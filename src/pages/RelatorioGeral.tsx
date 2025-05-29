@@ -67,7 +67,7 @@ const RelatorioGeral = () => {
       
       doc.setFontSize(18);
       doc.setTextColor(14, 165, 233);
-      doc.text(`Relatório Consolidado: ${cliente}`, 105, 15, { align: 'center' });
+      doc.text(`Relatorio Consolidado: ${cliente}`, 105, 15, { align: 'center' });
       
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
@@ -92,7 +92,7 @@ const RelatorioGeral = () => {
       doc.text(`Valor Total: R$ ${valorTotal.toFixed(2)}`, 14, yPos);
       yPos += 15;
       
-      const tableColumn = ["Data", "Tipo", "Valor", "Status", "Observações"];
+      const tableColumn = ["Data", "Tipo", "Valor", "Status", "Observacoes"];
       const tableRows = atendimentosCliente.map(a => [
         a.dataAtendimento ? new Date(a.dataAtendimento).toLocaleDateString('pt-BR') : '-',
         a.tipoServico ? a.tipoServico.replace('-', ' ') : '-',
@@ -151,14 +151,14 @@ const RelatorioGeral = () => {
         }
         
         if (a.indicacao) {
-          const indicacaoLines = doc.splitTextToSize(`Indicação: ${a.indicacao}`, 180);
+          const indicacaoLines = doc.splitTextToSize(`Indicacao: ${a.indicacao}`, 180);
           doc.text(indicacaoLines, 14, yPos);
           yPos += indicacaoLines.length * 5 + 5;
         }
         
         if (a.atencaoFlag) {
           doc.setTextColor(220, 38, 38);
-          doc.text(`ATENÇÃO: ${a.atencaoNota || 'Este cliente requer atenção especial'}`, 14, yPos);
+          doc.text(`ATENCAO: ${a.atencaoNota || 'Este cliente requer atencao especial'}`, 14, yPos);
           doc.setTextColor(0, 0, 0);
           yPos += 8;
         }
@@ -172,7 +172,7 @@ const RelatorioGeral = () => {
         doc.setFontSize(10);
         doc.setTextColor(150);
         doc.text(
-          `Libertá - Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} - Página ${i} de ${totalPages}`,
+          `Liberta - Relatorio gerado em ${new Date().toLocaleDateString('pt-BR')} - Pagina ${i} de ${totalPages}`,
           105,
           doc.internal.pageSize.height - 10,
           { align: 'center' }
@@ -182,14 +182,14 @@ const RelatorioGeral = () => {
       doc.save(`Relatorio_${cliente.replace(/ /g, '_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
       
       toast({
-        title: "Relatório gerado",
-        description: "O relatório consolidado foi baixado com sucesso.",
+        title: "Relatorio gerado",
+        description: "O relatorio consolidado foi baixado com sucesso.",
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao baixar relatório",
+        title: "Erro ao baixar relatorio",
         description: "Ocorreu um erro ao gerar o arquivo PDF.",
       });
     }
@@ -224,7 +224,7 @@ const RelatorioGeral = () => {
             Voltar
           </Button>
           <h1 className="text-2xl font-bold text-[#0EA5E9]">
-            Relatórios Gerais
+            Relatorios Gerais
           </h1>
         </div>
 
@@ -274,7 +274,7 @@ const RelatorioGeral = () => {
 
         <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-md mb-6">
           <CardHeader className="border-b border-white/10">
-            <CardTitle className="text-[#0EA5E9]">Relatórios Gerais</CardTitle>
+            <CardTitle className="text-[#0EA5E9]">Relatorios Gerais</CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <ReportManager variant="home" />
@@ -338,7 +338,7 @@ const RelatorioGeral = () => {
                                       Data: {atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A'}
                                     </span>
                                     <span className="text-sm text-slate-600">
-                                      Serviço: {atendimento.tipoServico ? atendimento.tipoServico.replace('-', ' ') : 'N/A'}
+                                      Servico: {atendimento.tipoServico ? atendimento.tipoServico.replace('-', ' ') : 'N/A'}
                                     </span>
                                     <span className="text-sm text-emerald-600 font-medium">
                                       Valor: R$ {parseFloat(atendimento.valor || "0").toFixed(2)}
@@ -379,7 +379,7 @@ const RelatorioGeral = () => {
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <FileText className="h-12 w-12 text-slate-300 mb-4" />
                   <h3 className="text-lg font-medium text-slate-600">Nenhum cliente encontrado</h3>
-                  <p className="text-slate-500 mt-2">Registre atendimentos para visualizar os relatórios</p>
+                  <p className="text-slate-500 mt-2">Registre atendimentos para visualizar os relatorios</p>
                 </div>
               )}
             </div>

@@ -17,7 +17,7 @@ const GeneralReportGenerator: React.FC<GeneralReportGeneratorProps> = ({ atendim
       
       doc.setFontSize(18);
       doc.setTextColor(14, 165, 233);
-      doc.text('Relatório Geral de Atendimentos', 105, 15, { align: 'center' });
+      doc.text('Relatorio Geral de Atendimentos', 105, 15, { align: 'center' });
       
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
@@ -38,7 +38,7 @@ const GeneralReportGenerator: React.FC<GeneralReportGeneratorProps> = ({ atendim
       doc.text(`Consultas Pendentes: ${pendingConsultations}`, 14, yPos);
       yPos += 15;
       
-      const tableColumn = ["Cliente", "Data", "Serviço", "Valor", "Status"];
+      const tableColumn = ["Cliente", "Data", "Servico", "Valor", "Status"];
       const tableRows = atendimentos.map(a => [
         a.nome || 'N/A',
         a.dataAtendimento ? new Date(a.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
@@ -61,7 +61,7 @@ const GeneralReportGenerator: React.FC<GeneralReportGeneratorProps> = ({ atendim
         doc.setFontSize(10);
         doc.setTextColor(150);
         doc.text(
-          `Libertá - Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} - Página ${i} de ${totalPages}`,
+          `Liberta - Relatorio gerado em ${new Date().toLocaleDateString('pt-BR')} - Pagina ${i} de ${totalPages}`,
           105,
           doc.internal.pageSize.height - 10,
           { align: 'center' }
@@ -70,10 +70,10 @@ const GeneralReportGenerator: React.FC<GeneralReportGeneratorProps> = ({ atendim
       
       doc.save(`Relatorio_Geral_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
       
-      toast.success("Relatório geral gerado com sucesso!");
+      toast.success("Relatorio geral gerado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      toast.error("Erro ao gerar relatório");
+      toast.error("Erro ao gerar relatorio");
     }
   };
 
@@ -83,7 +83,7 @@ const GeneralReportGenerator: React.FC<GeneralReportGeneratorProps> = ({ atendim
       className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white"
     >
       <FileText className="h-4 w-4 mr-2" />
-      Relatório Geral
+      Relatorio Geral
     </Button>
   );
 };
