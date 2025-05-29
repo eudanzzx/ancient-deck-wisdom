@@ -1,8 +1,13 @@
 
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, BarChart3, Home } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, BarChart3, Home, ChevronDown } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Logo from "@/components/Logo";
 import UserMenu from "@/components/UserMenu";
@@ -60,15 +65,29 @@ const DashboardHeader = () => {
                 Relatórios
               </Button>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="text-slate-600 hover:text-[#1E40AF] hover:bg-[#1E40AF]/10 transition-all duration-200 text-sm"
-                onClick={() => navigate('/relatorio-geral')}
-              >
-                <BarChart3 className="h-4 w-4 mr-1" />
-                Relatórios
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-slate-600 hover:text-[#1E40AF] hover:bg-[#1E40AF]/10 transition-all duration-200 text-sm"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-1" />
+                    Relatórios
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => navigate('/relatorio-geral')}>
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Relatórios Gerais
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/relatorios-financeiros')}>
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Relatórios Financeiros
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             <Button 
               className={`text-white h-8 px-4 text-sm transition-all duration-200 ${
@@ -93,4 +112,3 @@ const DashboardHeader = () => {
 };
 
 export default DashboardHeader;
-

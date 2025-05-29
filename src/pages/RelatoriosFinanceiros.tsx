@@ -1,413 +1,360 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { format, startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear, eachMonthOfInterval, eachDayOfInterval, getMonth, getYear } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { ArrowLeft, Download, DollarSign, Calendar, TrendingUp, LineChart } from "lucide-react";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Download, DollarSign, TrendingUp, Users, Activity, Sparkles } from "lucide-react";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import useUserDataService from "@/services/userDataService";
-import { useToast } from "@/hooks/use-toast";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 interface Atendimento {
   id: string;
+  nome: string;
   dataAtendimento: string;
   tipoServico: string;
-  valor: number;
-}
-
-interface DadosDiarios {
-  data: string;
-  valor: number;
-}
-
-interface DadosMensais {
-  mes: string;
-  valor: number;
-}
-
-interface DadosTiposServico {
-  name: string;
-  value: number;
+  valor: string;
+  statusPagamento?: 'pago' | 'pendente' | 'parcelado';
 }
 
 const RelatoriosFinanceiros = () => {
-  const navigate = useNavigate();
   const { getAtendimentos } = useUserDataService();
-  const { toast } = useToast();
-  const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
-  const [valorTotalDia, setValorTotalDia] = useState(0);
-  const [valorTotalMes, setValorTotalMes] = useState(0);
-  const [valorTotalAno, setValorTotalAno] = useState(0);
-  const [dadosGraficoDiario, setDadosGraficoDiario] = useState<DadosDiarios[]>([]);
-  const [dadosGraficoMensal, setDadosGraficoMensal] = useState<DadosMensais[]>([]);
-  const [dadosGraficoTiposServico, setDadosGraficoTiposServico] = useState<DadosTiposServico[]>([]);
-  
-  const COLORS = ['#0EA5E9', '#4f46e5', '#22c55e', '#f59e0b', '#ec4899', '#64748b', '#0f766e'];
+  const [atendimentos] = useState<Atendimento[]>(
+    getAtendimentos().filter((atendimento: Atendimento) => 
+      atendimento.tipoServico !== "tarot-frequencial"
+    )
+  );
+  const [periodoVisualizacao, setPeriodoVisualizacao] = useState("6meses");
 
-  useEffect(() => {
-    const todosAtendimentos = getAtendimentos() as Atendimento[];
-    setAtendimentos(todosAtendimentos);
-    
+  const calcularEstatisticas = () => {
     const hoje = new Date();
-    const inicioDia = startOfDay(hoje);
-    const inicioMes = startOfMonth(hoje);
-    const inicioAno = startOfYear(hoje);
-    const fimDia = endOfDay(hoje);
-    const fimMes = endOfMonth(hoje);
-    const fimAno = endOfYear(hoje);
+    const receitaTotal = atendimentos.reduce((sum, atendimento) => sum + parseFloat(atendimento.valor), 0);
     
-    const atendimentosDia = todosAtendimentos.filter(atendimento => {
-      const dataAtendimento = new Date(atendimento.dataAtendimento);
-      return dataAtendimento >= inicioDia && dataAtendimento <= fimDia;
-    });
-    
-    const atendimentosMes = todosAtendimentos.filter(atendimento => {
-      const dataAtendimento = new Date(atendimento.dataAtendimento);
-      return dataAtendimento >= inicioMes && dataAtendimento <= fimMes;
-    });
-    
-    const atendimentosAno = todosAtendimentos.filter(atendimento => {
-      const dataAtendimento = new Date(atendimento.dataAtendimento);
-      return dataAtendimento >= inicioAno && dataAtendimento <= fimAno;
-    });
-    
-    const totalDia = atendimentosDia.reduce((soma, atendimento) => {
-      return soma + parseFloat(atendimento.valor.toString() || '0');
-    }, 0);
-    
-    const totalMes = atendimentosMes.reduce((soma, atendimento) => {
-      return soma + parseFloat(atendimento.valor.toString() || '0');
-    }, 0);
-    
-    const totalAno = atendimentosAno.reduce((soma, atendimento) => {
-      return soma + parseFloat(atendimento.valor.toString() || '0');
-    }, 0);
-    
-    setValorTotalDia(totalDia);
-    setValorTotalMes(totalMes);
-    setValorTotalAno(totalAno);
-    
-    gerarDadosGraficoDiario(todosAtendimentos);
-    gerarDadosGraficoMensal(todosAtendimentos);
-    gerarDadosGraficoTiposServico(todosAtendimentos);
-    
-  }, [getAtendimentos]);
-  
-  const gerarDadosGraficoDiario = (todosAtendimentos: Atendimento[]) => {
-    const hoje = new Date();
-    const inicioIntervalo = new Date();
-    inicioIntervalo.setDate(hoje.getDate() - 29);
-    
-    const diasIntervalo = eachDayOfInterval({
-      start: inicioIntervalo,
-      end: hoje
-    });
-    
-    const dadosGrafico = diasIntervalo.map(dia => {
-      const atendimentosDia = todosAtendimentos.filter(atendimento => {
-        const dataAtendimento = new Date(atendimento.dataAtendimento);
-        return dataAtendimento.toDateString() === dia.toDateString();
-      });
-      
-      const valorTotal = atendimentosDia.reduce((soma, atendimento) => {
-        return soma + parseFloat(atendimento.valor.toString() || '0');
-      }, 0);
-      
-      return {
-        data: format(dia, 'dd/MM', { locale: ptBR }),
-        valor: valorTotal
-      };
-    });
-    
-    setDadosGraficoDiario(dadosGrafico);
+    const receitaMesAtual = atendimentos
+      .filter(atendimento => {
+        const data = new Date(atendimento.dataAtendimento);
+        return data.getMonth() === hoje.getMonth() && data.getFullYear() === hoje.getFullYear();
+      })
+      .reduce((sum, atendimento) => sum + parseFloat(atendimento.valor), 0);
+
+    const atendimentosPagos = atendimentos.filter(a => a.statusPagamento === 'pago').length;
+    const atendimentosPendentes = atendimentos.filter(a => a.statusPagamento === 'pendente').length;
+    const ticketMedio = receitaTotal / atendimentos.length || 0;
+
+    return {
+      receitaTotal,
+      receitaMesAtual,
+      atendimentosPagos,
+      atendimentosPendentes,
+      ticketMedio,
+      totalAtendimentos: atendimentos.length
+    };
   };
-  
-  const gerarDadosGraficoMensal = (todosAtendimentos: Atendimento[]) => {
-    const hoje = new Date();
-    const inicioIntervalo = new Date();
-    inicioIntervalo.setMonth(hoje.getMonth() - 11);
-    
-    const mesesIntervalo = eachMonthOfInterval({
-      start: inicioIntervalo,
-      end: hoje
-    });
-    
-    const dadosGrafico = mesesIntervalo.map(mes => {
-      const atendimentosMes = todosAtendimentos.filter(atendimento => {
-        const dataAtendimento = new Date(atendimento.dataAtendimento);
-        return getMonth(dataAtendimento) === getMonth(mes) && 
-               getYear(dataAtendimento) === getYear(mes);
-      });
-      
-      const valorTotal = atendimentosMes.reduce((soma, atendimento) => {
-        return soma + parseFloat(atendimento.valor.toString() || '0');
-      }, 0);
-      
-      return {
-        mes: format(mes, 'MMM', { locale: ptBR }),
-        valor: valorTotal
-      };
-    });
-    
-    setDadosGraficoMensal(dadosGrafico);
-  };
-  
-  const gerarDadosGraficoTiposServico = (todosAtendimentos: Atendimento[]) => {
-    const tiposServico: Record<string, { quantidade: number, valor: number }> = {};
-    
-    todosAtendimentos.forEach(atendimento => {
-      const tipo = atendimento.tipoServico;
-      if (!tiposServico[tipo]) {
-        tiposServico[tipo] = {
-          quantidade: 0,
-          valor: 0
-        };
-      }
-      
-      tiposServico[tipo].quantidade += 1;
-      tiposServico[tipo].valor += parseFloat(atendimento.valor.toString() || '0');
-    });
-    
-    const dadosGrafico = Object.entries(tiposServico).map(([tipo, dados]) => ({
-      name: tipo.replace('-', ' '),
-      value: dados.valor
-    }));
-    
-    dadosGrafico.sort((a, b) => b.value - a.value);
-    
-    setDadosGraficoTiposServico(dadosGrafico);
-  };
-  
-  const downloadRelatorioCsv = () => {
-    try {
-      let csvContent = "Período,Valor Total\n";
-      
-      csvContent += `Hoje (${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}),R$ ${valorTotalDia.toFixed(2)}\n`;
-      csvContent += `Mês atual (${format(new Date(), 'MMMM/yyyy', { locale: ptBR })}),R$ ${valorTotalMes.toFixed(2)}\n`;
-      csvContent += `Ano atual (${format(new Date(), 'yyyy', { locale: ptBR })}),R$ ${valorTotalAno.toFixed(2)}\n\n`;
-      
-      csvContent += "Análise Diária\n";
-      csvContent += "Data,Valor\n";
-      dadosGraficoDiario.forEach(item => {
-        csvContent += `${item.data},R$ ${item.valor.toFixed(2)}\n`;
-      });
-      
-      csvContent += "\nAnálise Mensal\n";
-      csvContent += "Mês,Valor\n";
-      dadosGraficoMensal.forEach(item => {
-        csvContent += `${item.mes},R$ ${item.valor.toFixed(2)}\n`;
-      });
-      
-      csvContent += "\nAnálise por Tipo de Serviço\n";
-      csvContent += "Tipo de Serviço,Valor Total\n";
-      dadosGraficoTiposServico.forEach(item => {
-        csvContent += `${item.name},R$ ${Number(item.value).toFixed(2)}\n`;
-      });
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      
-      const hoje = format(new Date(), 'dd-MM-yyyy', { locale: ptBR });
-      link.setAttribute('download', `Relatorio_Financeiro_${hoje}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast({
-        title: "Download iniciado",
-        description: "O relatório financeiro está sendo baixado.",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar CSV:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao baixar relatório",
-        description: "Ocorreu um erro ao gerar o arquivo CSV.",
-      });
+
+  const gerarDadosGraficoReceita = () => {
+    const dadosPorMes: { [key: string]: number } = {};
+    const mesesParaMostrar = periodoVisualizacao === "6meses" ? 6 : 12;
+
+    // Inicializar últimos meses
+    for (let i = mesesParaMostrar - 1; i >= 0; i--) {
+      const data = subMonths(new Date(), i);
+      const chave = format(data, 'MMM/yy', { locale: ptBR });
+      dadosPorMes[chave] = 0;
     }
+
+    atendimentos.forEach(atendimento => {
+      const data = new Date(atendimento.dataAtendimento);
+      const chave = format(data, 'MMM/yy', { locale: ptBR });
+      
+      if (dadosPorMes.hasOwnProperty(chave)) {
+        dadosPorMes[chave] += parseFloat(atendimento.valor);
+      }
+    });
+
+    return Object.entries(dadosPorMes).map(([mes, receita]) => ({
+      mes,
+      receita: receita
+    }));
+  };
+
+  const gerarDadosGraficoPagamentos = () => {
+    const pagos = atendimentos.filter(a => a.statusPagamento === 'pago').length;
+    const pendentes = atendimentos.filter(a => a.statusPagamento === 'pendente').length;
+    const parcelados = atendimentos.filter(a => a.statusPagamento === 'parcelado').length;
+
+    return [
+      { name: 'Pagos', value: pagos, color: '#22C55E' },
+      { name: 'Pendentes', value: pendentes, color: '#EF4444' },
+      { name: 'Parcelados', value: parcelados, color: '#F59E0B' },
+    ];
+  };
+
+  const gerarDadosGraficoServicos = () => {
+    const servicosPorTipo: { [key: string]: { count: number; receita: number } } = {};
+
+    atendimentos.forEach(atendimento => {
+      const tipo = atendimento.tipoServico;
+      if (!servicosPorTipo[tipo]) {
+        servicosPorTipo[tipo] = { count: 0, receita: 0 };
+      }
+      servicosPorTipo[tipo].count += 1;
+      servicosPorTipo[tipo].receita += parseFloat(atendimento.valor);
+    });
+
+    return Object.entries(servicosPorTipo).map(([tipo, dados]) => ({
+      servico: tipo,
+      quantidade: dados.count,
+      receita: dados.receita
+    }));
+  };
+
+  const gerarRelatorioFinanceiro = () => {
+    const doc = new jsPDF();
+    const stats = calcularEstatisticas();
+    
+    // Cabeçalho
+    doc.setFontSize(20);
+    doc.setTextColor(30, 64, 175);
+    doc.text('Relatório Financeiro', 20, 30);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 45);
+    
+    // Estatísticas Financeiras
+    doc.setFontSize(16);
+    doc.setTextColor(30, 64, 175);
+    doc.text('Resumo Financeiro', 20, 65);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Receita Total: R$ ${stats.receitaTotal.toFixed(2)}`, 20, 80);
+    doc.text(`Receita Mês Atual: R$ ${stats.receitaMesAtual.toFixed(2)}`, 20, 95);
+    doc.text(`Ticket Médio: R$ ${stats.ticketMedio.toFixed(2)}`, 20, 110);
+    doc.text(`Total de Atendimentos: ${stats.totalAtendimentos}`, 20, 125);
+    doc.text(`Pagamentos Confirmados: ${stats.atendimentosPagos}`, 20, 140);
+    doc.text(`Pagamentos Pendentes: ${stats.atendimentosPendentes}`, 20, 155);
+
+    // Tabela detalhada
+    const tableData = atendimentos.map(atendimento => [
+      atendimento.nome,
+      format(new Date(atendimento.dataAtendimento), 'dd/MM/yyyy'),
+      atendimento.tipoServico,
+      `R$ ${parseFloat(atendimento.valor).toFixed(2)}`,
+      atendimento.statusPagamento || 'N/A'
+    ]);
+
+    doc.autoTable({
+      head: [['Cliente', 'Data', 'Serviço', 'Valor', 'Status']],
+      body: tableData,
+      startY: 170,
+      styles: {
+        fontSize: 9,
+        textColor: [0, 0, 0],
+      },
+      headStyles: {
+        fillColor: [30, 64, 175],
+        textColor: [255, 255, 255],
+      },
+    });
+
+    doc.save('relatorio-financeiro.pdf');
+  };
+
+  const stats = calcularEstatisticas();
+  const dadosReceita = gerarDadosGraficoReceita();
+  const dadosPagamentos = gerarDadosGraficoPagamentos();
+  const dadosServicos = gerarDadosGraficoServicos();
+
+  const chartConfig = {
+    receita: {
+      label: "Receita",
+      color: "#1E40AF",
+    },
+    quantidade: {
+      label: "Quantidade",
+      color: "#3B82F6",
+    },
   };
 
   return (
-    <div className="min-h-screen bg-[#F1F7FF]">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/30 to-sky-200/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-300/20 to-sky-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+
       <DashboardHeader />
       
-      <main className="container mx-auto px-4 py-6 mt-20">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/')}
-              className="text-[#0EA5E9] hover:bg-white/80 hover:text-[#0EA5E9] transition-all duration-200"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
+      <main className="container mx-auto py-24 px-4 relative z-10">
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="transform hover:scale-110 transition-all duration-300 hover:rotate-12">
+              <DollarSign className="h-12 w-12 text-blue-600" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#0EA5E9]">Relatórios Financeiros</h1>
-              <p className="text-sm text-slate-600">Análise de valores recebidos por período</p>
+              <h1 className="text-3xl font-bold text-blue-800 bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent">
+                Relatórios Financeiros
+              </h1>
+              <p className="text-blue-600 mt-1 opacity-80">Análise completa das finanças</p>
             </div>
           </div>
-          <Button 
-            onClick={downloadRelatorioCsv}
-            className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/90 text-white"
-          >
-            <Download className="mr-2 h-4 w-4" /> Baixar Relatório
-          </Button>
+          
+          <div className="flex items-center gap-3">
+            <ToggleGroup 
+              type="single" 
+              value={periodoVisualizacao} 
+              onValueChange={(value) => {
+                if (value) setPeriodoVisualizacao(value);
+              }}
+              className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30"
+            >
+              <ToggleGroupItem value="6meses" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white">
+                6 Meses
+              </ToggleGroupItem>
+              <ToggleGroupItem value="12meses" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white">
+                12 Meses
+              </ToggleGroupItem>
+            </ToggleGroup>
+            
+            <Button 
+              onClick={gerarRelatorioFinanceiro}
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Gerar PDF
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-md">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Valor do Dia</p>
-                  <p className="text-xl font-bold text-[#0EA5E9]">R$ {valorTotalDia.toFixed(2)}</p>
-                </div>
-                <div className="rounded-full p-2 bg-[#0EA5E9]/10">
-                  <Calendar className="h-6 w-6 text-[#0EA5E9]" />
-                </div>
-              </div>
+        {/* Cards de Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard 
+            title="Receita Total" 
+            value={`R$ ${stats.receitaTotal.toFixed(2)}`} 
+            icon={<DollarSign className="h-8 w-8 text-blue-600" />} 
+          />
+          <StatCard 
+            title="Receita Mês Atual" 
+            value={`R$ ${stats.receitaMesAtual.toFixed(2)}`}
+            icon={<Calendar className="h-8 w-8 text-blue-600" />} 
+          />
+          <StatCard 
+            title="Ticket Médio"
+            value={`R$ ${stats.ticketMedio.toFixed(2)}`} 
+            icon={<TrendingUp className="h-8 w-8 text-blue-600" />} 
+          />
+          <StatCard 
+            title="Pagos/Pendentes" 
+            value={`${stats.atendimentosPagos}/${stats.atendimentosPendentes}`} 
+            icon={<Activity className="h-8 w-8 text-blue-600" />} 
+          />
+        </div>
+
+        {/* Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Gráfico de Receita Mensal */}
+          <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-blue-800">Receita Mensal</CardTitle>
+              <CardDescription>Evolução da receita ao longo do tempo</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dadosReceita}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mes" />
+                    <YAxis />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="receita" stroke="#1E40AF" strokeWidth={3} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
-          <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-md">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Valor do Mês</p>
-                  <p className="text-xl font-bold text-[#0EA5E9]">R$ {valorTotalMes.toFixed(2)}</p>
-                </div>
-                <div className="rounded-full p-2 bg-[#0EA5E9]/10">
-                  <DollarSign className="h-6 w-6 text-[#0EA5E9]" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-md">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Valor do Ano</p>
-                  <p className="text-xl font-bold text-[#0EA5E9]">R$ {valorTotalAno.toFixed(2)}</p>
-                </div>
-                <div className="rounded-full p-2 bg-[#0EA5E9]/10">
-                  <TrendingUp className="h-6 w-6 text-[#0EA5E9]" />
-                </div>
-              </div>
+
+          {/* Gráfico de Status de Pagamento */}
+          <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-blue-800">Status dos Pagamentos</CardTitle>
+              <CardDescription>Distribuição dos status de pagamento</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={dadosPagamentos}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {dadosPagamentos.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
         </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-md">
-            <CardHeader className="border-b border-white/10">
-              <CardTitle className="text-[#0EA5E9] flex items-center gap-2">
-                <LineChart className="h-5 w-5" /> Valores Diários (Últimos 30 dias)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={dadosGraficoDiario}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis 
-                      dataKey="data" 
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => value.split('/')[0]}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => `R$${value}`}
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Valor']}
-                      labelFormatter={(label) => `Data: ${label}`}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="valor" 
-                      stroke="#0EA5E9" 
-                      fill="#0EA5E9" 
-                      fillOpacity={0.2} 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-md">
-            <CardHeader className="border-b border-white/10">
-              <CardTitle className="text-[#0EA5E9] flex items-center gap-2">
-                <LineChart className="h-5 w-5" /> Valores Mensais (Últimos 12 meses)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={dadosGraficoMensal}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => `R$${value}`}
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Valor']}
-                      labelFormatter={(label) => `Mês: ${label}`}
-                    />
-                    <Bar dataKey="valor" fill="#0EA5E9" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-md">
-          <CardHeader className="border-b border-white/10">
-            <CardTitle className="text-[#0EA5E9] flex items-center gap-2">
-              <LineChart className="h-5 w-5" /> Distribuição por Tipo de Serviço
-            </CardTitle>
+
+        {/* Gráfico de Receita por Serviço */}
+        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-blue-800">Receita por Tipo de Serviço</CardTitle>
+            <CardDescription>Performance financeira por categoria de serviço</CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="h-[350px]">
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={dadosGraficoTiposServico}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={120}
-                    fill="#8884d8"
-                    dataKey="value"
-                    nameKey="name"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {dadosGraficoTiposServico.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`} />
-                  <Legend />
-                </PieChart>
+                <BarChart data={dadosServicos}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="servico" />
+                  <YAxis />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="receita" fill="#1E40AF" />
+                </BarChart>
               </ResponsiveContainer>
-            </div>
+            </ChartContainer>
           </CardContent>
         </Card>
       </main>
     </div>
   );
 };
+
+const StatCard = ({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) => (
+  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-500 group hover:bg-white hover:-translate-y-2 hover:scale-105">
+    <CardContent className="pt-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300">{title}</p>
+          <p className="text-3xl font-bold text-slate-800 group-hover:text-blue-700 transition-colors duration-300">{value}</p>
+        </div>
+        <div className="rounded-xl p-3 bg-blue-600/10 group-hover:bg-blue-600/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12">
+          {icon}
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default RelatoriosFinanceiros;
