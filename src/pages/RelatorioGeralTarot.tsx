@@ -9,7 +9,7 @@ import useUserDataService from "@/services/userDataService";
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import DetailedClientReportGenerator from "@/components/reports/DetailedClientReportGenerator";
+import ReportManager from "@/components/ReportManager";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const RelatorioGeralTarot = () => {
@@ -148,12 +148,6 @@ const RelatorioGeralTarot = () => {
                 12 Meses
               </ToggleGroupItem>
             </ToggleGroup>
-            
-            <DetailedClientReportGenerator 
-              atendimentos={analises}
-              clients={topClients}
-              variant="tarot"
-            />
           </div>
         </div>
 
@@ -230,7 +224,7 @@ const RelatorioGeralTarot = () => {
           </Card>
         </div>
 
-        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
+        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl mb-8">
           <CardHeader>
             <CardTitle className="text-[#6B21A8]">Receita Mensal</CardTitle>
             <CardDescription>Evolucao da receita ao longo dos meses</CardDescription>
@@ -247,6 +241,16 @@ const RelatorioGeralTarot = () => {
                 </LineChart>
               </ResponsiveContainer>
             </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-[#6B21A8]">Opcoes de Relatorios</CardTitle>
+            <CardDescription>Gere relatorios detalhados dos dados do tarot</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ReportManager variant="tarot" />
           </CardContent>
         </Card>
       </main>
