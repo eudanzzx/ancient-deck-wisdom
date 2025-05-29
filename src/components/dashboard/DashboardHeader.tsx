@@ -54,41 +54,35 @@ const DashboardHeader = () => {
                 Tarot
               </Button>
             )}
-            {isTarotPage ? (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="text-slate-600 hover:text-[#6B21A8] hover:bg-[#6B21A8]/10 transition-all duration-200 text-sm"
-                onClick={() => navigate('/relatorios-frequencial')}
-              >
-                <BarChart3 className="h-4 w-4 mr-1" />
-                Relatórios
-              </Button>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-slate-600 hover:text-[#1E40AF] hover:bg-[#1E40AF]/10 transition-all duration-200 text-sm"
-                  >
-                    <BarChart3 className="h-4 w-4 mr-1" />
-                    Relatórios
-                    <ChevronDown className="h-3 w-3 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => navigate('/relatorio-geral')}>
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Relatórios Gerais
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/relatorios-financeiros')}>
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Relatórios Financeiros
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className={`text-slate-600 transition-all duration-200 text-sm ${
+                    isTarotPage 
+                      ? 'hover:text-[#6B21A8] hover:bg-[#6B21A8]/10' 
+                      : 'hover:text-[#1E40AF] hover:bg-[#1E40AF]/10'
+                  }`}
+                >
+                  <BarChart3 className="h-4 w-4 mr-1" />
+                  Relatórios
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border border-white/30 shadow-lg">
+                <DropdownMenuItem onClick={() => navigate('/relatorio-geral')}>
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Relatórios Gerais
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(isTarotPage ? '/relatorios-frequenciais-tarot' : '/relatorios-financeiros')}>
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Relatórios Financeiros
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Button 
               className={`text-white h-8 px-4 text-sm transition-all duration-200 ${
                 isTarotPage 
