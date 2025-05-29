@@ -184,7 +184,7 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
     
     doc.setFontSize(18);
     doc.setTextColor(124, 100, 244);
-    doc.text('🔮 Relatorio Geral do Cliente - Historico Consolidado', 105, 15, { align: 'center' });
+    doc.text('Relatorio Geral do Cliente - Historico Consolidado', 105, 15, { align: 'center' });
     
     let yPos = 35;
     

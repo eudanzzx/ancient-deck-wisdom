@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,7 +99,7 @@ const RelatoriosFrequenciaisTarot = () => {
     // Cabeçalho
     doc.setFontSize(20);
     doc.setTextColor(107, 33, 168);
-    doc.text('Relatório Financeiro - Tarot Frequencial', 20, 30);
+    doc.text('Relatorio Financeiro - Tarot Frequencial', 20, 30);
     
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
@@ -114,11 +113,11 @@ const RelatoriosFrequenciaisTarot = () => {
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.text(`Receita Total: R$ ${stats.receitaTotal.toFixed(2)}`, 20, 80);
-    doc.text(`Receita Mês Atual: R$ ${stats.receitaMesAtual.toFixed(2)}`, 20, 95);
-    doc.text(`Ticket Médio: R$ ${stats.ticketMedio.toFixed(2)}`, 20, 110);
-    doc.text(`Total de Análises: ${stats.totalAnalises}`, 20, 125);
-    doc.text(`Análises Finalizadas: ${stats.analisesFinalizadas}`, 20, 140);
-    doc.text(`Análises Pendentes: ${stats.analisesPendentes}`, 20, 155);
+    doc.text(`Receita Mes Atual: R$ ${stats.receitaMesAtual.toFixed(2)}`, 20, 95);
+    doc.text(`Ticket Medio: R$ ${stats.ticketMedio.toFixed(2)}`, 20, 110);
+    doc.text(`Total de Analises: ${stats.totalAnalises}`, 20, 125);
+    doc.text(`Analises Finalizadas: ${stats.analisesFinalizadas}`, 20, 140);
+    doc.text(`Analises Pendentes: ${stats.analisesPendentes}`, 20, 155);
 
     // Tabela detalhada
     const tableData = analises.map(analise => [
