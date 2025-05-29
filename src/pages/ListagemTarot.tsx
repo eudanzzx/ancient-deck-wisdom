@@ -7,17 +7,13 @@ import {
   Search, 
   FileText, 
   DollarSign,
-  ArrowLeft,
-  Clock,
   CheckCircle,
   Calendar,
   Edit3,
-  Eye,
   Trash2,
   Star,
   AlertTriangle,
   Users,
-  TrendingUp,
   Sparkles,
   BellRing,
   Check,
@@ -25,15 +21,14 @@ import {
 } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Logo from "@/components/Logo";
-import UserMenu from "@/components/UserMenu";
 import useUserDataService from "@/services/userDataService";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import TarotCountdown from "@/components/TarotCountdown";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -192,53 +187,7 @@ const ListagemTarot = () => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-100/10 to-violet-100/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
       </div>
 
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Logo height={40} width={40} />
-              <h1 className="text-lg font-semibold tracking-tight text-[#673193]">Libertá - Tarot Frequencial</h1>
-            </div>
-            <div className="flex gap-2 items-center">
-              <Button 
-                variant="outline" 
-                className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10 hover:border-[#673193] transition-all duration-200"
-                onClick={() => navigate('/')}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar ao Início
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10 hover:border-[#673193] transition-all duration-200"
-                  >
-                    Relatórios
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white/95 backdrop-blur-sm border border-[#673193]/20">
-                  <DropdownMenuItem 
-                    onClick={() => navigate('/relatorio-geral')}
-                    className="text-[#673193] hover:bg-[#673193]/10 cursor-pointer"
-                  >
-                    Relatórios Gerais
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => navigate('/relatorios-frequencial')}
-                    className="text-[#673193] hover:bg-[#673193]/10 cursor-pointer"
-                  >
-                    Relatórios Frequenciais
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              <UserMenu />
-            </div>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader />
 
       <main className="pt-20 p-4 animate-fade-in relative z-10">
         <TarotCountdown analises={analises} />
