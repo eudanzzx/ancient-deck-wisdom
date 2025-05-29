@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,7 @@ import useUserDataService from "@/services/userDataService";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
+import TarotCountdown from "@/components/TarotCountdown";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -206,6 +208,32 @@ const ListagemTarot = () => {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar ao Início
               </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10 hover:border-[#673193] transition-all duration-200"
+                  >
+                    Relatórios
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-white/95 backdrop-blur-sm border border-[#673193]/20">
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/relatorio-geral')}
+                    className="text-[#673193] hover:bg-[#673193]/10 cursor-pointer"
+                  >
+                    Relatórios Gerais
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/relatorios-frequencial')}
+                    className="text-[#673193] hover:bg-[#673193]/10 cursor-pointer"
+                  >
+                    Relatórios Frequenciais
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <UserMenu />
             </div>
           </div>
@@ -213,6 +241,8 @@ const ListagemTarot = () => {
       </header>
 
       <main className="pt-20 p-4 animate-fade-in relative z-10">
+        <TarotCountdown analises={analises} />
+        
         {aniversarianteHoje && (
           <div className="animate-scale-in mb-6">
             <ClientBirthdayAlert 
