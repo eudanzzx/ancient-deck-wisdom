@@ -150,16 +150,153 @@ const RelatorioIndividualTarot = () => {
 
   const downloadAllClientReports = (client) => {
     try {
-      client.consultations.forEach((analise, index) => {
-        setTimeout(() => {
-          downloadIndividualReport(analise);
-        }, index * 1000);
+      const doc = new jsPDF();
+      
+      // Header do relatório
+      doc.setFontSize(18);
+      doc.setTextColor(107, 33, 168);
+      doc.text('Relatório Consolidado do Cliente', 105, 20, { align: 'center' });
+      
+      let yPos = 40;
+      
+      // Informações do cliente
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Nome do Cliente: ${client.name}`, 14, yPos);
+      yPos += 15;
+      
+      // Resumo financeiro
+      doc.setFont(undefined, 'bold');
+      doc.text('RESUMO FINANCEIRO', 14, yPos);
+      yPos += 10;
+      doc.setFont(undefined, 'normal');
+      doc.text(`Total de Consultas Realizadas: ${client.totalConsultations}`, 14, yPos);
+      yPos += 8;
+      doc.text(`Valor Total Investido: R$ ${client.totalValue.toFixed(2)}`, 14, yPos);
+      yPos += 8;
+      doc.text(`Valor Médio por Consulta: R$ ${(client.totalValue / client.totalConsultations).toFixed(2)}`, 14, yPos);
+      yPos += 8;
+      
+      const firstConsultation = client.consultations[client.consultations.length - 1];
+      const lastConsultation = client.consultations[0];
+      
+      if (firstConsultation.dataInicio) {
+        doc.text(`Primeira Consulta: ${format(new Date(firstConsultation.dataInicio), 'dd/MM/yyyy', { locale: ptBR })}`, 14, yPos);
+        yPos += 8;
+      }
+      
+      if (lastConsultation.dataInicio) {
+        doc.text(`Última Consulta: ${format(new Date(lastConsultation.dataInicio), 'dd/MM/yyyy', { locale: ptBR })}`, 14, yPos);
+        yPos += 15;
+      }
+      
+      // Informações pessoais do cliente (baseado na primeira consulta)
+      if (firstConsultation.dataNascimento || firstConsultation.signo) {
+        doc.setFont(undefined, 'bold');
+        doc.text('INFORMAÇÕES PESSOAIS', 14, yPos);
+        yPos += 10;
+        doc.setFont(undefined, 'normal');
+        
+        if (firstConsultation.dataNascimento) {
+          doc.text(`Data de Nascimento: ${format(new Date(firstConsultation.dataNascimento), 'dd/MM/yyyy', { locale: ptBR })}`, 14, yPos);
+          yPos += 8;
+        }
+        
+        if (firstConsultation.signo) {
+          doc.text(`Signo: ${firstConsultation.signo}`, 14, yPos);
+          yPos += 15;
+        }
+      }
+      
+      // Histórico detalhado das consultas
+      doc.setFont(undefined, 'bold');
+      doc.text('HISTÓRICO DETALHADO DAS CONSULTAS', 14, yPos);
+      yPos += 15;
+      
+      client.consultations.forEach((consulta, index) => {
+        // Verificar se precisa de nova página
+        if (yPos > 240) {
+          doc.addPage();
+          yPos = 20;
+        }
+        
+        doc.setFont(undefined, 'bold');
+        doc.text(`Consulta ${index + 1} - ${format(new Date(consulta.dataInicio), 'dd/MM/yyyy', { locale: ptBR })}`, 14, yPos);
+        yPos += 8;
+        
+        doc.setFont(undefined, 'normal');
+        doc.text(`Valor: R$ ${parseFloat(consulta.preco || "150").toFixed(2)}`, 14, yPos);
+        yPos += 8;
+        doc.text(`Status: ${consulta.finalizado ? 'Finalizada' : 'Em andamento'}`, 14, yPos);
+        yPos += 10;
+        
+        if (consulta.analiseAntes) {
+          doc.setFont(undefined, 'bold');
+          doc.text('Análise - Antes:', 14, yPos);
+          yPos += 6;
+          doc.setFont(undefined, 'normal');
+          const antesLines = doc.splitTextToSize(consulta.analiseAntes, 180);
+          doc.text(antesLines, 14, yPos);
+          yPos += antesLines.length * 5 + 8;
+        }
+        
+        if (consulta.analiseDepois) {
+          doc.setFont(undefined, 'bold');
+          doc.text('Análise - Depois:', 14, yPos);
+          yPos += 6;
+          doc.setFont(undefined, 'normal');
+          const depoisLines = doc.splitTextToSize(consulta.analiseDepois, 180);
+          doc.text(depoisLines, 14, yPos);
+          yPos += depoisLines.length * 5 + 8;
+        }
+        
+        if (consulta.lembretes && consulta.lembretes.length > 0) {
+          const tratamentos = consulta.lembretes.filter(l => l.texto?.trim());
+          if (tratamentos.length > 0) {
+            doc.setFont(undefined, 'bold');
+            doc.text('Tratamento/Lembretes:', 14, yPos);
+            yPos += 6;
+            doc.setFont(undefined, 'normal');
+            tratamentos.forEach(lembrete => {
+              const tratamentoLines = doc.splitTextToSize(lembrete.texto, 180);
+              doc.text(tratamentoLines, 14, yPos);
+              yPos += tratamentoLines.length * 5 + 3;
+            });
+          }
+        }
+        
+        yPos += 15;
+        
+        // Linha separadora entre consultas
+        if (index < client.consultations.length - 1) {
+          doc.setDrawColor(200, 200, 200);
+          doc.line(14, yPos - 5, 196, yPos - 5);
+          yPos += 5;
+        }
       });
       
-      toast.success(`Gerando ${client.consultations.length} relatórios de ${client.name}...`);
+      // Rodapé
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        doc.text(
+          `Relatório Consolidado - ${client.name} - Gerado em ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })} - Página ${i} de ${totalPages}`,
+          105,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
+      }
+      
+      const fileName = `Relatorio_Consolidado_${client.name.replace(/ /g, '_')}_${format(new Date(), 'dd-MM-yyyy')}.pdf`;
+      doc.save(fileName);
+      
+      toast.success(`Relatório consolidado de ${client.name} gerado com sucesso!`);
     } catch (error) {
-      console.error("Erro ao gerar relatórios:", error);
-      toast.error("Erro ao gerar relatórios");
+      console.error("Erro ao gerar relatório consolidado:", error);
+      toast.error("Erro ao gerar relatório consolidado");
     }
   };
 
