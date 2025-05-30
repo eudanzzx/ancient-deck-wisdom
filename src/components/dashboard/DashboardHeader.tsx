@@ -72,9 +72,9 @@ const DashboardHeader = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border border-white/30 shadow-lg">
-                <DropdownMenuItem onClick={() => navigate(isTarotPage ? '/relatorio-individual-tarot' : '/relatorio-geral')}>
-                  {isTarotPage ? <Users className="h-4 w-4 mr-2" /> : <BarChart3 className="h-4 w-4 mr-2" />}
-                  {isTarotPage ? 'Relatórios Individuais' : 'Relatórios Gerais'}
+                <DropdownMenuItem onClick={() => navigate(isTarotPage ? '/relatorio-individual-tarot' : '/relatorio-individual')}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Relatórios Individuais
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(isTarotPage ? '/relatorios-frequenciais-tarot' : '/relatorios-financeiros')}>
                   <BarChart3 className="h-4 w-4 mr-2" />

@@ -38,7 +38,7 @@ function App() {
               <Route path="/editar-atendimento/:id" element={<EditarAtendimento />} />
               <Route path="/relatorio-geral" element={<RelatorioGeral />} />
               <Route path="/relatorio-geral-tarot" element={<RelatorioGeralTarot />} />
-              <Route path="/relatorio-individual/:id" element={<RelatorioIndividual />} />
+              <Route path="/relatorio-individual" element={<RelatorioIndividual />} />
               <Route path="/relatorio-individual-tarot" element={<RelatorioIndividualTarot />} />
               <Route path="/analise-frequencial" element={<AnaliseFrequencial />} />
               <Route path="/listagem-tarot" element={<ListagemTarot />} />
