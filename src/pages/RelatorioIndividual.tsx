@@ -302,22 +302,15 @@ const RelatorioIndividual = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/30 to-sky-200/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-300/20 to-sky-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
       <DashboardHeader />
       
-      <main className="container mx-auto py-24 px-4 relative z-10">
+      <main className="container mx-auto py-24 px-4">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="transform hover:scale-110 transition-all duration-300 hover:rotate-12">
-              <Activity className="h-12 w-12 text-[#1E40AF]" />
-            </div>
+            <Activity className="h-12 w-12 text-[#1E40AF]" />
             <div>
-              <h1 className="text-3xl font-bold text-[#1E40AF] bg-gradient-to-r from-[#1E40AF] to-blue-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-[#1E40AF]">
                 Relatórios Individuais - Atendimentos
               </h1>
               <p className="text-[#1E40AF] mt-1 opacity-80">Relatórios detalhados por cliente</p>
@@ -328,7 +321,7 @@ const RelatorioIndividual = () => {
             <Input 
               type="text" 
               placeholder="Buscar cliente..." 
-              className="pr-10 bg-white/90 border-white/30 focus:border-[#1E40AF] focus:ring-[#1E40AF]/20 transition-all duration-300"
+              className="pr-10 bg-white/90 border-white/30 focus:border-[#1E40AF] focus:ring-[#1E40AF]/20"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -354,7 +347,7 @@ const RelatorioIndividual = () => {
           />
         </div>
 
-        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
+        <Card className="bg-white/90 border border-white/30">
           <CardHeader>
             <CardTitle className="text-[#1E40AF]">Clientes e Atendimentos</CardTitle>
             <CardDescription>Relatórios individuais organizados por cliente</CardDescription>
@@ -379,7 +372,7 @@ const RelatorioIndividual = () => {
                     onOpenChange={() => toggleClient(client.name)}
                   >
                     <CollapsibleTrigger asChild>
-                      <CardHeader className="cursor-pointer hover:bg-[#1E40AF]/5 transition-colors">
+                      <CardHeader className="cursor-pointer hover:bg-[#1E40AF]/5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             {openClients.has(client.name) ? 
@@ -454,14 +447,14 @@ const RelatorioIndividual = () => {
 };
 
 const StatCard = ({ title, value, icon }) => (
-  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-500 group hover:bg-white hover:-translate-y-2 hover:scale-105">
+  <Card className="bg-white/90 border border-white/30">
     <CardContent className="pt-6">
       <div className="flex justify-between items-center">
         <div>
-          <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300">{title}</p>
-          <p className="text-3xl font-bold text-slate-800 group-hover:text-[#1E40AF] transition-colors duration-300">{value}</p>
+          <p className="text-sm font-medium text-slate-600 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-slate-800">{value}</p>
         </div>
-        <div className="rounded-xl p-3 bg-[#1E40AF]/10 group-hover:bg-[#1E40AF]/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12">
+        <div className="rounded-xl p-3 bg-[#1E40AF]/10">
           {icon}
         </div>
       </div>

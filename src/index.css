@@ -86,40 +86,7 @@
 }
 
 @layer components {
-  /* Loading Animation */
-  .loader {
-    width: 45px;
-    height: 40px;
-    background: linear-gradient(#0000 calc(1100%/6),#0EA5E9 0 calc(3100%/6),#0000 0),
-              linear-gradient(#0000 calc(2100%/6),#0EA5E9 0 calc(4100%/6),#0000 0),
-              linear-gradient(#0000 calc(3100%/6),#0EA5E9 0 calc(5100%/6),#0000 0);
-    background-size: 10px 400%;
-    background-repeat: no-repeat;
-    animation: matrix 1s infinite linear;
-  }
-
-  @keyframes matrix {
-    0% { background-position: 0% 100%, 50% 100%, 100% 100% }
-    100% { background-position: 0% 0%, 50% 0%, 100% 0% }
-  }
-
-  /* Smooth Fade In */
-  .animate-fade-in {
-    animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Modern Scrollbar */
+  /* Simple Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
   }
