@@ -1,31 +1,16 @@
 
-import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Calendar } from "@/components/ui/calendar";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import {
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar as CalendarIcon, Plus, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { v4 as uuidv4 } from "uuid";
+import ClientInfoFields from "./frequency-analysis/ClientInfoFields";
+import AnalysisFields from "./frequency-analysis/AnalysisFields";
+import CountersSection from "./frequency-analysis/CountersSection";
 
 const formSchema = z.object({
   clientName: z.string().min(1, "Nome é obrigatório"),
@@ -64,100 +49,11 @@ interface FrequencyAnalysisFormProps {
   editingAnalysis?: any;
 }
 
-// Memoized counter component to prevent unnecessary re-renders
-const CounterField = memo(({ 
-  counter, 
-  index, 
-  onUpdate, 
-  onRemove 
-}: { 
-  counter: Counter; 
-  index: number; 
-  onUpdate: (id: string, name: string, endDate: Date) => void;
-  onRemove: (id: string) => void;
-}) => {
-  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate(counter.id, e.target.value, counter.endDate);
-  }, [counter.id, counter.endDate, onUpdate]);
-
-  const handleDateChange = useCallback((date: Date | undefined) => {
-    if (date) {
-      onUpdate(counter.id, counter.name, date);
-    }
-  }, [counter.id, counter.name, onUpdate]);
-
-  const handleRemove = useCallback(() => {
-    onRemove(counter.id);
-  }, [counter.id, onRemove]);
-
-  return (
-    <div className="border rounded-lg p-4 space-y-4">
-      <div className="flex justify-between items-center">
-        <h4 className="font-medium text-[#6B21A8]">Contador {index + 1}</h4>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={handleRemove}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-medium">Nome do Contador</label>
-          <Input
-            value={counter.name}
-            className="focus:border-[#6B21A8] focus:ring-[#6B21A8]/20"
-            onChange={handleNameChange}
-            placeholder="Nome do contador"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">Data Final</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-start text-left font-normal focus:border-[#6B21A8] focus:ring-[#6B21A8]/20"
-              >
-                {counter.endDate ? (
-                  format(counter.endDate, "PPP", { locale: ptBR })
-                ) : (
-                  <span>Selecione uma data</span>
-                )}
-                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={counter.endDate}
-                onSelect={handleDateChange}
-                initialFocus
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-CounterField.displayName = 'CounterField';
-
 const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
   onSubmit,
   onCancel,
   editingAnalysis,
 }) => {
-  const firstFieldRef = useRef<HTMLInputElement>(null);
-  
-  // Ensure we have a properly typed array of counters with all required properties
   const initialCounters: Counter[] = useMemo(() => 
     (editingAnalysis?.counters || []).map((counter: any) => ({
       id: counter.id || uuidv4(),
@@ -183,17 +79,6 @@ const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
       counters: initialCounters,
     },
   });
-
-  // Auto focus on first field when form opens
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (firstFieldRef.current) {
-        firstFieldRef.current.focus();
-      }
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleAddCounter = useCallback(() => {
     const newCounter: Counter = {
@@ -249,260 +134,15 @@ const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-4">
-        <div className="grid grid-cols-1 gap-6">
-          {/* Client Name Field */}
-          <FormField
-            control={form.control}
-            name="clientName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome do Cliente</FormLabel>
-                <FormControl>
-                  <Input 
-                    ref={firstFieldRef}
-                    placeholder="Nome completo" 
-                    className="focus:border-[#6B21A8] focus:ring-[#6B21A8]/20"
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Birth Date Field */}
-          <FormField
-            control={form.control}
-            name="birthDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data de Nascimento</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal focus:border-[#6B21A8] focus:ring-[#6B21A8]/20",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP", { locale: ptBR })
-                        ) : (
-                          <span>Selecione uma data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Start Date Field */}
-          <FormField
-            control={form.control}
-            name="startDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data de Início</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal focus:border-[#6B21A8] focus:ring-[#6B21A8]/20",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP", { locale: ptBR })
-                        ) : (
-                          <span>Selecione uma data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Treatment Days Field */}
-          <FormField
-            control={form.control}
-            name="treatmentDays"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Duração do Tratamento (dias)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="10"
-                    className="focus:border-[#6B21A8] focus:ring-[#6B21A8]/20"
-                    value={field.value}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Price Field */}
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Preço (R$)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="focus:border-[#6B21A8] focus:ring-[#6B21A8]/20"
-                    value={field.value}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Attention Field */}
-          <FormField
-            control={form.control}
-            name="attention"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>Atenção</FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Analysis Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="beforeAnalysis"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[#6B21A8]">Análise - Antes</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Descreva a situação antes do tratamento..."
-                    className="min-h-[120px] focus:border-[#6B21A8] focus:ring-[#6B21A8]/20"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="afterAnalysis"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[#6B21A8]">Análise - Depois</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Descreva os resultados após o tratamento..."
-                    className="min-h-[120px] focus:border-[#6B21A8] focus:ring-[#6B21A8]/20"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Recommended Treatment */}
-        <FormField
-          control={form.control}
-          name="recommendedTreatment"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[#6B21A8]">Tratamento Recomendado</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Descreva o tratamento recomendado..."
-                  className="focus:border-[#6B21A8] focus:ring-[#6B21A8]/20"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <ClientInfoFields form={form} />
+        <AnalysisFields form={form} />
+        <CountersSection
+          counters={counters}
+          onAddCounter={handleAddCounter}
+          onUpdateCounter={handleUpdateCounter}
+          onRemoveCounter={handleRemoveCounter}
         />
 
-        {/* Counters Section */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium text-[#6B21A8]">Contadores</h3>
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8]"
-              onClick={handleAddCounter}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Contador
-            </Button>
-          </div>
-
-          {counters.map((counter, index) => (
-            <CounterField
-              key={counter.id}
-              counter={counter}
-              index={index}
-              onUpdate={handleUpdateCounter}
-              onRemove={handleRemoveCounter}
-            />
-          ))}
-        </div>
-
-        {/* Form Actions */}
         <div className="flex justify-end space-x-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar

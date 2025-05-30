@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,6 +17,8 @@ import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import useUserDataService from "@/services/userDataService";
+import ClientForm from "@/components/tarot/ClientForm";
+import AnalysisCards from "@/components/tarot/AnalysisCards";
 
 // Memoized reminder component to prevent unnecessary re-renders
 const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
@@ -300,7 +301,6 @@ const AnaliseFrequencial = () => {
           </div>
         </div>
 
-        {/* Alert de aniversário do cliente - renderizado sempre que há nome e data */}
         {shouldShowBirthdayAlert && (
           <ClientBirthdayAlert 
             clientName={nomeCliente}
@@ -314,103 +314,26 @@ const AnaliseFrequencial = () => {
             <CardTitle className="text-[#6B21A8]">Tarot Frequencial</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="nome" className="text-slate-700">Nome do Cliente</Label>
-                <Input 
-                  id="nome" 
-                  placeholder="Nome completo" 
-                  value={nomeCliente}
-                  onChange={(e) => setNomeCliente(e.target.value)}
-                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
-                />
-              </div>
+            <ClientForm
+              nomeCliente={nomeCliente}
+              dataNascimento={dataNascimento}
+              signo={signo}
+              atencao={atencao}
+              dataInicio={dataInicio}
+              preco={preco}
+              onNomeClienteChange={setNomeCliente}
+              onDataNascimentoChange={handleDataNascimentoChange}
+              onAtencaoChange={setAtencao}
+              onDataInicioChange={setDataInicio}
+              onPrecoChange={setPreco}
+            />
 
-              <div className="space-y-2">
-                <Label htmlFor="dataNascimento" className="text-slate-700">Data de Nascimento</Label>
-                <Input 
-                  id="dataNascimento" 
-                  type="date" 
-                  value={dataNascimento}
-                  onChange={handleDataNascimentoChange}
-                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signo" className="text-slate-700">Signo</Label>
-                <Input 
-                  id="signo" 
-                  value={signo} 
-                  readOnly 
-                  className="bg-slate-50 border-slate-200" 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="data-inicio" className="text-slate-700">Data de Início</Label>
-                <Input 
-                  id="data-inicio" 
-                  type="date" 
-                  value={dataInicio}
-                  onChange={(e) => setDataInicio(e.target.value)}
-                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="preco" className="text-slate-700">Preço (R$)</Label>
-                <Input 
-                  id="preco" 
-                  type="number" 
-                  placeholder="0.00" 
-                  value={preco}
-                  onChange={(e) => setPreco(e.target.value)}
-                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
-                />
-              </div>
-
-              <div className="space-y-2 flex flex-col">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="atencao" className="text-base text-slate-700">ATENÇÃO</Label>
-                  <Switch 
-                    checked={atencao} 
-                    onCheckedChange={setAtencao} 
-                    className="data-[state=checked]:bg-[#6B21A8]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-white/50 border-slate-200/50">
-                <CardHeader className="bg-slate-50/80 py-3">
-                  <CardTitle className="text-lg text-[#6B21A8]">ANÁLISE - ANTES</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <Textarea 
-                    placeholder="Descreva a situação antes do tratamento..." 
-                    className="min-h-[150px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
-                    value={analiseAntes}
-                    onChange={(e) => setAnaliseAntes(e.target.value)}
-                  />
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-white/50 border-slate-200/50">
-                <CardHeader className="bg-slate-50/80 py-3">
-                  <CardTitle className="text-lg text-[#6B21A8]">ANÁLISE - DEPOIS</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <Textarea 
-                    placeholder="Descreva os resultados após o tratamento..." 
-                    className="min-h-[150px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
-                    value={analiseDepois}
-                    onChange={(e) => setAnaliseDepois(e.target.value)}
-                  />
-                </CardContent>
-              </Card>
-            </div>
+            <AnalysisCards
+              analiseAntes={analiseAntes}
+              analiseDepois={analiseDepois}
+              onAnaliseAntesChange={setAnaliseAntes}
+              onAnaliseDepoisChange={setAnaliseDepois}
+            />
             
             <div className="mt-8">
               <div className="flex justify-between items-center mb-4">

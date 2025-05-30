@@ -1,16 +1,16 @@
-import React, { useState, useMemo, memo, useCallback } from 'react';
+
+import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Download, DollarSign, TrendingUp, Users, Activity, Sparkles } from "lucide-react";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { Download, Sparkles } from "lucide-react";
 import useUserDataService from "@/services/userDataService";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import TarotStatsCards from "@/components/reports/TarotStatsCards";
+import TarotCharts from "@/components/charts/TarotCharts";
 
 declare module 'jspdf' {
   interface jsPDF {
@@ -26,31 +26,11 @@ interface TarotAnalise {
   finalizado: boolean;
 }
 
-// Memoized StatCard component
-const StatCard = memo(({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) => (
-  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-shadow duration-300 group">
-    <CardContent className="pt-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300">{title}</p>
-          <p className="text-3xl font-bold text-slate-800 group-hover:text-[#6B21A8] transition-colors duration-300">{value}</p>
-        </div>
-        <div className="rounded-xl p-3 bg-[#6B21A8]/10 group-hover:bg-[#6B21A8]/20 transition-colors duration-300">
-          {icon}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-));
-
-StatCard.displayName = 'StatCard';
-
 const RelatoriosFrequenciaisTarot = () => {
   const { getAllTarotAnalyses } = useUserDataService();
   const [analises] = useState<TarotAnalise[]>(getAllTarotAnalyses());
   const [periodoVisualizacao, setPeriodoVisualizacao] = useState("6meses");
 
-  // Memoize expensive calculations
   const stats = useMemo(() => {
     const hoje = new Date();
     const receitaTotal = analises.reduce((sum, analise) => sum + parseFloat(analise.preco || "150"), 0);
@@ -80,7 +60,6 @@ const RelatoriosFrequenciaisTarot = () => {
     const dadosPorMes: { [key: string]: number } = {};
     const mesesParaMostrar = periodoVisualizacao === "6meses" ? 6 : 12;
 
-    // Inicializar últimos meses
     for (let i = mesesParaMostrar - 1; i >= 0; i--) {
       const data = subMonths(new Date(), i);
       const chave = format(data, 'MMM/yy', { locale: ptBR });
@@ -115,7 +94,6 @@ const RelatoriosFrequenciaisTarot = () => {
   const gerarRelatorioTarot = useCallback(() => {
     const doc = new jsPDF();
     
-    // Cabeçalho
     doc.setFontSize(20);
     doc.setTextColor(107, 33, 168);
     doc.text('Relatorio Financeiro - Tarot Frequencial', 20, 30);
@@ -124,7 +102,6 @@ const RelatoriosFrequenciaisTarot = () => {
     doc.setTextColor(0, 0, 0);
     doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 45);
     
-    // Estatísticas Financeiras
     doc.setFontSize(16);
     doc.setTextColor(107, 33, 168);
     doc.text('Resumo Financeiro', 20, 65);
@@ -138,7 +115,6 @@ const RelatoriosFrequenciaisTarot = () => {
     doc.text(`Analises Finalizadas: ${stats.analisesFinalizadas}`, 20, 140);
     doc.text(`Analises Pendentes: ${stats.analisesPendentes}`, 20, 155);
 
-    // Tabela detalhada
     const tableData = analises.map(analise => [
       analise.nomeCliente,
       format(new Date(analise.dataInicio), 'dd/MM/yyyy'),
@@ -180,7 +156,6 @@ const RelatoriosFrequenciaisTarot = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 relative overflow-hidden">
-      {/* Simplified background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-200/20 to-violet-200/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-300/15 to-violet-300/15 rounded-full blur-3xl"></div>
@@ -227,103 +202,12 @@ const RelatoriosFrequenciaisTarot = () => {
           </div>
         </div>
 
-        {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard 
-            title="Receita Total" 
-            value={`R$ ${stats.receitaTotal.toFixed(2)}`} 
-            icon={<DollarSign className="h-8 w-8 text-[#6B21A8]" />} 
-          />
-          <StatCard 
-            title="Receita Mês Atual" 
-            value={`R$ ${stats.receitaMesAtual.toFixed(2)}`}
-            icon={<Calendar className="h-8 w-8 text-[#6B21A8]" />} 
-          />
-          <StatCard 
-            title="Ticket Médio"
-            value={`R$ ${stats.ticketMedio.toFixed(2)}`} 
-            icon={<TrendingUp className="h-8 w-8 text-[#6B21A8]" />} 
-          />
-          <StatCard 
-            title="Finalizadas/Pendentes" 
-            value={`${stats.analisesFinalizadas}/${stats.analisesPendentes}`} 
-            icon={<Activity className="h-8 w-8 text-[#6B21A8]" />} 
-          />
-        </div>
-
-        {/* Gráficos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Gráfico de Receita Mensal */}
-          <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-[#6B21A8]">Receita Mensal - Tarot</CardTitle>
-              <CardDescription>Evolução da receita do tarot frequencial</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dadosReceita}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="mes" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey="receita" stroke="#6B21A8" strokeWidth={3} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          {/* Gráfico de Status das Análises */}
-          <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-[#6B21A8]">Status das Análises</CardTitle>
-              <CardDescription>Distribuição das análises por status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={dadosStatus}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
-                    >
-                      {dadosStatus.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <ChartTooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Gráfico de Análises por Mês */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-[#6B21A8]">Análises por Mês</CardTitle>
-            <CardDescription>Quantidade de análises realizadas mensalmente</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dadosReceita}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="receita" fill="#6B21A8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        <TarotStatsCards stats={stats} />
+        <TarotCharts 
+          dadosReceita={dadosReceita}
+          dadosStatus={dadosStatus}
+          chartConfig={chartConfig}
+        />
       </main>
     </div>
   );
