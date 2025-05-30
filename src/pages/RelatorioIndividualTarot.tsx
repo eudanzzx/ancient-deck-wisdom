@@ -45,7 +45,7 @@ const RelatorioIndividualTarot = () => {
 
     const processedClients = Array.from(clientsMap.entries()).map(([name, consultations]) => ({
       name,
-      consultations: consultations.sort((a, b) => new Date(b.dataInicio) - new Date(a.dataInicio)),
+      consultations: consultations.sort((a, b) => new Date(b.dataInicio).getTime() - new Date(a.dataInicio).getTime()),
       totalConsultations: consultations.length,
       totalValue: consultations.reduce((acc, curr) => {
         const price = parseFloat(curr.preco || "150");

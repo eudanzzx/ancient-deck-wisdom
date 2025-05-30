@@ -48,7 +48,7 @@ const RelatorioIndividual = () => {
 
     const processedClients = Array.from(clientsMap.entries()).map(([name, consultations]) => ({
       name,
-      consultations: consultations.sort((a, b) => new Date(b.dataAtendimento) - new Date(a.dataAtendimento)),
+      consultations: consultations.sort((a, b) => new Date(b.dataAtendimento).getTime() - new Date(a.dataAtendimento).getTime()),
       totalConsultations: consultations.length,
       totalValue: consultations.reduce((acc, curr) => {
         const price = parseFloat(curr.valor || "0");
