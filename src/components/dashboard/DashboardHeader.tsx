@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, BarChart3, Home, ChevronDown } from "lucide-react";
+import { Plus, BarChart3, Home, ChevronDown, Users } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Logo from "@/components/Logo";
 import UserMenu from "@/components/UserMenu";
@@ -72,9 +72,9 @@ const DashboardHeader = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border border-white/30 shadow-lg">
-                <DropdownMenuItem onClick={() => navigate(isTarotPage ? '/relatorio-geral-tarot' : '/relatorio-geral')}>
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Relatórios Gerais
+                <DropdownMenuItem onClick={() => navigate(isTarotPage ? '/relatorio-individual-tarot' : '/relatorio-geral')}>
+                  {isTarotPage ? <Users className="h-4 w-4 mr-2" /> : <BarChart3 className="h-4 w-4 mr-2" />}
+                  {isTarotPage ? 'Relatórios Individuais' : 'Relatórios Gerais'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(isTarotPage ? '/relatorios-frequenciais-tarot' : '/relatorios-financeiros')}>
                   <BarChart3 className="h-4 w-4 mr-2" />

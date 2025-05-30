@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,6 +18,7 @@ import RelatoriosFrequencial from "@/pages/RelatoriosFrequencial";
 import RelatoriosFinanceiros from "@/pages/RelatoriosFinanceiros";
 import RelatoriosFrequenciaisTarot from "@/pages/RelatoriosFrequenciaisTarot";
 import RelatorioGeralTarot from "@/pages/RelatorioGeralTarot";
+import RelatorioIndividualTarot from "@/pages/RelatorioIndividualTarot";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,7 @@ function App() {
               <Route path="/relatorio-geral" element={<RelatorioGeral />} />
               <Route path="/relatorio-geral-tarot" element={<RelatorioGeralTarot />} />
               <Route path="/relatorio-individual/:id" element={<RelatorioIndividual />} />
+              <Route path="/relatorio-individual-tarot" element={<RelatorioIndividualTarot />} />
               <Route path="/analise-frequencial" element={<AnaliseFrequencial />} />
               <Route path="/listagem-tarot" element={<ListagemTarot />} />
               <Route path="/editar-analise-frequencial/:id" element={<EditarAnaliseFrequencial />} />
