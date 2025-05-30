@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, AlertTriangle } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
@@ -8,17 +8,20 @@ interface TarotCountdownProps {
   analises: any[];
 }
 
-const TarotCountdown: React.FC<TarotCountdownProps> = ({ analises }) => {
-  const [expiringAnalyses, setExpiringAnalyses] = useState([]);
+const TarotCountdown: React.FC<TarotCountdownProps> = memo(({ analises }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Update time every 5 minutes instead of every minute
   useEffect(() => {
-    checkExpiringAnalyses();
-    const interval = setInterval(checkExpiringAnalyses, 60000); // Check every minute
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 300000); // 5 minutes
     return () => clearInterval(interval);
-  }, [analises]);
+  }, []);
 
-  const checkExpiringAnalyses = () => {
-    const now = new Date();
+  // Memoize expensive calculations
+  const expiringAnalyses = useMemo(() => {
+    const now = currentTime;
     const expiring = [];
 
     analises.forEach(analise => {
@@ -43,14 +46,14 @@ const TarotCountdown: React.FC<TarotCountdownProps> = ({ analises }) => {
       }
     });
 
-    setExpiringAnalyses(expiring);
-  };
+    return expiring;
+  }, [analises, currentTime]);
 
-  const formatTimeRemaining = (days) => {
+  const formatTimeRemaining = useMemo(() => (days: number) => {
     if (days === 0) return "Hoje";
     if (days === 1) return "1 dia";
     return `${days} dias`;
-  };
+  }, []);
 
   if (expiringAnalyses.length === 0) return null;
 
@@ -58,8 +61,8 @@ const TarotCountdown: React.FC<TarotCountdownProps> = ({ analises }) => {
     <div className="mb-6 space-y-4">
       {expiringAnalyses.map((item, index) => (
         <Card 
-          key={index}
-          className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse"
+          key={`${item.nomeCliente}-${index}`}
+          className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-lg hover:shadow-xl transition-shadow duration-200"
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -87,7 +90,7 @@ const TarotCountdown: React.FC<TarotCountdownProps> = ({ analises }) => {
                     item.diasRestantes === 0 
                       ? "bg-red-100 text-red-700 border-red-200" 
                       : "bg-amber-100 text-amber-700 border-amber-200"
-                  } animate-bounce`}
+                  }`}
                 >
                   {formatTimeRemaining(item.diasRestantes)}
                 </Badge>
@@ -101,6 +104,8 @@ const TarotCountdown: React.FC<TarotCountdownProps> = ({ analises }) => {
       ))}
     </div>
   );
-};
+});
+
+TarotCountdown.displayName = 'TarotCountdown';
 
 export default TarotCountdown;

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -17,6 +18,66 @@ import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import useUserDataService from "@/services/userDataService";
+
+// Memoized reminder component to prevent unnecessary re-renders
+const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
+  lembrete: any;
+  onUpdate: (id: number, campo: string, valor: any) => void;
+  onRemove: (id: number) => void;
+}) => {
+  const handleTextoChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onUpdate(lembrete.id, 'texto', e.target.value);
+  }, [lembrete.id, onUpdate]);
+
+  const handleDiasChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    onUpdate(lembrete.id, 'dias', parseInt(e.target.value) || 0);
+  }, [lembrete.id, onUpdate]);
+
+  const handleRemoveClick = useCallback(() => {
+    onRemove(lembrete.id);
+  }, [lembrete.id, onRemove]);
+
+  return (
+    <div className="flex flex-col gap-3 p-3 border border-slate-200 rounded-md bg-white/50 hover:bg-white/70 transition-colors duration-200">
+      <div className="flex items-center gap-2">
+        <BellRing className="h-5 w-5 text-[#6B21A8]" />
+        <span className="font-medium text-[#6B21A8]">Contador {lembrete.id}</span>
+        <div className="flex-grow"></div>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
+          onClick={handleRemoveClick}
+        >
+          <Trash2 className="h-5 w-5" />
+        </Button>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
+          <Textarea 
+            placeholder="Descrição do tratamento..." 
+            value={lembrete.texto}
+            onChange={handleTextoChange}
+            className="min-h-[80px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="whitespace-nowrap text-slate-600">Avisar daqui a</span>
+          <Input 
+            type="number" 
+            className="w-20 bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200" 
+            value={lembrete.dias}
+            onChange={handleDiasChange}
+          />
+          <span className="whitespace-nowrap text-slate-600">dias</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+ReminderCard.displayName = 'ReminderCard';
 
 const AnaliseFrequencial = () => {
   const navigate = useNavigate();
@@ -54,7 +115,7 @@ const AnaliseFrequencial = () => {
     }
   }, [nomeCliente, dataNascimento, checkClientBirthday]);
 
-  const handleDataNascimentoChange = (e) => {
+  const handleDataNascimentoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setDataNascimento(value);
     
@@ -82,16 +143,16 @@ const AnaliseFrequencial = () => {
     } else {
       setSigno("");
     }
-  };
+  }, []);
 
   // Verifica se existem tratamentos que atingiram o prazo
-  const checkNotifications = () => {
+  const checkNotifications = useCallback(() => {
     const hoje = new Date();
     const analises = JSON.parse(localStorage.getItem("analises") || "[]");
     
-    analises.forEach(analise => {
+    analises.forEach((analise: any) => {
       if (analise.lembretes) {
-        analise.lembretes.forEach(lembrete => {
+        analise.lembretes.forEach((lembrete: any) => {
           if (!lembrete.texto) return;
           
           const dataInicio = new Date(analise.dataInicio);
@@ -126,30 +187,30 @@ const AnaliseFrequencial = () => {
         });
       }
     });
-  };
+  }, []);
 
-  const adicionarLembrete = () => {
+  const adicionarLembrete = useCallback(() => {
     const novoId = lembretes.length > 0 
       ? Math.max(...lembretes.map(l => l.id)) + 1 
       : 1;
     
-    setLembretes([
-      ...lembretes, 
+    setLembretes(prev => [
+      ...prev, 
       { id: novoId, texto: "", dias: 7 }
     ]);
-  };
+  }, [lembretes]);
 
-  const removerLembrete = (id) => {
-    setLembretes(lembretes.filter(item => item.id !== id));
-  };
+  const removerLembrete = useCallback((id: number) => {
+    setLembretes(prev => prev.filter(item => item.id !== id));
+  }, []);
 
-  const atualizarLembrete = (id, campo, valor) => {
-    setLembretes(lembretes.map(l => 
+  const atualizarLembrete = useCallback((id: number, campo: string, valor: any) => {
+    setLembretes(prev => prev.map(l => 
       l.id === id ? { ...l, [campo]: valor } : l
     ));
-  };
+  }, []);
 
-  const handleSalvarAnalise = () => {
+  const handleSalvarAnalise = useCallback(() => {
     // Validar campos obrigatórios
     if (!nomeCliente || !dataInicio) {
       toast.error("Preencha o nome do cliente e a data de início");
@@ -205,7 +266,20 @@ const AnaliseFrequencial = () => {
     
     // Voltar para a página de listagem
     navigate("/listagem-tarot");
-  };
+  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, lembretes, navigate]);
+
+  const handleBack = useCallback(() => {
+    navigate("/listagem-tarot");
+  }, [navigate]);
+
+  const handleCancel = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+
+  // Memoize the birthday alert check
+  const shouldShowBirthdayAlert = useMemo(() => {
+    return nomeCliente && dataNascimento;
+  }, [nomeCliente, dataNascimento]);
 
   return (
     <div className="min-h-screen bg-[#F1F7FF] py-6 px-4">
@@ -213,8 +287,8 @@ const AnaliseFrequencial = () => {
         <div className="mb-6 flex items-center">
           <Button 
             variant="ghost" 
-            className="mr-2 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:text-[#6B21A8] transition-all duration-200" 
-            onClick={() => navigate("/listagem-tarot")}
+            className="mr-2 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:text-[#6B21A8] transition-colors duration-200" 
+            onClick={handleBack}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -227,7 +301,7 @@ const AnaliseFrequencial = () => {
         </div>
 
         {/* Alert de aniversário do cliente - renderizado sempre que há nome e data */}
-        {nomeCliente && dataNascimento && (
+        {shouldShowBirthdayAlert && (
           <ClientBirthdayAlert 
             clientName={nomeCliente}
             birthDate={dataNascimento}
@@ -235,7 +309,7 @@ const AnaliseFrequencial = () => {
           />
         )}
 
-        <Card className="border-[#6B21A8]/20 shadow-sm mb-6 bg-white/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
+        <Card className="border-[#6B21A8]/20 shadow-sm mb-6 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-300">
           <CardHeader>
             <CardTitle className="text-[#6B21A8]">Tarot Frequencial</CardTitle>
           </CardHeader>
@@ -248,7 +322,7 @@ const AnaliseFrequencial = () => {
                   placeholder="Nome completo" 
                   value={nomeCliente}
                   onChange={(e) => setNomeCliente(e.target.value)}
-                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-all duration-200"
+                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
                 />
               </div>
 
@@ -259,7 +333,7 @@ const AnaliseFrequencial = () => {
                   type="date" 
                   value={dataNascimento}
                   onChange={handleDataNascimentoChange}
-                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-all duration-200"
+                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
                 />
               </div>
 
@@ -280,7 +354,7 @@ const AnaliseFrequencial = () => {
                   type="date" 
                   value={dataInicio}
                   onChange={(e) => setDataInicio(e.target.value)}
-                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-all duration-200"
+                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
                 />
               </div>
               
@@ -292,7 +366,7 @@ const AnaliseFrequencial = () => {
                   placeholder="0.00" 
                   value={preco}
                   onChange={(e) => setPreco(e.target.value)}
-                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-all duration-200"
+                  className="bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
                 />
               </div>
 
@@ -316,7 +390,7 @@ const AnaliseFrequencial = () => {
                 <CardContent className="pt-4">
                   <Textarea 
                     placeholder="Descreva a situação antes do tratamento..." 
-                    className="min-h-[150px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-all duration-200"
+                    className="min-h-[150px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
                     value={analiseAntes}
                     onChange={(e) => setAnaliseAntes(e.target.value)}
                   />
@@ -330,7 +404,7 @@ const AnaliseFrequencial = () => {
                 <CardContent className="pt-4">
                   <Textarea 
                     placeholder="Descreva os resultados após o tratamento..." 
-                    className="min-h-[150px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-all duration-200"
+                    className="min-h-[150px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
                     value={analiseDepois}
                     onChange={(e) => setAnaliseDepois(e.target.value)}
                   />
@@ -343,7 +417,7 @@ const AnaliseFrequencial = () => {
                 <h3 className="text-lg font-medium text-[#6B21A8]">Tratamento</h3>
                 <Button 
                   variant="outline" 
-                  className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-all duration-200"
+                  className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200"
                   onClick={adicionarLembrete}
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -353,45 +427,12 @@ const AnaliseFrequencial = () => {
               
               <div className="space-y-4">
                 {lembretes.map((lembrete) => (
-                  <div 
+                  <ReminderCard
                     key={lembrete.id}
-                    className="flex flex-col gap-3 p-3 border border-slate-200 rounded-md bg-white/50 hover:bg-white/70 transition-all duration-200"
-                  >
-                    <div className="flex items-center gap-2">
-                      <BellRing className="h-5 w-5 text-[#6B21A8]" />
-                      <span className="font-medium text-[#6B21A8]">Contador {lembrete.id}</span>
-                      <div className="flex-grow"></div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
-                        onClick={() => removerLembrete(lembrete.id)}
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="md:col-span-2">
-                        <Textarea 
-                          placeholder="Descrição do tratamento..." 
-                          value={lembrete.texto}
-                          onChange={(e) => atualizarLembrete(lembrete.id, 'texto', e.target.value)}
-                          className="min-h-[80px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-all duration-200"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="whitespace-nowrap text-slate-600">Avisar daqui a</span>
-                        <Input 
-                          type="number" 
-                          className="w-20 bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-all duration-200" 
-                          value={lembrete.dias}
-                          onChange={(e) => atualizarLembrete(lembrete.id, 'dias', parseInt(e.target.value) || 0)}
-                        />
-                        <span className="whitespace-nowrap text-slate-600">dias</span>
-                      </div>
-                    </div>
-                  </div>
+                    lembrete={lembrete}
+                    onUpdate={atualizarLembrete}
+                    onRemove={removerLembrete}
+                  />
                 ))}
               </div>
             </div>
@@ -399,13 +440,13 @@ const AnaliseFrequencial = () => {
           <CardFooter className="flex justify-end gap-3">
             <Button 
               variant="outline" 
-              onClick={() => navigate(-1)}
-              className="border-slate-200 text-slate-600 hover:bg-slate-50 transition-all duration-200"
+              onClick={handleCancel}
+              className="border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors duration-200"
             >
               Cancelar
             </Button>
             <Button 
-              className="bg-[#6B21A8] hover:bg-[#6B21A8]/90 text-white transition-all duration-200 hover:shadow-md"
+              className="bg-[#6B21A8] hover:bg-[#6B21A8]/90 text-white transition-colors duration-200 hover:shadow-md"
               onClick={handleSalvarAnalise}
             >
               <Save className="h-4 w-4 mr-2" />

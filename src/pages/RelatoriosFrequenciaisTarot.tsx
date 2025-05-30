@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Download, DollarSign, TrendingUp, Users, Activity, Sparkles } from "lucide-react";
@@ -26,12 +26,32 @@ interface TarotAnalise {
   finalizado: boolean;
 }
 
+// Memoized StatCard component
+const StatCard = memo(({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) => (
+  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-shadow duration-300 group">
+    <CardContent className="pt-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300">{title}</p>
+          <p className="text-3xl font-bold text-slate-800 group-hover:text-[#6B21A8] transition-colors duration-300">{value}</p>
+        </div>
+        <div className="rounded-xl p-3 bg-[#6B21A8]/10 group-hover:bg-[#6B21A8]/20 transition-colors duration-300">
+          {icon}
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+));
+
+StatCard.displayName = 'StatCard';
+
 const RelatoriosFrequenciaisTarot = () => {
   const { getAllTarotAnalyses } = useUserDataService();
   const [analises] = useState<TarotAnalise[]>(getAllTarotAnalyses());
   const [periodoVisualizacao, setPeriodoVisualizacao] = useState("6meses");
 
-  const calcularEstatisticas = () => {
+  // Memoize expensive calculations
+  const stats = useMemo(() => {
     const hoje = new Date();
     const receitaTotal = analises.reduce((sum, analise) => sum + parseFloat(analise.preco || "150"), 0);
     
@@ -54,9 +74,9 @@ const RelatoriosFrequenciaisTarot = () => {
       ticketMedio,
       totalAnalises: analises.length
     };
-  };
+  }, [analises]);
 
-  const gerarDadosGraficoReceita = () => {
+  const dadosReceita = useMemo(() => {
     const dadosPorMes: { [key: string]: number } = {};
     const mesesParaMostrar = periodoVisualizacao === "6meses" ? 6 : 12;
 
@@ -80,9 +100,9 @@ const RelatoriosFrequenciaisTarot = () => {
       mes,
       receita: receita
     }));
-  };
+  }, [analises, periodoVisualizacao]);
 
-  const gerarDadosGraficoStatus = () => {
+  const dadosStatus = useMemo(() => {
     const finalizadas = analises.filter(a => a.finalizado).length;
     const pendentes = analises.filter(a => !a.finalizado).length;
 
@@ -90,11 +110,10 @@ const RelatoriosFrequenciaisTarot = () => {
       { name: 'Finalizadas', value: finalizadas, color: '#22C55E' },
       { name: 'Pendentes', value: pendentes, color: '#F59E0B' },
     ];
-  };
+  }, [analises]);
 
-  const gerarRelatorioTarot = () => {
+  const gerarRelatorioTarot = useCallback(() => {
     const doc = new jsPDF();
-    const stats = calcularEstatisticas();
     
     // Cabeçalho
     doc.setFontSize(20);
@@ -142,13 +161,9 @@ const RelatoriosFrequenciaisTarot = () => {
     });
 
     doc.save('relatorio-financeiro-tarot.pdf');
-  };
+  }, [stats, analises]);
 
-  const stats = calcularEstatisticas();
-  const dadosReceita = gerarDadosGraficoReceita();
-  const dadosStatus = gerarDadosGraficoStatus();
-
-  const chartConfig = {
+  const chartConfig = useMemo(() => ({
     receita: {
       label: "Receita",
       color: "#6B21A8",
@@ -157,14 +172,18 @@ const RelatoriosFrequenciaisTarot = () => {
       label: "Quantidade",
       color: "#8B5CF6",
     },
-  };
+  }), []);
+
+  const handlePeriodoChange = useCallback((value: string | undefined) => {
+    if (value) setPeriodoVisualizacao(value);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 relative overflow-hidden">
-      {/* Animated background elements */}
+      {/* Simplified background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-200/30 to-violet-200/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-300/20 to-violet-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-200/20 to-violet-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-300/15 to-violet-300/15 rounded-full blur-3xl"></div>
       </div>
 
       <DashboardHeader />
@@ -172,7 +191,7 @@ const RelatoriosFrequenciaisTarot = () => {
       <main className="container mx-auto py-24 px-4 relative z-10">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="transform hover:scale-110 transition-all duration-300 hover:rotate-12">
+            <div className="transform hover:scale-105 transition-transform duration-200">
               <Sparkles className="h-12 w-12 text-[#6B21A8]" />
             </div>
             <div>
@@ -187,9 +206,7 @@ const RelatoriosFrequenciaisTarot = () => {
             <ToggleGroup 
               type="single" 
               value={periodoVisualizacao} 
-              onValueChange={(value) => {
-                if (value) setPeriodoVisualizacao(value);
-              }}
+              onValueChange={handlePeriodoChange}
               className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30"
             >
               <ToggleGroupItem value="6meses" className="data-[state=on]:bg-[#6B21A8] data-[state=on]:text-white">
@@ -311,21 +328,5 @@ const RelatoriosFrequenciaisTarot = () => {
     </div>
   );
 };
-
-const StatCard = ({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) => (
-  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-500 group hover:bg-white hover:-translate-y-2 hover:scale-105">
-    <CardContent className="pt-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300">{title}</p>
-          <p className="text-3xl font-bold text-slate-800 group-hover:text-[#6B21A8] transition-colors duration-300">{value}</p>
-        </div>
-        <div className="rounded-xl p-3 bg-[#6B21A8]/10 group-hover:bg-[#6B21A8]/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12">
-          {icon}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
 
 export default RelatoriosFrequenciaisTarot;
