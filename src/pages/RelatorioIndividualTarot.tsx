@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,7 +48,10 @@ const RelatorioIndividualTarot = () => {
       name,
       consultations: consultations.sort((a, b) => new Date(b.dataInicio) - new Date(a.dataInicio)),
       totalConsultations: consultations.length,
-      totalValue: consultations.reduce((acc, curr) => acc + parseFloat(curr.preco || "150"), 0)
+      totalValue: consultations.reduce((acc, curr) => {
+        const price = parseFloat(curr.preco || "150");
+        return acc + price;
+      }, 0)
     }));
 
     setClientsData(processedClients.sort((a, b) => a.name.localeCompare(b.name)));
