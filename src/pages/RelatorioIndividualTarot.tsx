@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -537,46 +538,58 @@ const RelatorioIndividualTarot = () => {
                           <div className="space-y-3">
                             {cliente.analises.map((analise: any, idx: number) => (
                               <div key={idx} className="bg-purple-50/50 rounded-lg p-3 border border-purple-200/30">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                                  <div>
-                                    <span className="font-medium text-purple-600">Data:</span>
-                                    <span className="ml-2 text-slate-700">
-                                      {analise.dataInicio ? new Date(analise.dataInicio).toLocaleDateString('pt-BR') : 'N/A'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-purple-600">Status:</span>
-                                    <span className="ml-2 text-slate-700">
-                                      {analise.finalizado ? 'Finalizada' : 'Em andamento'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-purple-600">Valor:</span>
-                                    <span className="ml-2 text-slate-700">R$ {parseFloat(analise.preco || "150").toFixed(2)}</span>
-                                  </div>
-                                  
-                                  {analise.signo && (
+                                <div className="flex justify-between items-start mb-3">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm flex-1">
                                     <div>
-                                      <span className="font-medium text-purple-600">Signo:</span>
-                                      <span className="ml-2 text-slate-700">{analise.signo}</span>
-                                    </div>
-                                  )}
-                                  
-                                  {analise.nascimento && (
-                                    <div>
-                                      <span className="font-medium text-purple-600">Nascimento:</span>
+                                      <span className="font-medium text-purple-600">Data:</span>
                                       <span className="ml-2 text-slate-700">
-                                        {new Date(analise.nascimento).toLocaleDateString('pt-BR')}
+                                        {analise.dataInicio ? new Date(analise.dataInicio).toLocaleDateString('pt-BR') : 'N/A'}
                                       </span>
                                     </div>
-                                  )}
-                                  
-                                  {analise.telefone && (
                                     <div>
-                                      <span className="font-medium text-purple-600">Telefone:</span>
-                                      <span className="ml-2 text-slate-700">{analise.telefone}</span>
+                                      <span className="font-medium text-purple-600">Status:</span>
+                                      <span className="ml-2 text-slate-700">
+                                        {analise.finalizado ? 'Finalizada' : 'Em andamento'}
+                                      </span>
                                     </div>
-                                  )}
+                                    <div>
+                                      <span className="font-medium text-purple-600">Valor:</span>
+                                      <span className="ml-2 text-slate-700">R$ {parseFloat(analise.preco || "150").toFixed(2)}</span>
+                                    </div>
+                                    
+                                    {analise.signo && (
+                                      <div>
+                                        <span className="font-medium text-purple-600">Signo:</span>
+                                        <span className="ml-2 text-slate-700">{analise.signo}</span>
+                                      </div>
+                                    )}
+                                    
+                                    {analise.nascimento && (
+                                      <div>
+                                        <span className="font-medium text-purple-600">Nascimento:</span>
+                                        <span className="ml-2 text-slate-700">
+                                          {new Date(analise.nascimento).toLocaleDateString('pt-BR')}
+                                        </span>
+                                      </div>
+                                    )}
+                                    
+                                    {analise.telefone && (
+                                      <div>
+                                        <span className="font-medium text-purple-600">Telefone:</span>
+                                        <span className="ml-2 text-slate-700">{analise.telefone}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => downloadIndividualAnalysisReport(analise)}
+                                    className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10 ml-3"
+                                  >
+                                    <Download className="h-4 w-4 mr-1" />
+                                    PDF
+                                  </Button>
                                 </div>
 
                                 {analise.pergunta && (
