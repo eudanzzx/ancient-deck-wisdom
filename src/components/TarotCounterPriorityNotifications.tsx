@@ -12,6 +12,7 @@ interface CounterData {
   minutosRestantes: number;
   dataExpiracao: Date;
   priority: number;
+  timeDiff: number;
 }
 
 interface TarotCounterPriorityNotificationsProps {
@@ -62,7 +63,8 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
                   horasRestantes,
                   minutosRestantes,
                   dataExpiracao,
-                  priority
+                  priority,
+                  timeDiff
                 });
               }
             }
@@ -70,10 +72,10 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
         }
       });
 
-      // Ordenar por prioridade (maior prioridade primeiro)
-      activeCounters.sort((a, b) => b.priority - a.priority);
+      // Ordenar por tempo restante (mais próximo primeiro)
+      activeCounters.sort((a, b) => a.timeDiff - b.timeDiff);
 
-      console.log('TarotCounterPriorityNotifications - Contadores ordenados por prioridade:', activeCounters);
+      console.log('TarotCounterPriorityNotifications - Contadores ordenados por tempo:', activeCounters);
       setCounters(activeCounters);
     };
 
@@ -113,7 +115,7 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
   const getUrgencyBadge = (counter: CounterData) => {
     if (counter.diasRestantes === 0) {
       if (counter.horasRestantes <= 1) {
-        return "bg-red-100 text-red-700 border-red-200";
+        return "bg-red-100 text-red-700 border-red-200 animate-pulse";
       }
       return "bg-orange-100 text-orange-700 border-orange-200";
     }
@@ -135,7 +137,7 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
 
   if (counters.length === 0) return null;
 
-  // Mostrar apenas os 3 mais prioritários
+  // Mostrar apenas os 3 mais prioritários (mais próximos de expirar)
   const topCounters = counters.slice(0, 3);
 
   return (
@@ -143,7 +145,7 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
       <div className="flex items-center gap-2 mb-3">
         <Timer className="h-5 w-5 text-purple-600" />
         <h3 className="text-lg font-semibold text-purple-800">
-          Contadores Ativos ({counters.length})
+          Contadores Prioritários ({counters.length})
         </h3>
         {topCounters[0] && (
           <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
@@ -180,7 +182,7 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
                     </h4>
                     {index === 0 && (
                       <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
-                        PRÓXIMO
+                        MAIS PRÓXIMO
                       </Badge>
                     )}
                   </div>
@@ -196,10 +198,14 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
                 >
                   {formatDetailedTime(counter)}
                 </Badge>
-                <p className="text-xs text-gray-600 mt-1">
-                  {counter.dataExpiracao.toLocaleDateString('pt-BR')} às{' '}
-                  {counter.dataExpiracao.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </p>
+                <div className="text-xs mt-1 space-y-1">
+                  <p className="text-gray-600">
+                    Expira: {counter.dataExpiracao.toLocaleDateString('pt-BR')}
+                  </p>
+                  <p className="text-gray-600">
+                    às {counter.dataExpiracao.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>
