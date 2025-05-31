@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Download, Sparkles } from "lucide-react";
 import useUserDataService from "@/services/userDataService";
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import TarotStatsCards from "@/components/reports/TarotStatsCards";
 import TarotCharts from "@/components/charts/TarotCharts";
+import { toast } from 'sonner';
 
 interface TarotAnalise {
   id: string;
@@ -85,105 +85,246 @@ const RelatoriosFrequenciaisTarot = () => {
   }, [analises]);
 
   const gerarRelatorioTarot = useCallback(() => {
-    const doc = new jsPDF();
-    
-    // Header elegante
-    doc.setFontSize(22);
-    doc.setTextColor(107, 33, 168);
-    doc.text('Relatório Financeiro', 105, 25, { align: 'center' });
-    
-    doc.setFontSize(16);
-    doc.setTextColor(120, 120, 120);
-    doc.text('Tarot Frequencial', 105, 35, { align: 'center' });
-    
-    // Linha decorativa
-    doc.setDrawColor(107, 33, 168);
-    doc.setLineWidth(0.5);
-    doc.line(30, 45, 180, 45);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, 20, 55);
-    
-    // Resumo em boxes elegantes
-    const receitaTotal = analises.reduce((sum, analise) => sum + parseFloat(analise.preco || "150"), 0);
-    const analisesFinalizadas = analises.filter(a => a.finalizado).length;
-    const analisesPendentes = analises.filter(a => !a.finalizado).length;
-    const ticketMedio = receitaTotal / analises.length || 0;
-    
-    // Box 1 - Receita Total
-    doc.rect(20, 65, 50, 25);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Receita Total', 25, 73);
-    doc.setFontSize(14);
-    doc.setTextColor(107, 33, 168);
-    doc.text(`R$ ${receitaTotal.toFixed(2)}`, 45, 85, { align: 'center' });
-    
-    // Box 2 - Total de Análises
-    doc.rect(80, 65, 50, 25);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Total Análises', 85, 73);
-    doc.setFontSize(14);
-    doc.setTextColor(107, 33, 168);
-    doc.text(analises.length.toString(), 105, 85, { align: 'center' });
-    
-    // Box 3 - Ticket Médio
-    doc.rect(140, 65, 50, 25);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Ticket Médio', 145, 73);
-    doc.setFontSize(14);
-    doc.setTextColor(107, 33, 168);
-    doc.text(`R$ ${ticketMedio.toFixed(2)}`, 165, 85, { align: 'center' });
-
-    // Tabela elegante
-    const tableData = analises.map(analise => [
-      analise.nomeCliente,
-      format(new Date(analise.dataInicio), 'dd/MM/yyyy'),
-      `R$ ${parseFloat(analise.preco || "150").toFixed(2)}`,
-      analise.finalizado ? 'Finalizada' : 'Pendente'
-    ]);
-
-    autoTable(doc, {
-      head: [['Cliente', 'Data', 'Valor', 'Status']],
-      body: tableData,
-      startY: 105,
-      theme: 'grid',
-      styles: {
-        fontSize: 9,
-        cellPadding: 6,
-        textColor: [60, 60, 60],
-      },
-      headStyles: {
-        fillColor: [107, 33, 168],
-        textColor: [255, 255, 255],
-        fontSize: 10,
-        fontStyle: 'bold',
-      },
-      alternateRowStyles: {
-        fillColor: [248, 248, 248],
-      },
-      margin: { left: 20, right: 20 },
-    });
-
-    // Footer
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
+    try {
+      const doc = new jsPDF();
+      
+      // Configurações de cores
+      const primaryColor = [107, 33, 168];
+      const secondaryColor = [139, 92, 246];
+      const textColor = [30, 30, 30];
+      const lightGray = [248, 250, 252];
+      const darkGray = [71, 85, 105];
+      
+      // Background gradient effect
+      doc.setFillColor(107, 33, 168);
+      doc.rect(0, 0, 210, 40, 'F');
+      
+      // Header principal
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(28);
+      doc.setFont(undefined, 'bold');
+      doc.text('RELATÓRIO FINANCEIRO', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'normal');
+      doc.text('Tarot Frequencial - Análise Completa', 105, 30, { align: 'center' });
+      
+      // Data e período
+      doc.setFontSize(10);
+      doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} | Período: ${periodoVisualizacao}`, 15, 50);
+      
+      // Cálculos financeiros
+      const receitaTotal = analises.reduce((sum, analise) => sum + parseFloat(analise.preco || "150"), 0);
+      const analisesFinalizadas = analises.filter(a => a.finalizado).length;
+      const analisesPendentes = analises.filter(a => !a.finalizado).length;
+      const ticketMedio = receitaTotal / analises.length || 0;
+      const clientesUnicos = new Set(analises.map(a => a.nomeCliente)).size;
+      
+      // Receita do mês atual
+      const hoje = new Date();
+      const receitaMesAtual = analises
+        .filter(analise => {
+          const data = new Date(analise.dataInicio);
+          return data.getMonth() === hoje.getMonth() && data.getFullYear() === hoje.getFullYear();
+        })
+        .reduce((sum, analise) => sum + parseFloat(analise.preco || "150"), 0);
+      
+      // Grid de métricas principais (2x3)
+      let yPos = 65;
+      const boxWidth = 60;
+      const boxHeight = 30;
+      const spacing = 5;
+      
+      // Primeira linha
+      // Receita Total
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(15, yPos, boxWidth, boxHeight, 'F');
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setLineWidth(0.8);
+      doc.rect(15, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('RECEITA TOTAL', 45, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(`R$ ${receitaTotal.toFixed(2)}`, 45, yPos + 20, { align: 'center' });
+      
+      // Receita Mês Atual
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(80, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(80, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('RECEITA MÊS ATUAL', 110, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(`R$ ${receitaMesAtual.toFixed(2)}`, 110, yPos + 20, { align: 'center' });
+      
+      // Ticket Médio
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(145, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(145, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('TICKET MÉDIO', 175, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(`R$ ${ticketMedio.toFixed(2)}`, 175, yPos + 20, { align: 'center' });
+      
+      yPos += boxHeight + spacing;
+      
+      // Segunda linha
+      // Total Análises
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(15, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(15, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('TOTAL ANÁLISES', 45, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(analises.length.toString(), 45, yPos + 20, { align: 'center' });
+      
+      // Finalizadas
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(80, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(80, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('FINALIZADAS', 110, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(34, 197, 94); // Green
+      doc.text(analisesFinalizadas.toString(), 110, yPos + 20, { align: 'center' });
+      
+      // Clientes Únicos
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(145, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(145, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('CLIENTES ÚNICOS', 175, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(clientesUnicos.toString(), 175, yPos + 20, { align: 'center' });
+      
+      yPos += 45;
+      
+      // Top 10 Clientes por Valor
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text('TOP 10 CLIENTES POR VALOR', 15, yPos);
+      
+      yPos += 8;
+      
+      // Agrupa clientes por valor
+      const clientesValor = analises.reduce((acc, analise) => {
+        const cliente = analise.nomeCliente;
+        const valor = parseFloat(analise.preco || "150");
+        if (!acc[cliente]) {
+          acc[cliente] = { nome: cliente, valor: 0, quantidade: 0 };
+        }
+        acc[cliente].valor += valor;
+        acc[cliente].quantidade += 1;
+        return acc;
+      }, {} as Record<string, { nome: string; valor: number; quantidade: number }>);
+      
+      const topClientes = Object.values(clientesValor)
+        .sort((a, b) => b.valor - a.valor)
+        .slice(0, 10);
+      
+      // Header da tabela
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.rect(15, yPos, 180, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('CLIENTE', 20, yPos + 5);
+      doc.text('QTD', 120, yPos + 5);
+      doc.text('VALOR TOTAL', 155, yPos + 5);
+      
+      yPos += 8;
+      
+      // Linhas da tabela
+      topClientes.forEach((cliente, index) => {
+        if (yPos > 250) return; // Limite da página
+        
+        const rowColor = index % 2 === 0 ? [255, 255, 255] : lightGray;
+        doc.setFillColor(rowColor[0], rowColor[1], rowColor[2]);
+        doc.rect(15, yPos, 180, 7, 'F');
+        
+        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text(cliente.nome.substring(0, 30), 20, yPos + 4);
+        doc.text(cliente.quantidade.toString(), 120, yPos + 4);
+        doc.text(`R$ ${cliente.valor.toFixed(2)}`, 155, yPos + 4);
+        
+        yPos += 7;
+      });
+      
+      // Faturamento mensal (mini gráfico)
+      if (yPos < 240) {
+        yPos += 10;
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text('EVOLUÇÃO MENSAL', 15, yPos);
+        
+        yPos += 8;
+        
+        const dadosMensais = dadosReceita.slice(-6); // Últimos 6 meses
+        const maxValor = Math.max(...dadosMensais.map(d => d.receita));
+        
+        dadosMensais.forEach((mes, index) => {
+          if (yPos > 270) return;
+          
+          const barWidth = maxValor > 0 ? (mes.receita / maxValor) * 100 : 0;
+          
+          // Barra
+          doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+          doc.rect(15, yPos, barWidth, 4, 'F');
+          
+          // Texto
+          doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+          doc.setFontSize(8);
+          doc.text(`${mes.mes}: R$ ${mes.receita.toFixed(2)}`, 125, yPos + 3);
+          
+          yPos += 8;
+        });
+      }
+      
+      // Footer decorativo
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setLineWidth(2);
+      doc.line(15, 285, 195, 285);
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
       doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Libertá - Página ${i} de ${pageCount}`,
-        105,
-        doc.internal.pageSize.height - 10,
-        { align: 'center' }
-      );
+      doc.text('Libertá - Sistema de Gestão | Relatório Financeiro Personalizado', 105, 292, { align: 'center' });
+      
+      // Salvar
+      const fileName = `Relatorio_Financeiro_Tarot_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+      doc.save(fileName);
+      
+      toast.success('Relatório financeiro personalizado gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar relatório financeiro');
     }
-
-    doc.save('relatorio-financeiro-tarot.pdf');
-  }, [analises]);
+  }, [analises, periodoVisualizacao, dadosReceita]);
 
   const chartConfig = useMemo(() => ({
     receita: {
@@ -243,7 +384,7 @@ const RelatoriosFrequenciaisTarot = () => {
               className="bg-[#6B21A8] hover:bg-[#6B21A8]/90 text-white shadow-lg"
             >
               <Download className="h-4 w-4 mr-2" />
-              Gerar PDF
+              Relatório PDF
             </Button>
           </div>
         </div>
