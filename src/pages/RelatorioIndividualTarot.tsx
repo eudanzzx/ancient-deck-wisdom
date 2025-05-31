@@ -2,7 +2,8 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Download, Search, Calendar, DollarSign, FileText, Users, Star } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Download, Search, Calendar, DollarSign, FileText, Users, Star, User } from "lucide-react";
 import useUserDataService from "@/services/userDataService";
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -14,6 +15,7 @@ import Logo from "@/components/Logo";
 const RelatorioIndividualTarot = () => {
   const { getAllTarotAnalyses } = useUserDataService();
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedClient, setExpandedClient] = useState<string | null>(null);
   const [analises] = useState(getAllTarotAnalyses());
 
   const clientesUnicos = useMemo(() => {
@@ -346,9 +348,14 @@ const RelatorioIndividualTarot = () => {
         <Card className="bg-white/90 backdrop-blur-sm border border-white/30">
           <CardHeader className="border-b border-slate-200/50 pb-4">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-2xl font-bold text-[#673193]">
-                Clientes - Tarot
-              </CardTitle>
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-2xl font-bold text-[#673193]">
+                  Clientes - Tarot
+                </CardTitle>
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                  {clientesUnicos.length} clientes
+                </Badge>
+              </div>
               <div className="relative">
                 <Input 
                   type="text" 
@@ -374,48 +381,127 @@ const RelatorioIndividualTarot = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4">
+              <div className="space-y-2">
                 {clientesFiltrados.map((cliente, index) => (
-                  <Card 
-                    key={index} 
-                    className="bg-white/80 border border-white/30 hover:bg-white/90 hover:shadow-lg transition-all duration-300"
-                  >
-                    <CardContent className="p-6">
+                  <div key={`${cliente.nome}-${index}`} className="border border-white/20 rounded-xl bg-white/50 hover:bg-white/70 transition-all duration-300 shadow-md">
+                    <div className="p-4">
                       <div className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                            {cliente.nome}
-                          </h3>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-600">
-                            <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <User className="h-5 w-5 text-[#673193]" />
+                            <span className="font-medium text-slate-800">{cliente.nome}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-slate-500">
+                            <div className="flex items-center gap-1">
                               <FileText className="h-4 w-4 text-[#673193]" />
                               <span>{cliente.analises.length} análise(s)</span>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               <DollarSign className="h-4 w-4 text-emerald-600" />
                               <span className="font-medium text-emerald-600">
                                 R$ {calcularTotalCliente(cliente.analises).toFixed(2)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Star className="h-4 w-4 text-amber-500" />
-                              <span>
-                                {cliente.analises[0]?.signo || 'Signo não informado'}
-                              </span>
-                            </div>
+                            <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                              {cliente.analises.length} análise{cliente.analises.length !== 1 ? 's' : ''}
+                            </Badge>
                           </div>
                         </div>
-                        <Button
-                          variant="outline"
-                          className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10"
-                          onClick={() => gerarRelatorioIndividual(cliente)}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Relatório
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setExpandedClient(expandedClient === cliente.nome ? null : cliente.nome)}
+                            className="border-purple-600/30 text-purple-600 hover:bg-purple-600/10"
+                          >
+                            {expandedClient === cliente.nome ? 'Ocultar' : 'Ver'} Detalhes
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10"
+                            onClick={() => gerarRelatorioIndividual(cliente)}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Relatório
+                          </Button>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      {expandedClient === cliente.nome && (
+                        <div className="mt-4 border-t border-purple-600/20 pt-4">
+                          <h4 className="font-medium text-purple-600 mb-3">Histórico de Análises</h4>
+                          <div className="space-y-3">
+                            {cliente.analises.map((analise: any, idx: number) => (
+                              <div key={idx} className="bg-purple-50/50 rounded-lg p-3 border border-purple-200/30">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                                  <div>
+                                    <span className="font-medium text-purple-600">Data:</span>
+                                    <span className="ml-2 text-slate-700">
+                                      {analise.dataInicio ? new Date(analise.dataInicio).toLocaleDateString('pt-BR') : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-purple-600">Status:</span>
+                                    <span className="ml-2 text-slate-700">
+                                      {analise.finalizado ? 'Finalizada' : 'Em andamento'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-purple-600">Valor:</span>
+                                    <span className="ml-2 text-slate-700">R$ {parseFloat(analise.preco || "150").toFixed(2)}</span>
+                                  </div>
+                                  
+                                  {analise.signo && (
+                                    <div>
+                                      <span className="font-medium text-purple-600">Signo:</span>
+                                      <span className="ml-2 text-slate-700">{analise.signo}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {analise.nascimento && (
+                                    <div>
+                                      <span className="font-medium text-purple-600">Nascimento:</span>
+                                      <span className="ml-2 text-slate-700">
+                                        {new Date(analise.nascimento).toLocaleDateString('pt-BR')}
+                                      </span>
+                                    </div>
+                                  )}
+                                  
+                                  {analise.telefone && (
+                                    <div>
+                                      <span className="font-medium text-purple-600">Telefone:</span>
+                                      <span className="ml-2 text-slate-700">{analise.telefone}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {analise.pergunta && (
+                                  <div className="mt-3">
+                                    <span className="font-medium text-purple-600">Pergunta:</span>
+                                    <p className="mt-1 text-sm text-slate-700 bg-white/50 p-2 rounded border">{analise.pergunta}</p>
+                                  </div>
+                                )}
+
+                                {analise.leitura && (
+                                  <div className="mt-3">
+                                    <span className="font-medium text-purple-600">Leitura:</span>
+                                    <p className="mt-1 text-sm text-slate-700 bg-white/50 p-2 rounded border">{analise.leitura}</p>
+                                  </div>
+                                )}
+
+                                {analise.orientacao && (
+                                  <div className="mt-3">
+                                    <span className="font-medium text-purple-600">Orientação:</span>
+                                    <p className="mt-1 text-sm text-slate-700 bg-white/50 p-2 rounded border">{analise.orientacao}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
