@@ -14,6 +14,7 @@ export const useRelatorioIndividual = () => {
 
   useEffect(() => {
     const filtered = atendimentos.filter(atendimento =>
+      atendimento.nomeCliente && 
       atendimento.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredAtendimentos(filtered);
@@ -30,6 +31,12 @@ export const useRelatorioIndividual = () => {
     const clientesMap = new Map();
     
     filteredAtendimentos.forEach(atendimento => {
+      // Verificar se nomeCliente existe antes de usar
+      if (!atendimento.nomeCliente) {
+        console.warn('Atendimento sem nomeCliente:', atendimento);
+        return;
+      }
+      
       const cliente = atendimento.nomeCliente;
       if (!clientesMap.has(cliente)) {
         clientesMap.set(cliente, {
