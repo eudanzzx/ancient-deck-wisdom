@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, FileText, Download, Calendar, DollarSign, User, ArrowLeft } from 'lucide-react';
+import { Search, FileText, Download, Calendar, DollarSign, User, ArrowLeft, AlertTriangle, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -57,35 +57,161 @@ const RelatorioIndividual = () => {
       doc.text(`Atendimentos: ${cliente.totalConsultas}`, 50, 65);
       doc.text(`Total: R$ ${cliente.valorTotal.toFixed(2)}`, 120, 65);
 
-      // Tabela de atendimentos
-      const tableData = cliente.atendimentos.map((atendimento: any) => [
-        atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
-        atendimento.tipoServico?.replace('-', ' ') || 'Consulta',
-        `R$ ${parseFloat(atendimento.valor || atendimento.preco || "0").toFixed(2)}`
-      ]);
+      // Tabela detalhada de atendimentos
+      const tableData = cliente.atendimentos.map((atendimento: any) => {
+        const detalhes = [];
+        
+        // Informações básicas
+        detalhes.push([
+          'Data',
+          atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A'
+        ]);
+        
+        detalhes.push([
+          'Serviço',
+          atendimento.tipoServico?.replace('-', ' ') || 'Consulta'
+        ]);
+        
+        detalhes.push([
+          'Valor',
+          `R$ ${parseFloat(atendimento.valor || atendimento.preco || "0").toFixed(2)}`
+        ]);
+        
+        detalhes.push([
+          'Status Pagamento',
+          atendimento.statusPagamento || 'N/A'
+        ]);
 
-      autoTable(doc, {
-        head: [['Data', 'Serviço', 'Valor']],
-        body: tableData,
-        startY: 90,
-        theme: 'grid',
-        styles: {
-          fontSize: 10,
-          cellPadding: 8,
-          textColor: [40, 40, 40],
-          lineColor: [220, 220, 220],
-          lineWidth: 0.5,
-        },
-        headStyles: {
-          fillColor: [37, 99, 235],
-          textColor: [255, 255, 255],
-          fontSize: 11,
-          fontStyle: 'bold',
-        },
-        alternateRowStyles: {
-          fillColor: [250, 250, 250],
-        },
-        margin: { left: 30, right: 30 },
+        // Informações pessoais
+        if (atendimento.dataNascimento) {
+          detalhes.push(['Data Nascimento', new Date(atendimento.dataNascimento).toLocaleDateString('pt-BR')]);
+        }
+        
+        if (atendimento.signo) {
+          detalhes.push(['Signo', atendimento.signo]);
+        }
+
+        if (atendimento.destino) {
+          detalhes.push(['Destino', atendimento.destino]);
+        }
+
+        if (atendimento.ano) {
+          detalhes.push(['Ano', atendimento.ano]);
+        }
+
+        // Detalhes da sessão
+        if (atendimento.detalhes) {
+          detalhes.push(['Detalhes da Sessão', atendimento.detalhes]);
+        }
+
+        if (atendimento.tratamento) {
+          detalhes.push(['Tratamento', atendimento.tratamento]);
+        }
+
+        if (atendimento.indicacao) {
+          detalhes.push(['Indicação', atendimento.indicacao]);
+        }
+
+        // Pontos de atenção
+        if (atendimento.atencaoFlag && atendimento.atencaoNota) {
+          detalhes.push(['⚠️ ATENÇÃO', atendimento.atencaoNota]);
+        }
+
+        return detalhes;
+      });
+
+      let yPosition = 90;
+      
+      cliente.atendimentos.forEach((atendimento: any, index: number) => {
+        if (index > 0) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        doc.setFontSize(14);
+        doc.setTextColor(37, 99, 235);
+        doc.text(`Atendimento ${index + 1}`, 20, yPosition);
+        yPosition += 15;
+
+        const detalhesAtendimento = [];
+        
+        // Informações básicas
+        detalhesAtendimento.push([
+          'Data',
+          atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A'
+        ]);
+        
+        detalhesAtendimento.push([
+          'Serviço',
+          atendimento.tipoServico?.replace('-', ' ') || 'Consulta'
+        ]);
+        
+        detalhesAtendimento.push([
+          'Valor',
+          `R$ ${parseFloat(atendimento.valor || atendimento.preco || "0").toFixed(2)}`
+        ]);
+        
+        detalhesAtendimento.push([
+          'Status Pagamento',
+          atendimento.statusPagamento || 'N/A'
+        ]);
+
+        // Informações pessoais
+        if (atendimento.dataNascimento) {
+          detalhesAtendimento.push(['Data Nascimento', new Date(atendimento.dataNascimento).toLocaleDateString('pt-BR')]);
+        }
+        
+        if (atendimento.signo) {
+          detalhesAtendimento.push(['Signo', atendimento.signo]);
+        }
+
+        if (atendimento.destino) {
+          detalhesAtendimento.push(['Destino', atendimento.destino]);
+        }
+
+        if (atendimento.ano) {
+          detalhesAtendimento.push(['Ano', atendimento.ano]);
+        }
+
+        // Detalhes da sessão
+        if (atendimento.detalhes) {
+          detalhesAtendimento.push(['Detalhes da Sessão', atendimento.detalhes]);
+        }
+
+        if (atendimento.tratamento) {
+          detalhesAtendimento.push(['Tratamento', atendimento.tratamento]);
+        }
+
+        if (atendimento.indicacao) {
+          detalhesAtendimento.push(['Indicação', atendimento.indicacao]);
+        }
+
+        // Pontos de atenção
+        if (atendimento.atencaoFlag && atendimento.atencaoNota) {
+          detalhesAtendimento.push(['⚠️ ATENÇÃO', atendimento.atencaoNota]);
+        }
+
+        autoTable(doc, {
+          body: detalhesAtendimento,
+          startY: yPosition,
+          theme: 'grid',
+          styles: {
+            fontSize: 10,
+            cellPadding: 8,
+            textColor: [40, 40, 40],
+            lineColor: [220, 220, 220],
+            lineWidth: 0.5,
+          },
+          columnStyles: {
+            0: { fontStyle: 'bold', fillColor: [240, 240, 240] },
+          },
+          alternateRowStyles: {
+            fillColor: [250, 250, 250],
+          },
+          margin: { left: 20, right: 20 },
+        });
+
+        yPosition = (doc as any).lastAutoTable.finalY + 20;
       });
 
       // Footer
@@ -311,6 +437,9 @@ const RelatorioIndividual = () => {
                           <div className="flex items-center gap-2">
                             <User className="h-5 w-5 text-blue-600" />
                             <span className="font-medium text-slate-800">{cliente.nome}</span>
+                            {cliente.atendimentos.some((a: any) => a.atencaoFlag) && (
+                              <AlertTriangle className="h-4 w-4 text-red-500" title="Cliente com pontos de atenção" />
+                            )}
                           </div>
                           <div className="flex items-center gap-4 text-sm text-slate-500">
                             <div className="flex items-center gap-1">
@@ -333,15 +462,112 @@ const RelatorioIndividual = () => {
                             </Badge>
                           </div>
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => downloadIndividualClientReport(cliente)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Relatório Individual
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setExpandedClient(expandedClient === cliente.nome ? null : cliente.nome)}
+                            className="border-blue-600/30 text-blue-600 hover:bg-blue-600/10"
+                          >
+                            {expandedClient === cliente.nome ? 'Ocultar' : 'Ver'} Detalhes
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => downloadIndividualClientReport(cliente)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Relatório Individual
+                          </Button>
+                        </div>
                       </div>
+
+                      {expandedClient === cliente.nome && (
+                        <div className="mt-4 border-t border-blue-600/20 pt-4">
+                          <h4 className="font-medium text-blue-600 mb-3">Histórico de Atendimentos</h4>
+                          <div className="space-y-3">
+                            {cliente.atendimentos.map((atendimento: any, idx: number) => (
+                              <div key={idx} className="bg-blue-50/50 rounded-lg p-3 border border-blue-200/30">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                                  <div>
+                                    <span className="font-medium text-blue-600">Data:</span>
+                                    <span className="ml-2 text-slate-700">
+                                      {atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-blue-600">Serviço:</span>
+                                    <span className="ml-2 text-slate-700">{atendimento.tipoServico || 'N/A'}</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-blue-600">Valor:</span>
+                                    <span className="ml-2 text-slate-700">R$ {parseFloat(atendimento.valor || "0").toFixed(2)}</span>
+                                  </div>
+                                  
+                                  {atendimento.statusPagamento && (
+                                    <div>
+                                      <span className="font-medium text-blue-600">Status:</span>
+                                      <span className="ml-2 text-slate-700">{atendimento.statusPagamento}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {atendimento.signo && (
+                                    <div>
+                                      <span className="font-medium text-blue-600">Signo:</span>
+                                      <span className="ml-2 text-slate-700">{atendimento.signo}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {atendimento.destino && (
+                                    <div>
+                                      <span className="font-medium text-blue-600">Destino:</span>
+                                      <span className="ml-2 text-slate-700">{atendimento.destino}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {atendimento.ano && (
+                                    <div>
+                                      <span className="font-medium text-blue-600">Ano:</span>
+                                      <span className="ml-2 text-slate-700">{atendimento.ano}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {atendimento.detalhes && (
+                                  <div className="mt-3">
+                                    <span className="font-medium text-blue-600">Detalhes da Sessão:</span>
+                                    <p className="mt-1 text-sm text-slate-700 bg-white/50 p-2 rounded border">{atendimento.detalhes}</p>
+                                  </div>
+                                )}
+
+                                {atendimento.tratamento && (
+                                  <div className="mt-3">
+                                    <span className="font-medium text-blue-600">Tratamento:</span>
+                                    <p className="mt-1 text-sm text-slate-700 bg-white/50 p-2 rounded border">{atendimento.tratamento}</p>
+                                  </div>
+                                )}
+
+                                {atendimento.indicacao && (
+                                  <div className="mt-3">
+                                    <span className="font-medium text-blue-600">Indicação:</span>
+                                    <p className="mt-1 text-sm text-slate-700 bg-white/50 p-2 rounded border">{atendimento.indicacao}</p>
+                                  </div>
+                                )}
+
+                                {atendimento.atencaoFlag && atendimento.atencaoNota && (
+                                  <div className="mt-3 bg-red-50 border border-red-200 rounded p-2">
+                                    <div className="flex items-center gap-2">
+                                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                                      <span className="font-medium text-red-600">Ponto de Atenção:</span>
+                                    </div>
+                                    <p className="mt-1 text-sm text-red-700">{atendimento.atencaoNota}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
