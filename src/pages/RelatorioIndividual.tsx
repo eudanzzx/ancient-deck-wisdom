@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
@@ -58,68 +57,6 @@ const RelatorioIndividual = () => {
       doc.text(`Total: R$ ${cliente.valorTotal.toFixed(2)}`, 120, 65);
 
       // Tabela detalhada de atendimentos
-      const tableData = cliente.atendimentos.map((atendimento: any) => {
-        const detalhes = [];
-        
-        // Informações básicas
-        detalhes.push([
-          'Data',
-          atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A'
-        ]);
-        
-        detalhes.push([
-          'Serviço',
-          atendimento.tipoServico?.replace('-', ' ') || 'Consulta'
-        ]);
-        
-        detalhes.push([
-          'Valor',
-          `R$ ${parseFloat(atendimento.valor || atendimento.preco || "0").toFixed(2)}`
-        ]);
-        
-        detalhes.push([
-          'Status Pagamento',
-          atendimento.statusPagamento || 'N/A'
-        ]);
-
-        // Informações pessoais
-        if (atendimento.dataNascimento) {
-          detalhes.push(['Data Nascimento', new Date(atendimento.dataNascimento).toLocaleDateString('pt-BR')]);
-        }
-        
-        if (atendimento.signo) {
-          detalhes.push(['Signo', atendimento.signo]);
-        }
-
-        if (atendimento.destino) {
-          detalhes.push(['Destino', atendimento.destino]);
-        }
-
-        if (atendimento.ano) {
-          detalhes.push(['Ano', atendimento.ano]);
-        }
-
-        // Detalhes da sessão
-        if (atendimento.detalhes) {
-          detalhes.push(['Detalhes da Sessão', atendimento.detalhes]);
-        }
-
-        if (atendimento.tratamento) {
-          detalhes.push(['Tratamento', atendimento.tratamento]);
-        }
-
-        if (atendimento.indicacao) {
-          detalhes.push(['Indicação', atendimento.indicacao]);
-        }
-
-        // Pontos de atenção
-        if (atendimento.atencaoFlag && atendimento.atencaoNota) {
-          detalhes.push(['⚠️ ATENÇÃO', atendimento.atencaoNota]);
-        }
-
-        return detalhes;
-      });
-
       let yPosition = 90;
       
       cliente.atendimentos.forEach((atendimento: any, index: number) => {
@@ -143,7 +80,7 @@ const RelatorioIndividual = () => {
         
         detalhesAtendimento.push([
           'Serviço',
-          atendimento.tipoServico?.replace('-', ' ') || 'Consulta'
+          atendimento.tipoServico?.replace(/[-_]/g, ' ') || 'Consulta'
         ]);
         
         detalhesAtendimento.push([
@@ -173,22 +110,67 @@ const RelatorioIndividual = () => {
           detalhesAtendimento.push(['Ano', atendimento.ano]);
         }
 
-        // Detalhes da sessão
+        // Detalhes da sessão com quebra de linha automática
         if (atendimento.detalhes) {
-          detalhesAtendimento.push(['Detalhes da Sessão', atendimento.detalhes]);
+          const detalhesText = atendimento.detalhes;
+          if (detalhesText.length > 60) {
+            // Para textos longos, quebrar em múltiplas linhas
+            const chunks = detalhesText.match(/.{1,60}/g) || [detalhesText];
+            chunks.forEach((chunk, chunkIndex) => {
+              detalhesAtendimento.push([
+                chunkIndex === 0 ? 'Detalhes da Sessão' : '',
+                chunk
+              ]);
+            });
+          } else {
+            detalhesAtendimento.push(['Detalhes da Sessão', detalhesText]);
+          }
         }
 
         if (atendimento.tratamento) {
-          detalhesAtendimento.push(['Tratamento', atendimento.tratamento]);
+          const tratamentoText = atendimento.tratamento;
+          if (tratamentoText.length > 60) {
+            const chunks = tratamentoText.match(/.{1,60}/g) || [tratamentoText];
+            chunks.forEach((chunk, chunkIndex) => {
+              detalhesAtendimento.push([
+                chunkIndex === 0 ? 'Tratamento' : '',
+                chunk
+              ]);
+            });
+          } else {
+            detalhesAtendimento.push(['Tratamento', tratamentoText]);
+          }
         }
 
         if (atendimento.indicacao) {
-          detalhesAtendimento.push(['Indicação', atendimento.indicacao]);
+          const indicacaoText = atendimento.indicacao;
+          if (indicacaoText.length > 60) {
+            const chunks = indicacaoText.match(/.{1,60}/g) || [indicacaoText];
+            chunks.forEach((chunk, chunkIndex) => {
+              detalhesAtendimento.push([
+                chunkIndex === 0 ? 'Indicação' : '',
+                chunk
+              ]);
+            });
+          } else {
+            detalhesAtendimento.push(['Indicação', indicacaoText]);
+          }
         }
 
         // Pontos de atenção
         if (atendimento.atencaoFlag && atendimento.atencaoNota) {
-          detalhesAtendimento.push(['⚠️ ATENÇÃO', atendimento.atencaoNota]);
+          const atencaoText = atendimento.atencaoNota;
+          if (atencaoText.length > 60) {
+            const chunks = atencaoText.match(/.{1,60}/g) || [atencaoText];
+            chunks.forEach((chunk, chunkIndex) => {
+              detalhesAtendimento.push([
+                chunkIndex === 0 ? '⚠️ ATENÇÃO' : '',
+                chunk
+              ]);
+            });
+          } else {
+            detalhesAtendimento.push(['⚠️ ATENÇÃO', atencaoText]);
+          }
         }
 
         autoTable(doc, {
@@ -203,7 +185,8 @@ const RelatorioIndividual = () => {
             lineWidth: 0.5,
           },
           columnStyles: {
-            0: { fontStyle: 'bold', fillColor: [240, 240, 240] },
+            0: { fontStyle: 'bold', fillColor: [240, 240, 240], cellWidth: 40 },
+            1: { cellWidth: 130 }
           },
           alternateRowStyles: {
             fillColor: [250, 250, 250],
@@ -293,7 +276,7 @@ const RelatorioIndividual = () => {
       const tableData = atendimentos.slice(0, 20).map(a => [
         a.nome || 'N/A',
         a.dataAtendimento ? new Date(a.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
-        a.tipoServico?.replace('-', ' ') || 'N/A',
+        a.tipoServico?.replace(/[-_]/g, ' ') || 'N/A',
         `R$ ${parseFloat(a.valor || a.preco || "0").toFixed(2)}`
       ]);
       
@@ -438,7 +421,7 @@ const RelatorioIndividual = () => {
                             <User className="h-5 w-5 text-blue-600" />
                             <span className="font-medium text-slate-800">{cliente.nome}</span>
                             {cliente.atendimentos.some((a: any) => a.atencaoFlag) && (
-                              <AlertTriangle className="h-4 w-4 text-red-500" title="Cliente com pontos de atenção" />
+                              <AlertTriangle className="h-4 w-4 text-red-500" />
                             )}
                           </div>
                           <div className="flex items-center gap-4 text-sm text-slate-500">
@@ -497,7 +480,7 @@ const RelatorioIndividual = () => {
                                   </div>
                                   <div>
                                     <span className="font-medium text-blue-600">Serviço:</span>
-                                    <span className="ml-2 text-slate-700">{atendimento.tipoServico || 'N/A'}</span>
+                                    <span className="ml-2 text-slate-700">{atendimento.tipoServico?.replace(/[-_]/g, ' ') || 'N/A'}</span>
                                   </div>
                                   <div>
                                     <span className="font-medium text-blue-600">Valor:</span>
