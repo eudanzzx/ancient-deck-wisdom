@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, BellRing } from 'lucide-react';
@@ -13,7 +14,7 @@ const TarotCounterNotifications: React.FC<TarotCounterNotificationsProps> = ({ a
   useEffect(() => {
     const checkCounters = () => {
       const now = new Date();
-      const activeCounters: any[] = [];
+      const clientCounters: { [key: string]: any } = {};
 
       console.log('TarotCounterNotifications - Verificando contadores para:', analises.length, 'análises');
 
@@ -39,7 +40,7 @@ const TarotCounterNotifications: React.FC<TarotCounterNotificationsProps> = ({ a
 
               // Mostrar todos os contadores ativos (não expirados)
               if (timeDiff >= 0) {
-                activeCounters.push({
+                const notification = {
                   nomeCliente: analise.nomeCliente,
                   lembreteTexto: lembrete.texto,
                   diasRestantes: daysDiff,
@@ -48,17 +49,22 @@ const TarotCounterNotifications: React.FC<TarotCounterNotificationsProps> = ({ a
                   minutosRestantes: minutesRemaining,
                   dataExpiracao: dataExpiracao,
                   timeDiff: timeDiff // Para ordenação
-                });
+                };
+
+                // Agrupar por cliente e manter apenas o mais próximo de expirar
+                if (!clientCounters[analise.nomeCliente] || timeDiff < clientCounters[analise.nomeCliente].timeDiff) {
+                  clientCounters[analise.nomeCliente] = notification;
+                }
               }
             }
           });
         }
       });
 
-      // Ordenar por tempo restante (mais próximo primeiro)
-      activeCounters.sort((a, b) => a.timeDiff - b.timeDiff);
+      // Converter o objeto em array e ordenar por tempo restante
+      const activeCounters = Object.values(clientCounters).sort((a: any, b: any) => a.timeDiff - b.timeDiff);
 
-      console.log('TarotCounterNotifications - Contadores ativos ordenados:', activeCounters);
+      console.log('TarotCounterNotifications - Contadores ativos agrupados por cliente:', activeCounters);
       setNotifications(activeCounters);
     };
 
