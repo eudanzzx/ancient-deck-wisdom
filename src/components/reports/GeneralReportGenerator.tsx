@@ -65,11 +65,11 @@ const GeneralReportGenerator: React.FC<GeneralReportGeneratorProps> = ({ atendim
       doc.setTextColor(34, 197, 94);
       doc.text(paidConsultations.toString(), 167, 75, { align: 'center' });
       
-      // Tabela simplificada
+      // Tabela com serviços corrigidos
       const tableData = atendimentos.slice(0, 20).map(a => [
         a.nome || 'N/A',
         a.dataAtendimento ? new Date(a.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
-        a.tipoServico?.replace('-', ' ') || 'N/A',
+        a.tipoServico ? a.tipoServico.replace(/[-_]/g, ' ') : 'Consulta Geral',
         `R$ ${parseFloat(a.valor || "0").toFixed(2)}`
       ]);
       
