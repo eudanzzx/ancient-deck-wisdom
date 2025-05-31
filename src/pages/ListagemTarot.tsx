@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,8 @@ import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import useUserDataService from "@/services/userDataService";
-import TarotCounterNotifications from "@/components/TarotCounterNotifications";
+import TarotCountdown from "@/components/TarotCountdown";
+import TarotCounters from "@/components/tarot/TarotCounters";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -95,8 +95,12 @@ const ListagemTarot = () => {
           </Button>
         </div>
 
-        {/* Notificação simples de contadores */}
-        <TarotCounterNotifications analises={analises} />
+        <TarotCountdown analises={analises} />
+        
+        {/* Adicionar os contadores detalhados */}
+        <div className="mb-6">
+          <TarotCounters analises={analises} />
+        </div>
 
         <div className="mb-4">
           <Input
