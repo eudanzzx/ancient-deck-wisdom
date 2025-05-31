@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,10 +81,11 @@ const RelatorioIndividual = () => {
   }, [filteredAtendimentos]);
 
   const getTotalValue = () => {
-    return atendimentos.reduce((acc, curr) => {
+    return atendimentos.reduce((acc: number, curr) => {
       const precoValue = curr.preco || curr.valor || "0";
       const precoNumber = parseFloat(precoValue.toString());
-      return acc + (isNaN(precoNumber) ? 0 : precoNumber);
+      const validNumber = isNaN(precoNumber) ? 0 : precoNumber;
+      return acc + validNumber;
     }, 0).toFixed(2);
   };
 
