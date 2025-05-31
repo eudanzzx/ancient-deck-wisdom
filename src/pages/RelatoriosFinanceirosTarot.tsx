@@ -1,12 +1,14 @@
-
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from "@/components/Logo";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { DollarSign, TrendingUp, Calendar, Users } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Users, Download } from 'lucide-react';
 import useUserDataService from "@/services/userDataService";
+import { jsPDF } from 'jspdf';
+import { toast } from 'sonner';
 
 const RelatoriosFinanceirosTarot = () => {
   const navigate = useNavigate();
@@ -54,6 +56,181 @@ const RelatoriosFinanceirosTarot = () => {
     };
   }, [analises]);
 
+  const generateCustomFinancialReport = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Configurações de cores
+      const primaryColor = [103, 49, 147]; // Purple
+      const secondaryColor = [168, 85, 247]; // Light purple
+      const textColor = [30, 30, 30];
+      const lightGray = [245, 245, 245];
+      
+      // Header com gradiente visual
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, 210, 35, 'F');
+      
+      // Logo e título
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont(undefined, 'bold');
+      doc.text('RELATÓRIO FINANCEIRO', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'normal');
+      doc.text('Tarot Frequencial', 105, 28, { align: 'center' });
+      
+      // Data de geração
+      doc.setFontSize(10);
+      doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 20, 45);
+      
+      // Seção de métricas principais - layout em grid
+      let yPos = 55;
+      const boxWidth = 40;
+      const boxHeight = 25;
+      
+      // Caixa 1 - Total Arrecadado
+      doc.setFillColor(...lightGray);
+      doc.rect(20, yPos, boxWidth, boxHeight, 'F');
+      doc.setDrawColor(...primaryColor);
+      doc.setLineWidth(0.5);
+      doc.rect(20, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(...textColor);
+      doc.setFontSize(8);
+      doc.text('TOTAL ARRECADADO', 40, yPos + 6, { align: 'center' });
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(`R$ ${financialData.totalValue.toFixed(2)}`, 40, yPos + 15, { align: 'center' });
+      
+      // Caixa 2 - Total de Análises
+      doc.setFillColor(...lightGray);
+      doc.rect(70, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(70, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8);
+      doc.text('TOTAL DE ANÁLISES', 90, yPos + 6, { align: 'center' });
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(financialData.totalAnalyses.toString(), 90, yPos + 15, { align: 'center' });
+      
+      // Caixa 3 - Valor Médio
+      doc.setFillColor(...lightGray);
+      doc.rect(120, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(120, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8);
+      doc.text('VALOR MÉDIO', 140, yPos + 6, { align: 'center' });
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(`R$ ${financialData.averageValue.toFixed(2)}`, 140, yPos + 15, { align: 'center' });
+      
+      // Caixa 4 - Clientes Únicos
+      doc.setFillColor(...lightGray);
+      doc.rect(170, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(170, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8);
+      doc.text('CLIENTES ÚNICOS', 190, yPos + 6, { align: 'center' });
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(financialData.clientData.length.toString(), 190, yPos + 15, { align: 'center' });
+      
+      yPos += 35;
+      
+      // Seção Top 5 Clientes
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...primaryColor);
+      doc.text('TOP 5 CLIENTES', 20, yPos);
+      
+      yPos += 10;
+      
+      // Tabela compacta dos top clientes
+      const topClients = financialData.clientData.slice(0, 5);
+      
+      // Header da tabela
+      doc.setFillColor(...primaryColor);
+      doc.rect(20, yPos, 170, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('CLIENTE', 25, yPos + 5);
+      doc.text('ANÁLISES', 110, yPos + 5);
+      doc.text('VALOR TOTAL', 150, yPos + 5);
+      
+      yPos += 8;
+      
+      // Dados da tabela
+      topClients.forEach((client, index) => {
+        const rowColor = index % 2 === 0 ? [255, 255, 255] : lightGray;
+        doc.setFillColor(...rowColor);
+        doc.rect(20, yPos, 170, 7, 'F');
+        
+        doc.setTextColor(...textColor);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text(client.name.substring(0, 25), 25, yPos + 4);
+        doc.text(client.count.toString(), 110, yPos + 4);
+        doc.text(`R$ ${client.value.toFixed(2)}`, 150, yPos + 4);
+        
+        yPos += 7;
+      });
+      
+      yPos += 10;
+      
+      // Seção de Faturamento Mensal
+      if (financialData.monthlyData.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...primaryColor);
+        doc.text('FATURAMENTO MENSAL', 20, yPos);
+        
+        yPos += 10;
+        
+        // Mini gráfico de barras textual
+        const maxValue = Math.max(...financialData.monthlyData.map(d => d.value));
+        
+        financialData.monthlyData.slice(0, 6).forEach((month, index) => {
+          const barWidth = (month.value / maxValue) * 80;
+          
+          // Barra
+          doc.setFillColor(...secondaryColor);
+          doc.rect(20, yPos, barWidth, 4, 'F');
+          
+          // Texto
+          doc.setTextColor(...textColor);
+          doc.setFontSize(8);
+          doc.text(`${month.month}: R$ ${month.value.toFixed(2)}`, 110, yPos + 3);
+          
+          yPos += 8;
+        });
+      }
+      
+      // Linha decorativa no final
+      doc.setDrawColor(...primaryColor);
+      doc.setLineWidth(1);
+      doc.line(20, 280, 190, 280);
+      
+      // Footer
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(8);
+      doc.text('Libertá - Sistema de Gestão', 105, 290, { align: 'center' });
+      
+      // Salvar o PDF
+      const fileName = `Relatorio_Financeiro_Tarot_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+      doc.save(fileName);
+      
+      toast.success('Relatório financeiro personalizado gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar relatório financeiro');
+    }
+  };
+
   const COLORS = ['#8B5CF6', '#A78BFA', '#C4B5FD', '#DDD6FE', '#EDE9FE'];
 
   return (
@@ -73,6 +250,14 @@ const RelatoriosFinanceirosTarot = () => {
               <p className="text-purple-600/80 mt-1">Análise financeira das consultas de Tarot</p>
             </div>
           </div>
+          
+          <Button
+            onClick={generateCustomFinancialReport}
+            className="bg-[#673193] hover:bg-[#673193]/90 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Relatório PDF
+          </Button>
         </div>
 
         {/* Stats Cards */}
