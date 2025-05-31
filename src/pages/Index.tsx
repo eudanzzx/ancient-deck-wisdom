@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useUserDataService from "@/services/userDataService";
 import DashboardBirthdayNotifications from "@/components/DashboardBirthdayNotifications";
@@ -32,16 +31,16 @@ interface Atendimento {
   atencaoNota?: string;
 }
 
-// Componente otimizado com React.memo
+// Componente otimizado com React.memo e animações aprimoradas
 const DashboardCard = React.memo(({ title, value, icon, delay = "0s" }: { title: string; value: string; icon: React.ReactNode; delay?: string }) => (
-  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300 group hover:bg-white transform hover:scale-105" style={{ animationDelay: delay }}>
+  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300 group hover:bg-white transform hover:scale-105 cursor-pointer" style={{ animationDelay: delay }}>
     <CardContent className="pt-6">
       <div className="flex justify-between items-center">
         <div>
           <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300">{title}</p>
           <p className="text-3xl font-bold text-slate-800 group-hover:text-blue-700 transition-colors duration-300">{value}</p>
         </div>
-        <div className="rounded-xl p-3 bg-blue-600/10 group-hover:bg-blue-600/20 transition-all duration-300">
+        <div className="rounded-xl p-3 bg-blue-600/10 group-hover:bg-blue-600/20 transition-all duration-300 group-hover:scale-110">
           {icon}
         </div>
       </div>
@@ -226,7 +225,7 @@ const Index = () => {
 
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="transform hover:scale-110 transition-transform duration-200">
+            <div className="transform hover:scale-110 transition-transform duration-300 cursor-pointer">
               <Logo height={50} width={50} />
             </div>
             <div>
@@ -236,7 +235,7 @@ const Index = () => {
               <p className="text-blue-600 mt-1 opacity-80">Gerencie seus atendimentos</p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-2 text-blue-600/60">
+          <div className="hidden md:flex items-center gap-2 text-blue-600/60 hover:text-blue-600 transition-colors duration-300 cursor-pointer transform hover:scale-105">
             <Sparkles className="h-5 w-5" />
             <span className="text-sm font-medium">Sistema Inteligente</span>
           </div>
@@ -244,51 +243,53 @@ const Index = () => {
 
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-blue-800">Visão Geral</h2>
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
             <ToggleGroup 
               type="single" 
               value={periodoVisualizacao} 
               onValueChange={handlePeriodoChange}
               className="border rounded-xl overflow-hidden"
             >
-              <ToggleGroupItem value="dia" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-colors duration-200">
+              <ToggleGroupItem value="dia" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50">
                 Dia
               </ToggleGroupItem>
-              <ToggleGroupItem value="semana" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-colors duration-200">
+              <ToggleGroupItem value="semana" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50">
                 Semana
               </ToggleGroupItem>
-              <ToggleGroupItem value="mes" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-colors duration-200">
+              <ToggleGroupItem value="mes" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50">
                 Mês
               </ToggleGroupItem>
-              <ToggleGroupItem value="ano" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-colors duration-200">
+              <ToggleGroupItem value="ano" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50">
                 Ano
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
         </div>
 
-        <TratamentoCountdown analises={atendimentos} />
+        <div className="transform hover:scale-[1.02] transition-all duration-300">
+          <TratamentoCountdown analises={atendimentos} />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <DashboardCard 
             title="Total Atendimentos" 
             value={atendimentos.length.toString()} 
-            icon={<Users className="h-8 w-8 text-blue-600" />} 
+            icon={<Users className="h-8 w-8 text-blue-600 transition-transform duration-300 group-hover:scale-110" />} 
           />
           <DashboardCard 
             title="Esta Semana" 
             value={stats.atendimentosSemana.toString()}
-            icon={<CalendarDays className="h-8 w-8 text-blue-600" />} 
+            icon={<CalendarDays className="h-8 w-8 text-blue-600 transition-transform duration-300 group-hover:scale-110" />} 
           />
           <DashboardCard 
             title={`Recebido (${getPeriodoLabel()})`}
             value={`R$ ${stats.totalRecebido.toFixed(2)}`} 
-            icon={<Activity className="h-8 w-8 text-blue-600" />} 
+            icon={<Activity className="h-8 w-8 text-blue-600 transition-transform duration-300 group-hover:scale-110" />} 
           />
           <DashboardCard 
             title="Tratamentos" 
             value={stats.totalLembretes.toString()} 
-            icon={<BellRing className="h-8 w-8 text-blue-600" />} 
+            icon={<BellRing className="h-8 w-8 text-blue-600 transition-transform duration-300 group-hover:scale-110" />} 
           />
         </div>
 
@@ -298,18 +299,20 @@ const Index = () => {
             <Input 
               type="text" 
               placeholder="Buscar por nome..." 
-              className="pr-10 bg-white/90 border-white/30 focus:border-blue-600 focus:ring-blue-600/20 transition-all duration-200 w-64"
+              className="pr-10 bg-white/90 border-white/30 focus:border-blue-600 focus:ring-blue-600/20 transition-all duration-300 w-64 hover:shadow-md transform hover:scale-105"
               value={searchTerm}
               onChange={handleSearchChange}
             />
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-blue-600 transition-colors duration-200" />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-blue-600 transition-all duration-300 group-hover:scale-110" />
           </div>
         </div>
 
-        <AtendimentosTable 
-          atendimentos={filteredAtendimentos}
-          onDeleteAtendimento={handleDeleteAtendimento}
-        />
+        <div className="transform hover:scale-[1.01] transition-all duration-300">
+          <AtendimentosTable 
+            atendimentos={filteredAtendimentos}
+            onDeleteAtendimento={handleDeleteAtendimento}
+          />
+        </div>
       </main>
     </div>
   );
