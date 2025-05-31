@@ -13,8 +13,6 @@ import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import useUserDataService from "@/services/userDataService";
-import TarotCountdown from "@/components/TarotCountdown";
-import TarotCounters from "@/components/tarot/TarotCounters";
 import TarotCounterNotifications from "@/components/TarotCounterNotifications";
 
 const ListagemTarot = () => {
@@ -97,15 +95,8 @@ const ListagemTarot = () => {
           </Button>
         </div>
 
-        {/* Notificações de contadores urgentes */}
+        {/* Notificação simples de contadores */}
         <TarotCounterNotifications analises={analises} />
-
-        <TarotCountdown analises={analises} />
-        
-        {/* Adicionar os contadores detalhados */}
-        <div className="mb-6">
-          <TarotCounters analises={analises} />
-        </div>
 
         <div className="mb-4">
           <Input
