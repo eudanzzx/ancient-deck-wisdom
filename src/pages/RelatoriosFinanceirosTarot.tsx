@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from "@/components/Logo";
@@ -61,13 +62,13 @@ const RelatoriosFinanceirosTarot = () => {
       const doc = new jsPDF();
       
       // Configurações de cores
-      const primaryColor = [103, 49, 147]; // Purple
-      const secondaryColor = [168, 85, 247]; // Light purple
-      const textColor = [30, 30, 30];
-      const lightGray = [245, 245, 245];
+      const primaryColor = [103, 49, 147] as const; // Purple
+      const secondaryColor = [168, 85, 247] as const; // Light purple
+      const textColor = [30, 30, 30] as const;
+      const lightGray = [245, 245, 245] as const;
       
       // Header com gradiente visual
-      doc.setFillColor(...primaryColor);
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.rect(0, 0, 210, 35, 'F');
       
       // Logo e título
@@ -90,13 +91,13 @@ const RelatoriosFinanceirosTarot = () => {
       const boxHeight = 25;
       
       // Caixa 1 - Total Arrecadado
-      doc.setFillColor(...lightGray);
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.rect(20, yPos, boxWidth, boxHeight, 'F');
-      doc.setDrawColor(...primaryColor);
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.setLineWidth(0.5);
       doc.rect(20, yPos, boxWidth, boxHeight, 'S');
       
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.setFontSize(8);
       doc.text('TOTAL ARRECADADO', 40, yPos + 6, { align: 'center' });
       doc.setFontSize(12);
@@ -104,7 +105,7 @@ const RelatoriosFinanceirosTarot = () => {
       doc.text(`R$ ${financialData.totalValue.toFixed(2)}`, 40, yPos + 15, { align: 'center' });
       
       // Caixa 2 - Total de Análises
-      doc.setFillColor(...lightGray);
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.rect(70, yPos, boxWidth, boxHeight, 'F');
       doc.rect(70, yPos, boxWidth, boxHeight, 'S');
       
@@ -116,7 +117,7 @@ const RelatoriosFinanceirosTarot = () => {
       doc.text(financialData.totalAnalyses.toString(), 90, yPos + 15, { align: 'center' });
       
       // Caixa 3 - Valor Médio
-      doc.setFillColor(...lightGray);
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.rect(120, yPos, boxWidth, boxHeight, 'F');
       doc.rect(120, yPos, boxWidth, boxHeight, 'S');
       
@@ -128,7 +129,7 @@ const RelatoriosFinanceirosTarot = () => {
       doc.text(`R$ ${financialData.averageValue.toFixed(2)}`, 140, yPos + 15, { align: 'center' });
       
       // Caixa 4 - Clientes Únicos
-      doc.setFillColor(...lightGray);
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.rect(170, yPos, boxWidth, boxHeight, 'F');
       doc.rect(170, yPos, boxWidth, boxHeight, 'S');
       
@@ -144,7 +145,7 @@ const RelatoriosFinanceirosTarot = () => {
       // Seção Top 5 Clientes
       doc.setFontSize(14);
       doc.setFont(undefined, 'bold');
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('TOP 5 CLIENTES', 20, yPos);
       
       yPos += 10;
@@ -153,7 +154,7 @@ const RelatoriosFinanceirosTarot = () => {
       const topClients = financialData.clientData.slice(0, 5);
       
       // Header da tabela
-      doc.setFillColor(...primaryColor);
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.rect(20, yPos, 170, 8, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(9);
@@ -166,11 +167,11 @@ const RelatoriosFinanceirosTarot = () => {
       
       // Dados da tabela
       topClients.forEach((client, index) => {
-        const rowColor = index % 2 === 0 ? [255, 255, 255] : lightGray;
-        doc.setFillColor(...rowColor);
+        const rowColor = index % 2 === 0 ? [255, 255, 255] as const : lightGray;
+        doc.setFillColor(rowColor[0], rowColor[1], rowColor[2]);
         doc.rect(20, yPos, 170, 7, 'F');
         
-        doc.setTextColor(...textColor);
+        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.text(client.name.substring(0, 25), 25, yPos + 4);
@@ -186,7 +187,7 @@ const RelatoriosFinanceirosTarot = () => {
       if (financialData.monthlyData.length > 0) {
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...primaryColor);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
         doc.text('FATURAMENTO MENSAL', 20, yPos);
         
         yPos += 10;
@@ -198,11 +199,11 @@ const RelatoriosFinanceirosTarot = () => {
           const barWidth = (month.value / maxValue) * 80;
           
           // Barra
-          doc.setFillColor(...secondaryColor);
+          doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
           doc.rect(20, yPos, barWidth, 4, 'F');
           
           // Texto
-          doc.setTextColor(...textColor);
+          doc.setTextColor(textColor[0], textColor[1], textColor[2]);
           doc.setFontSize(8);
           doc.text(`${month.month}: R$ ${month.value.toFixed(2)}`, 110, yPos + 3);
           
@@ -211,7 +212,7 @@ const RelatoriosFinanceirosTarot = () => {
       }
       
       // Linha decorativa no final
-      doc.setDrawColor(...primaryColor);
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.setLineWidth(1);
       doc.line(20, 280, 190, 280);
       
