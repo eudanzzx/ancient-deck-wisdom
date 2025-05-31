@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface DetailedClientReportGeneratorProps {
   atendimentos: any[];
@@ -31,7 +33,6 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
         toast.success(`Gerando ${clients.length} relatorios individuais detalhados...`);
       }
       
-      // Close the component after generating reports
       if (onClose) {
         onClose();
       }
@@ -54,126 +55,66 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
       
       const doc = new jsPDF();
       
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Relatorio Detalhado - Cliente: ${clientName}`, 14, 20);
+      // Header elegante
+      doc.setFontSize(20);
+      doc.setTextColor(variant === 'tarot' ? 103 : 37, variant === 'tarot' ? 49 : 99, variant === 'tarot' ? 147 : 235);
+      doc.text(`Relatório Detalhado`, 105, 20, { align: 'center' });
       
+      doc.setFontSize(14);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`Cliente: ${clientName}`, 105, 30, { align: 'center' });
+      
+      // Linha decorativa
+      doc.setDrawColor(variant === 'tarot' ? 103 : 37, variant === 'tarot' ? 49 : 99, variant === 'tarot' ? 147 : 235);
+      doc.setLineWidth(0.5);
+      doc.line(20, 40, 190, 40);
+      
+      // Resumo do cliente
       doc.setFontSize(12);
-      doc.text(`Total de Atendimentos: ${clientConsultations.length}`, 14, 35);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Total de Atendimentos: ${clientConsultations.length}`, 20, 55);
       
-      let yPos = 50;
+      const totalValue = clientConsultations.reduce((acc, curr) => {
+        const valor = parseFloat(curr.valor || curr.preco || "0");
+        return acc + valor;
+      }, 0);
       
-      doc.text('==================================================', 14, yPos);
-      yPos += 15;
-      
-      clientConsultations.forEach((consultation, index) => {
-        if (yPos > 240) {
-          doc.addPage();
-          yPos = 20;
-        }
-        
-        doc.setFont(undefined, 'bold');
-        doc.text(`Atendimento no ${index + 1}`, 14, yPos);
-        yPos += 10;
-        
-        doc.setFont(undefined, 'normal');
-        const dataAtendimento = consultation.dataAtendimento ? 
-          new Date(consultation.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A';
-        doc.text(`Data do Atendimento: ${dataAtendimento}`, 14, yPos);
-        yPos += 10;
-        
-        doc.text(`Nome do Cliente: ${clientName}`, 14, yPos);
-        yPos += 8;
-        
-        const dataNascimento = consultation.dataNascimento ? 
-          new Date(consultation.dataNascimento).toLocaleDateString('pt-BR') : 'N/A';
-        doc.text(`Data de Nascimento: ${dataNascimento}`, 14, yPos);
-        yPos += 8;
-        
-        doc.text(`Signo: ${consultation.signo || 'N/A'}`, 14, yPos);
-        yPos += 8;
-        
-        const tipoServico = consultation.tipoServico ? 
-          consultation.tipoServico.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'N/A';
-        doc.text(`Tipo de Servico: ${tipoServico}`, 14, yPos);
-        yPos += 8;
-        
-        const valorValue = consultation.valor || consultation.preco || "0";
-        const valor = parseFloat(valorValue.toString()).toFixed(2);
-        doc.text(`Valor Cobrado: R$ ${valor}`, 14, yPos);
-        yPos += 8;
-        
-        const statusPagamento = consultation.statusPagamento ? 
-          consultation.statusPagamento.charAt(0).toUpperCase() + consultation.statusPagamento.slice(1) : 'N/A';
-        doc.text(`Status de Pagamento: ${statusPagamento}`, 14, yPos);
-        yPos += 8;
-        
-        doc.text(`Destino: ${consultation.destino || 'N/A'}`, 14, yPos);
-        yPos += 8;
-        
-        doc.text(`Ano: ${consultation.ano || 'N/A'}`, 14, yPos);
-        yPos += 15;
-        
-        doc.setFont(undefined, 'bold');
-        doc.text('Pontos de Atencao', 14, yPos);
-        yPos += 8;
-        doc.setFont(undefined, 'normal');
-        if (consultation.atencaoFlag && consultation.atencaoNota) {
-          const atencaoLines = doc.splitTextToSize(consultation.atencaoNota, 180);
-          doc.text(atencaoLines, 14, yPos);
-          yPos += atencaoLines.length * 6;
-        } else {
-          doc.text('Nenhum ponto de atencao registrado', 14, yPos);
-          yPos += 6;
-        }
-        yPos += 10;
-        
-        doc.setFont(undefined, 'bold');
-        doc.text('Detalhes da Sessao', 14, yPos);
-        yPos += 8;
-        doc.setFont(undefined, 'normal');
-        if (consultation.detalhes) {
-          const detalhesLines = doc.splitTextToSize(consultation.detalhes, 180);
-          doc.text(detalhesLines, 14, yPos);
-          yPos += detalhesLines.length * 6;
-        } else {
-          doc.text('Nenhum detalhe registrado', 14, yPos);
-          yPos += 6;
-        }
-        yPos += 10;
-        
-        doc.setFont(undefined, 'bold');
-        doc.text('Tratamento', 14, yPos);
-        yPos += 8;
-        doc.setFont(undefined, 'normal');
-        if (consultation.tratamento) {
-          const tratamentoLines = doc.splitTextToSize(consultation.tratamento, 180);
-          doc.text(tratamentoLines, 14, yPos);
-          yPos += tratamentoLines.length * 6;
-        } else {
-          doc.text('Nenhum tratamento registrado', 14, yPos);
-          yPos += 6;
-        }
-        yPos += 10;
-        
-        doc.setFont(undefined, 'bold');
-        doc.text('Indicacao', 14, yPos);
-        yPos += 8;
-        doc.setFont(undefined, 'normal');
-        if (consultation.indicacao) {
-          const indicacaoLines = doc.splitTextToSize(consultation.indicacao, 180);
-          doc.text(indicacaoLines, 14, yPos);
-          yPos += indicacaoLines.length * 6;
-        } else {
-          doc.text('Nenhuma indicacao registrada', 14, yPos);
-          yPos += 6;
-        }
-        yPos += 15;
-        
-        doc.text('==================================================', 14, yPos);
-        yPos += 15;
+      doc.text(`Valor Total: R$ ${totalValue.toFixed(2)}`, 20, 65);
+      doc.text(`Valor Médio: R$ ${(totalValue / clientConsultations.length).toFixed(2)}`, 20, 75);
+
+      // Tabela de atendimentos
+      const tableData = clientConsultations.map(consultation => {
+        const dataAtendimento = consultation.dataAtendimento || consultation.dataInicio;
+        return [
+          dataAtendimento ? new Date(dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
+          consultation.tipoServico || 'N/A',
+          `R$ ${parseFloat(consultation.valor || consultation.preco || "0").toFixed(2)}`,
+          consultation.statusPagamento || (consultation.finalizado ? 'Finalizada' : 'Pendente')
+        ];
       });
-      
+
+      autoTable(doc, {
+        head: [['Data', 'Serviço', 'Valor', 'Status']],
+        body: tableData,
+        startY: 90,
+        theme: 'grid',
+        styles: {
+          fontSize: 9,
+          cellPadding: 6,
+          textColor: [60, 60, 60],
+        },
+        headStyles: {
+          fillColor: variant === 'tarot' ? [103, 49, 147] : [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [248, 248, 248],
+        },
+        margin: { left: 20, right: 20 },
+      });
+
       addFooter(doc);
       
       const fileName = `Relatorio_Detalhado_${clientName.replace(/ /g, '_')}.pdf`;
@@ -189,11 +130,21 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
   const generateTarotGeneralReport = () => {
     const doc = new jsPDF();
     
-    doc.setFontSize(18);
-    doc.setTextColor(124, 100, 244);
-    doc.text('Relatorio Geral do Cliente - Historico Consolidado', 105, 15, { align: 'center' });
+    // Header elegante
+    doc.setFontSize(20);
+    doc.setTextColor(103, 49, 147);
+    doc.text('Relatório Geral Consolidado', 105, 20, { align: 'center' });
     
-    let yPos = 35;
+    doc.setFontSize(14);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Histórico de Análises', 105, 30, { align: 'center' });
+    
+    // Linha decorativa
+    doc.setDrawColor(103, 49, 147);
+    doc.setLineWidth(0.5);
+    doc.line(20, 40, 190, 40);
+    
+    let yPos = 55;
     
     const clientsMap = new Map();
     atendimentos.forEach(analise => {
@@ -210,119 +161,50 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
         yPos = 20;
       }
       
-      const firstConsultation = consultations[0];
-      const lastConsultation = consultations[consultations.length - 1];
       const totalValue = consultations.reduce((acc, curr) => acc + parseFloat(curr.preco || "150"), 0);
-      const avgValue = totalValue / consultations.length;
       
-      doc.setFontSize(14);
+      doc.setFontSize(16);
+      doc.setTextColor(103, 49, 147);
+      doc.text(`${clientName}`, 20, yPos);
+      yPos += 10;
+      
+      doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
-      
-      doc.setFont(undefined, 'bold');
-      doc.text(`Nome do Cliente: ${clientName}`, 14, yPos);
+      doc.text(`Total de Análises: ${consultations.length}`, 20, yPos);
       yPos += 8;
-      
-      if (firstConsultation.dataNascimento) {
-        doc.text(`Data de Nascimento: ${new Date(firstConsultation.dataNascimento).toLocaleDateString('pt-BR')}`, 14, yPos);
-        yPos += 8;
-      }
-      
-      if (firstConsultation.signo) {
-        doc.text(`Signo: ${firstConsultation.signo}`, 14, yPos);
-        yPos += 8;
-      }
-      
-      if (firstConsultation.dataInicio) {
-        doc.text(`Data da Primeira Analise: ${new Date(firstConsultation.dataInicio).toLocaleDateString('pt-BR')}`, 14, yPos);
-        yPos += 8;
-      }
-      
-      if (lastConsultation.dataInicio) {
-        doc.text(`Data da Ultima Analise: ${new Date(lastConsultation.dataInicio).toLocaleDateString('pt-BR')}`, 14, yPos);
-        yPos += 8;
-      }
-      
-      doc.text(`Total de Analises Realizadas: ${consultations.length}`, 14, yPos);
-      yPos += 8;
-      
-      doc.text(`Valor Total Investido: R$ ${totalValue.toFixed(2)}`, 14, yPos);
-      yPos += 8;
-      
-      doc.text(`Media por Analise: R$ ${avgValue.toFixed(2)}`, 14, yPos);
+      doc.text(`Valor Total: R$ ${totalValue.toFixed(2)}`, 20, yPos);
       yPos += 15;
       
-      doc.setFont(undefined, 'normal');
-      
-      doc.setFont(undefined, 'bold');
-      doc.text('Resumo das Analises', 14, yPos);
-      yPos += 10;
-      doc.setFont(undefined, 'normal');
-      
-      consultations.forEach((consultation, index) => {
-        if (yPos > 220) {
-          doc.addPage();
-          yPos = 20;
-        }
-        
-        doc.setFont(undefined, 'bold');
-        doc.text(`Analise ${index + 1}:`, 14, yPos);
-        yPos += 8;
-        doc.setFont(undefined, 'normal');
-        
-        if (consultation.dataInicio) {
-          doc.text(`Data: ${new Date(consultation.dataInicio).toLocaleDateString('pt-BR')}`, 14, yPos);
-          yPos += 6;
-        }
-        
-        if (consultation.analiseAntes) {
-          doc.text('Antes:', 14, yPos);
-          yPos += 6;
-          const antesLines = doc.splitTextToSize(consultation.analiseAntes, 170);
-          doc.text(antesLines, 14, yPos);
-          yPos += antesLines.length * 5 + 5;
-        }
-        
-        if (consultation.analiseDepois) {
-          doc.text('Depois:', 14, yPos);
-          yPos += 6;
-          const depoisLines = doc.splitTextToSize(consultation.analiseDepois, 170);
-          doc.text(depoisLines, 14, yPos);
-          yPos += depoisLines.length * 5 + 5;
-        }
-        
-        if (consultation.lembretes && consultation.lembretes.length > 0) {
-          const tratamentos = consultation.lembretes.filter(l => l.texto?.trim());
-          if (tratamentos.length > 0) {
-            doc.text('Tratamento:', 14, yPos);
-            yPos += 6;
-            tratamentos.forEach(lembrete => {
-              const tratamentoLines = doc.splitTextToSize(lembrete.texto, 170);
-              doc.text(tratamentoLines, 14, yPos);
-              yPos += tratamentoLines.length * 5;
-            });
-            yPos += 5;
-          }
-        }
-        
-        yPos += 10;
+      // Tabela das análises do cliente
+      const tableData = consultations.map(consultation => [
+        consultation.dataInicio ? new Date(consultation.dataInicio).toLocaleDateString('pt-BR') : 'N/A',
+        `R$ ${parseFloat(consultation.preco || "150").toFixed(2)}`,
+        consultation.finalizado ? 'Finalizada' : 'Pendente'
+      ]);
+
+      autoTable(doc, {
+        head: [['Data', 'Valor', 'Status']],
+        body: tableData,
+        startY: yPos,
+        theme: 'grid',
+        styles: {
+          fontSize: 9,
+          cellPadding: 6,
+          textColor: [60, 60, 60],
+        },
+        headStyles: {
+          fillColor: [103, 49, 147],
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [248, 248, 248],
+        },
+        margin: { left: 20, right: 20 },
       });
       
-      if (yPos > 200) {
-        doc.addPage();
-        yPos = 20;
-      }
-      
-      doc.setFont(undefined, 'bold');
-      doc.text('Observacoes Gerais', 14, yPos);
-      yPos += 10;
-      doc.setFont(undefined, 'normal');
-      
-      doc.text('• Evolucao observada nas analises.', 14, yPos);
-      yPos += 6;
-      doc.text('• Padroes recorrentes nas descricoes de "Antes" e "Depois".', 14, yPos);
-      yPos += 6;
-      doc.text('• Frequencia dos retornos com base no campo "Avisar daqui a [X] dias".', 14, yPos);
-      yPos += 15;
+      yPos = (doc as any).lastAutoTable.finalY + 20;
     });
     
     addFooter(doc);
@@ -337,10 +219,10 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
     const totalPages = doc.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
-      doc.setFontSize(10);
-      doc.setTextColor(150);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
       doc.text(
-        `Liberta - Relatorio gerado em ${new Date().toLocaleDateString('pt-BR')} - Pagina ${i} de ${totalPages}`,
+        `Libertá - Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} - Página ${i} de ${totalPages}`,
         105,
         doc.internal.pageSize.height - 10,
         { align: 'center' }

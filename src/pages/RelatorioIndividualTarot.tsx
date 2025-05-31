@@ -1,22 +1,15 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Download, Search, Calendar, DollarSign, FileText, Users, Star } from "lucide-react";
 import useUserDataService from "@/services/userDataService";
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import Logo from "@/components/Logo";
-
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
 
 const RelatorioIndividualTarot = () => {
   const { getAllTarotAnalyses } = useUserDataService();
@@ -56,82 +49,205 @@ const RelatorioIndividualTarot = () => {
   const gerarRelatorioIndividual = useCallback((cliente: any) => {
     const doc = new jsPDF();
     
-    doc.setFontSize(20);
+    // Header elegante
+    doc.setFontSize(22);
     doc.setTextColor(103, 49, 147);
-    doc.text('Relatório Individual - Tarot Frequencial', 20, 30);
+    doc.text('Relatório Individual', 105, 25, { align: 'center' });
     
     doc.setFontSize(16);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Tarot Frequencial', 105, 35, { align: 'center' });
+    
+    // Linha decorativa
+    doc.setDrawColor(103, 49, 147);
+    doc.setLineWidth(0.5);
+    doc.line(20, 45, 190, 45);
+    
+    // Informações do cliente
+    doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Cliente: ${cliente.nome}`, 20, 50);
+    doc.text(`Cliente: ${cliente.nome}`, 20, 60);
     
-    doc.setFontSize(12);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 65);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, 20, 70);
     
+    // Resumo em caixas
     const totalGasto = calcularTotalCliente(cliente.analises);
-    doc.text(`Total gasto: R$ ${totalGasto.toFixed(2)}`, 20, 80);
-    doc.text(`Número de análises: ${cliente.analises.length}`, 20, 95);
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    
+    // Box 1 - Total de análises
+    doc.rect(20, 80, 50, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Total de Análises', 25, 87);
+    doc.setFontSize(16);
+    doc.setTextColor(103, 49, 147);
+    doc.text(cliente.analises.length.toString(), 45, 96, { align: 'center' });
+    
+    // Box 2 - Valor total
+    doc.rect(80, 80, 50, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Valor Total', 85, 87);
+    doc.setFontSize(16);
+    doc.setTextColor(103, 49, 147);
+    doc.text(`R$ ${totalGasto.toFixed(2)}`, 105, 96, { align: 'center' });
+    
+    // Box 3 - Valor médio
+    doc.rect(140, 80, 50, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Valor Médio', 145, 87);
+    doc.setFontSize(16);
+    doc.setTextColor(103, 49, 147);
+    doc.text(`R$ ${(totalGasto / cliente.analises.length).toFixed(2)}`, 165, 96, { align: 'center' });
 
+    // Tabela simplificada
     const tableData = cliente.analises.map((analise: any) => [
       format(new Date(analise.dataInicio), 'dd/MM/yyyy'),
-      analise.signo || 'Não informado',
       `R$ ${parseFloat(analise.preco || "150").toFixed(2)}`,
       analise.finalizado ? 'Finalizada' : 'Em andamento'
     ]);
 
-    doc.autoTable({
-      head: [['Data Início', 'Signo', 'Valor', 'Status']],
+    autoTable(doc, {
+      head: [['Data', 'Valor', 'Status']],
       body: tableData,
-      startY: 110,
+      startY: 115,
+      theme: 'grid',
       styles: {
-        fontSize: 9,
-        textColor: [0, 0, 0],
+        fontSize: 10,
+        cellPadding: 8,
+        textColor: [60, 60, 60],
       },
       headStyles: {
         fillColor: [103, 49, 147],
         textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold',
       },
+      alternateRowStyles: {
+        fillColor: [248, 248, 248],
+      },
+      margin: { left: 20, right: 20 },
     });
 
-    doc.save(`relatorio-tarot-${cliente.nome.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+    // Footer elegante
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(
+        `Libertá - Página ${i} de ${pageCount}`,
+        105,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+    }
+
+    doc.save(`relatorio-${cliente.nome.replace(/\s+/g, '-').toLowerCase()}.pdf`);
   }, []);
 
   const gerarRelatorioConsolidado = useCallback(() => {
     const doc = new jsPDF();
     
-    doc.setFontSize(20);
+    // Header elegante
+    doc.setFontSize(22);
     doc.setTextColor(103, 49, 147);
-    doc.text('Relatório Consolidado - Tarot Frequencial', 20, 30);
+    doc.text('Relatório Consolidado', 105, 25, { align: 'center' });
     
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 45);
+    doc.setFontSize(16);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Tarot Frequencial', 105, 35, { align: 'center' });
+    
+    // Linha decorativa
+    doc.setDrawColor(103, 49, 147);
+    doc.setLineWidth(0.5);
+    doc.line(20, 45, 190, 45);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, 20, 55);
     
     const totalGeral = clientesUnicos.reduce((total, cliente) => {
       return total + calcularTotalCliente(cliente.analises);
     }, 0);
     
-    doc.text(`Total de clientes: ${clientesUnicos.length}`, 20, 65);
-    doc.text(`Receita total: R$ ${totalGeral.toFixed(2)}`, 20, 80);
+    // Resumo geral em boxes
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    
+    // Box 1 - Total de clientes
+    doc.rect(30, 65, 40, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Clientes', 35, 72);
+    doc.setFontSize(16);
+    doc.setTextColor(103, 49, 147);
+    doc.text(clientesUnicos.length.toString(), 50, 81, { align: 'center' });
+    
+    // Box 2 - Receita total
+    doc.rect(80, 65, 60, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Receita Total', 85, 72);
+    doc.setFontSize(16);
+    doc.setTextColor(103, 49, 147);
+    doc.text(`R$ ${totalGeral.toFixed(2)}`, 110, 81, { align: 'center' });
+    
+    // Box 3 - Ticket médio
+    doc.rect(150, 65, 40, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Ticket Médio', 155, 72);
+    doc.setFontSize(16);
+    doc.setTextColor(103, 49, 147);
+    doc.text(`R$ ${(totalGeral / clientesUnicos.length).toFixed(2)}`, 170, 81, { align: 'center' });
 
+    // Tabela de clientes
     const tableData = clientesUnicos.map(cliente => [
       cliente.nome,
       cliente.analises.length.toString(),
       `R$ ${calcularTotalCliente(cliente.analises).toFixed(2)}`
     ]);
 
-    doc.autoTable({
-      head: [['Cliente', 'Análises', 'Total Gasto']],
+    autoTable(doc, {
+      head: [['Cliente', 'Análises', 'Total']],
       body: tableData,
-      startY: 95,
+      startY: 100,
+      theme: 'grid',
       styles: {
         fontSize: 10,
-        textColor: [0, 0, 0],
+        cellPadding: 8,
+        textColor: [60, 60, 60],
       },
       headStyles: {
         fillColor: [103, 49, 147],
         textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold',
       },
+      alternateRowStyles: {
+        fillColor: [248, 248, 248],
+      },
+      margin: { left: 20, right: 20 },
     });
+
+    // Footer elegante
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(
+        `Libertá - Página ${i} de ${pageCount}`,
+        105,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+    }
 
     doc.save('relatorio-consolidado-tarot.pdf');
   }, [clientesUnicos]);

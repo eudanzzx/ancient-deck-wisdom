@@ -15,53 +15,94 @@ const GeneralReportGenerator: React.FC<GeneralReportGeneratorProps> = ({ atendim
     try {
       const doc = new jsPDF();
       
-      doc.setFontSize(18);
-      doc.setTextColor(14, 165, 233);
-      doc.text('Relatorio Geral de Atendimentos', 105, 15, { align: 'center' });
+      // Header elegante
+      doc.setFontSize(22);
+      doc.setTextColor(37, 99, 235);
+      doc.text('Relatório Geral', 105, 25, { align: 'center' });
       
       doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(120, 120, 120);
+      doc.text('Resumo de Atendimentos', 105, 35, { align: 'center' });
       
-      let yPos = 30;
+      // Linha decorativa
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(0.5);
+      doc.line(30, 45, 180, 45);
       
+      // Estatísticas em boxes
       const totalAtendimentos = atendimentos.length;
       const totalValue = atendimentos.reduce((acc, curr) => acc + parseFloat(curr.valor || "0"), 0);
       const paidConsultations = atendimentos.filter(a => a.statusPagamento === 'pago').length;
       const pendingConsultations = atendimentos.filter(a => a.statusPagamento === 'pendente').length;
       
-      doc.text(`Total de Atendimentos: ${totalAtendimentos}`, 14, yPos);
-      yPos += 8;
-      doc.text(`Valor Total: R$ ${totalValue.toFixed(2)}`, 14, yPos);
-      yPos += 8;
-      doc.text(`Consultas Pagas: ${paidConsultations}`, 14, yPos);
-      yPos += 8;
-      doc.text(`Consultas Pendentes: ${pendingConsultations}`, 14, yPos);
-      yPos += 15;
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
       
-      const tableColumn = ["Cliente", "Data", "Servico", "Valor", "Status"];
-      const tableRows = atendimentos.map(a => [
+      // Box 1 - Total
+      doc.rect(20, 55, 45, 25);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Total', 25, 63);
+      doc.setFontSize(16);
+      doc.setTextColor(37, 99, 235);
+      doc.text(totalAtendimentos.toString(), 42, 75, { align: 'center' });
+      
+      // Box 2 - Valor
+      doc.rect(75, 55, 60, 25);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Receita Total', 80, 63);
+      doc.setFontSize(16);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`R$ ${totalValue.toFixed(2)}`, 105, 75, { align: 'center' });
+      
+      // Box 3 - Status
+      doc.rect(145, 55, 45, 25);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Pagos', 150, 63);
+      doc.setFontSize(16);
+      doc.setTextColor(34, 197, 94);
+      doc.text(paidConsultations.toString(), 167, 75, { align: 'center' });
+      
+      // Tabela simplificada
+      const tableData = atendimentos.slice(0, 20).map(a => [
         a.nome || 'N/A',
         a.dataAtendimento ? new Date(a.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
         a.tipoServico?.replace('-', ' ') || 'N/A',
-        `R$ ${parseFloat(a.valor || "0").toFixed(2)}`,
-        a.statusPagamento || 'N/A'
+        `R$ ${parseFloat(a.valor || "0").toFixed(2)}`
       ]);
       
       autoTable(doc, {
-        head: [tableColumn],
-        body: tableRows,
-        startY: yPos,
-        styles: { fontSize: 10, cellPadding: 3 },
-        headStyles: { fillColor: [14, 165, 233], textColor: [255, 255, 255] }
+        head: [["Cliente", "Data", "Serviço", "Valor"]],
+        body: tableData,
+        startY: 95,
+        theme: 'grid',
+        styles: { 
+          fontSize: 9, 
+          cellPadding: 6,
+          textColor: [60, 60, 60],
+        },
+        headStyles: { 
+          fillColor: [37, 99, 235], 
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [248, 248, 248],
+        },
+        margin: { left: 20, right: 20 },
       });
       
+      // Footer
       const totalPages = doc.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
-        doc.setFontSize(10);
-        doc.setTextColor(150);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
         doc.text(
-          `Liberta - Relatorio gerado em ${new Date().toLocaleDateString('pt-BR')} - Pagina ${i} de ${totalPages}`,
+          `Libertá - Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} - Página ${i} de ${totalPages}`,
           105,
           doc.internal.pageSize.height - 10,
           { align: 'center' }
@@ -70,10 +111,10 @@ const GeneralReportGenerator: React.FC<GeneralReportGeneratorProps> = ({ atendim
       
       doc.save(`Relatorio_Geral_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
       
-      toast.success("Relatorio geral gerado com sucesso!");
+      toast.success("Relatório geral gerado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      toast.error("Erro ao gerar relatorio");
+      toast.error("Erro ao gerar relatório");
     }
   };
 
@@ -83,7 +124,7 @@ const GeneralReportGenerator: React.FC<GeneralReportGeneratorProps> = ({ atendim
       className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white"
     >
       <FileText className="h-4 w-4 mr-2" />
-      Relatorio Geral
+      Relatório Geral
     </Button>
   );
 };

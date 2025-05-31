@@ -1,22 +1,15 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Download, Sparkles } from "lucide-react";
 import useUserDataService from "@/services/userDataService";
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import TarotStatsCards from "@/components/reports/TarotStatsCards";
 import TarotCharts from "@/components/charts/TarotCharts";
-
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
 
 interface TarotAnalise {
   id: string;
@@ -94,27 +87,58 @@ const RelatoriosFrequenciaisTarot = () => {
   const gerarRelatorioTarot = useCallback(() => {
     const doc = new jsPDF();
     
-    doc.setFontSize(20);
+    // Header elegante
+    doc.setFontSize(22);
     doc.setTextColor(107, 33, 168);
-    doc.text('Relatorio Financeiro - Tarot Frequencial', 20, 30);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 45);
+    doc.text('Relatório Financeiro', 105, 25, { align: 'center' });
     
     doc.setFontSize(16);
-    doc.setTextColor(107, 33, 168);
-    doc.text('Resumo Financeiro', 20, 65);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Tarot Frequencial', 105, 35, { align: 'center' });
     
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Receita Total: R$ ${stats.receitaTotal.toFixed(2)}`, 20, 80);
-    doc.text(`Receita Mes Atual: R$ ${stats.receitaMesAtual.toFixed(2)}`, 20, 95);
-    doc.text(`Ticket Medio: R$ ${stats.ticketMedio.toFixed(2)}`, 20, 110);
-    doc.text(`Total de Analises: ${stats.totalAnalises}`, 20, 125);
-    doc.text(`Analises Finalizadas: ${stats.analisesFinalizadas}`, 20, 140);
-    doc.text(`Analises Pendentes: ${stats.analisesPendentes}`, 20, 155);
+    // Linha decorativa
+    doc.setDrawColor(107, 33, 168);
+    doc.setLineWidth(0.5);
+    doc.line(30, 45, 180, 45);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, 20, 55);
+    
+    // Resumo em boxes elegantes
+    const receitaTotal = analises.reduce((sum, analise) => sum + parseFloat(analise.preco || "150"), 0);
+    const analisesFinalizadas = analises.filter(a => a.finalizado).length;
+    const analisesPendentes = analises.filter(a => !a.finalizado).length;
+    const ticketMedio = receitaTotal / analises.length || 0;
+    
+    // Box 1 - Receita Total
+    doc.rect(20, 65, 50, 25);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Receita Total', 25, 73);
+    doc.setFontSize(14);
+    doc.setTextColor(107, 33, 168);
+    doc.text(`R$ ${receitaTotal.toFixed(2)}`, 45, 85, { align: 'center' });
+    
+    // Box 2 - Total de Análises
+    doc.rect(80, 65, 50, 25);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Total Análises', 85, 73);
+    doc.setFontSize(14);
+    doc.setTextColor(107, 33, 168);
+    doc.text(analises.length.toString(), 105, 85, { align: 'center' });
+    
+    // Box 3 - Ticket Médio
+    doc.rect(140, 65, 50, 25);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Ticket Médio', 145, 73);
+    doc.setFontSize(14);
+    doc.setTextColor(107, 33, 168);
+    doc.text(`R$ ${ticketMedio.toFixed(2)}`, 165, 85, { align: 'center' });
 
+    // Tabela elegante
     const tableData = analises.map(analise => [
       analise.nomeCliente,
       format(new Date(analise.dataInicio), 'dd/MM/yyyy'),
@@ -122,22 +146,44 @@ const RelatoriosFrequenciaisTarot = () => {
       analise.finalizado ? 'Finalizada' : 'Pendente'
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       head: [['Cliente', 'Data', 'Valor', 'Status']],
       body: tableData,
-      startY: 170,
+      startY: 105,
+      theme: 'grid',
       styles: {
         fontSize: 9,
-        textColor: [0, 0, 0],
+        cellPadding: 6,
+        textColor: [60, 60, 60],
       },
       headStyles: {
         fillColor: [107, 33, 168],
         textColor: [255, 255, 255],
+        fontSize: 10,
+        fontStyle: 'bold',
       },
+      alternateRowStyles: {
+        fillColor: [248, 248, 248],
+      },
+      margin: { left: 20, right: 20 },
     });
 
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(
+        `Libertá - Página ${i} de ${pageCount}`,
+        105,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+    }
+
     doc.save('relatorio-financeiro-tarot.pdf');
-  }, [stats, analises]);
+  }, [analises]);
 
   const chartConfig = useMemo(() => ({
     receita: {
