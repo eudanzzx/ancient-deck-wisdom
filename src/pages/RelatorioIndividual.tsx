@@ -32,184 +32,88 @@ const RelatorioIndividual = () => {
       const doc = new jsPDF();
       
       // Header elegante
-      doc.setFontSize(20);
+      doc.setFontSize(18);
       doc.setTextColor(37, 99, 235);
-      doc.text(`Relatório Individual - ${cliente.nome}`, 105, 25, { align: 'center' });
+      doc.text(`Relatório - ${cliente.nome}`, 105, 20, { align: 'center' });
       
       // Linha decorativa
       doc.setDrawColor(37, 99, 235);
       doc.setLineWidth(0.5);
-      doc.line(30, 35, 180, 35);
+      doc.line(30, 28, 180, 28);
       
-      // Resumo em boxes elegantes
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      
-      // Box com informações resumidas
-      doc.rect(40, 45, 120, 30, 'S');
+      // Resumo compacto
       doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text('RESUMO', 100, 55, { align: 'center' });
-      
-      doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
-      doc.text(`Atendimentos: ${cliente.totalConsultas}`, 50, 65);
-      doc.text(`Total: R$ ${cliente.valorTotal.toFixed(2)}`, 120, 65);
+      doc.text(`Atendimentos: ${cliente.totalConsultas}`, 30, 40);
+      doc.text(`Total: R$ ${cliente.valorTotal.toFixed(2)}`, 105, 40);
+      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 140, 40);
 
-      // Tabela detalhada de atendimentos
-      let yPosition = 90;
+      // Tabela compacta com apenas os primeiros 15 atendimentos
+      const atendimentosLimitados = cliente.atendimentos.slice(0, 15);
       
-      cliente.atendimentos.forEach((atendimento: any, index: number) => {
-        if (index > 0) {
-          doc.addPage();
-          yPosition = 20;
-        }
-
-        doc.setFontSize(14);
-        doc.setTextColor(37, 99, 235);
-        doc.text(`Atendimento ${index + 1}`, 20, yPosition);
-        yPosition += 15;
-
-        const detalhesAtendimento = [];
+      const tableData = atendimentosLimitados.map((atendimento: any) => {
+        const detalhesResumo = atendimento.detalhes ? 
+          (atendimento.detalhes.length > 40 ? atendimento.detalhes.substring(0, 40) + '...' : atendimento.detalhes) : 
+          'N/A';
         
-        // Informações básicas
-        detalhesAtendimento.push([
-          'Data',
-          atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A'
-        ]);
-        
-        detalhesAtendimento.push([
-          'Serviço',
-          atendimento.tipoServico?.replace(/[-_]/g, ' ') || 'Consulta'
-        ]);
-        
-        detalhesAtendimento.push([
-          'Valor',
-          `R$ ${parseFloat(atendimento.valor || atendimento.preco || "0").toFixed(2)}`
-        ]);
-        
-        detalhesAtendimento.push([
-          'Status Pagamento',
-          atendimento.statusPagamento || 'N/A'
-        ]);
-
-        // Informações pessoais
-        if (atendimento.dataNascimento) {
-          detalhesAtendimento.push(['Data Nascimento', new Date(atendimento.dataNascimento).toLocaleDateString('pt-BR')]);
-        }
-        
-        if (atendimento.signo) {
-          detalhesAtendimento.push(['Signo', atendimento.signo]);
-        }
-
-        if (atendimento.destino) {
-          detalhesAtendimento.push(['Destino', atendimento.destino]);
-        }
-
-        if (atendimento.ano) {
-          detalhesAtendimento.push(['Ano', atendimento.ano]);
-        }
-
-        // Detalhes da sessão com quebra de linha automática
-        if (atendimento.detalhes) {
-          const detalhesText = atendimento.detalhes;
-          if (detalhesText.length > 60) {
-            // Para textos longos, quebrar em múltiplas linhas
-            const chunks = detalhesText.match(/.{1,60}/g) || [detalhesText];
-            chunks.forEach((chunk, chunkIndex) => {
-              detalhesAtendimento.push([
-                chunkIndex === 0 ? 'Detalhes da Sessão' : '',
-                chunk
-              ]);
-            });
-          } else {
-            detalhesAtendimento.push(['Detalhes da Sessão', detalhesText]);
-          }
-        }
-
-        if (atendimento.tratamento) {
-          const tratamentoText = atendimento.tratamento;
-          if (tratamentoText.length > 60) {
-            const chunks = tratamentoText.match(/.{1,60}/g) || [tratamentoText];
-            chunks.forEach((chunk, chunkIndex) => {
-              detalhesAtendimento.push([
-                chunkIndex === 0 ? 'Tratamento' : '',
-                chunk
-              ]);
-            });
-          } else {
-            detalhesAtendimento.push(['Tratamento', tratamentoText]);
-          }
-        }
-
-        if (atendimento.indicacao) {
-          const indicacaoText = atendimento.indicacao;
-          if (indicacaoText.length > 60) {
-            const chunks = indicacaoText.match(/.{1,60}/g) || [indicacaoText];
-            chunks.forEach((chunk, chunkIndex) => {
-              detalhesAtendimento.push([
-                chunkIndex === 0 ? 'Indicação' : '',
-                chunk
-              ]);
-            });
-          } else {
-            detalhesAtendimento.push(['Indicação', indicacaoText]);
-          }
-        }
-
-        // Pontos de atenção
-        if (atendimento.atencaoFlag && atendimento.atencaoNota) {
-          const atencaoText = atendimento.atencaoNota;
-          if (atencaoText.length > 60) {
-            const chunks = atencaoText.match(/.{1,60}/g) || [atencaoText];
-            chunks.forEach((chunk, chunkIndex) => {
-              detalhesAtendimento.push([
-                chunkIndex === 0 ? '⚠️ ATENÇÃO' : '',
-                chunk
-              ]);
-            });
-          } else {
-            detalhesAtendimento.push(['⚠️ ATENÇÃO', atencaoText]);
-          }
-        }
-
-        autoTable(doc, {
-          body: detalhesAtendimento,
-          startY: yPosition,
-          theme: 'grid',
-          styles: {
-            fontSize: 10,
-            cellPadding: 8,
-            textColor: [40, 40, 40],
-            lineColor: [220, 220, 220],
-            lineWidth: 0.5,
-          },
-          columnStyles: {
-            0: { fontStyle: 'bold', fillColor: [240, 240, 240], cellWidth: 40 },
-            1: { cellWidth: 130 }
-          },
-          alternateRowStyles: {
-            fillColor: [250, 250, 250],
-          },
-          margin: { left: 20, right: 20 },
-        });
-
-        yPosition = (doc as any).lastAutoTable.finalY + 20;
+        return [
+          atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
+          atendimento.tipoServico?.replace(/[-_]/g, ' ') || 'Consulta',
+          `R$ ${parseFloat(atendimento.valor || atendimento.preco || "0").toFixed(2)}`,
+          detalhesResumo
+        ];
       });
 
-      // Footer
-      const totalPages = doc.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(
-          `Libertá - Página ${i} de ${totalPages}`,
-          105,
-          doc.internal.pageSize.height - 10,
-          { align: 'center' }
-        );
+      autoTable(doc, {
+        head: [["Data", "Serviço", "Valor", "Resumo"]],
+        body: tableData,
+        startY: 50,
+        theme: 'grid',
+        styles: { 
+          fontSize: 8, 
+          cellPadding: 3,
+          textColor: [40, 40, 40],
+          lineColor: [220, 220, 220],
+          lineWidth: 0.3,
+        },
+        headStyles: { 
+          fillColor: [37, 99, 235], 
+          textColor: [255, 255, 255],
+          fontSize: 9,
+          fontStyle: 'bold',
+        },
+        columnStyles: {
+          0: { cellWidth: 25 },
+          1: { cellWidth: 35 },
+          2: { cellWidth: 25 },
+          3: { cellWidth: 85 }
+        },
+        alternateRowStyles: {
+          fillColor: [250, 250, 250],
+        },
+        margin: { left: 20, right: 20 },
+        pageBreak: 'avoid'
+      });
+
+      // Adicionar nota se houver mais atendimentos
+      if (cliente.atendimentos.length > 15) {
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        if (finalY < 260) { // Só adiciona se couber na página
+          doc.setFontSize(8);
+          doc.setTextColor(100, 100, 100);
+          doc.text(`Mostrando 15 de ${cliente.atendimentos.length} atendimentos`, 105, finalY, { align: 'center' });
+        }
       }
+
+      // Footer compacto
+      doc.setFontSize(6);
+      doc.setTextColor(150, 150, 150);
+      doc.text(
+        `Libertá - Relatório Individual`,
+        105,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
       
       doc.save(`Relatorio_Cliente_${cliente.nome.replace(/ /g, '_')}.pdf`);
       
