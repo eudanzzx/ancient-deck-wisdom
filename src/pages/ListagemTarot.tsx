@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
+
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import useUserDataService from "@/services/userDataService";
 import TarotCountdown from "@/components/TarotCountdown";
 import TarotCounters from "@/components/tarot/TarotCounters";
+import TarotCounterNotifications from "@/components/TarotCounterNotifications";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -21,7 +23,7 @@ const ListagemTarot = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("asc"); // 'asc' or 'desc'
   const [sortBy, setSortBy] = useState("nomeCliente"); // Default sort by client name
-  const { getAllTarotAnalyses, deleteTarotAnalise } = useUserDataService();
+  const { getAllTarotAnalyses, deleteTarotAnalysis } = useUserDataService();
 
   useEffect(() => {
     const storedAnalises = getAllTarotAnalyses();
@@ -38,14 +40,14 @@ const ListagemTarot = () => {
 
   const handleDelete = useCallback(async (id: string) => {
     try {
-      await deleteTarotAnalise(id);
+      await deleteTarotAnalysis(id);
       const updatedAnalises = getAllTarotAnalyses();
       setAnalises(updatedAnalises);
       toast.success("Análise excluída com sucesso!");
     } catch (error) {
       toast.error("Erro ao excluir análise.");
     }
-  }, [deleteTarotAnalise, getAllTarotAnalyses]);
+  }, [deleteTarotAnalysis, getAllTarotAnalyses]);
 
   const handleFinalizar = useCallback((id: string) => {
     const analisesAtualizadas = analises.map((analise) =>
@@ -94,6 +96,9 @@ const ListagemTarot = () => {
             Nova Análise
           </Button>
         </div>
+
+        {/* Notificações de contadores urgentes */}
+        <TarotCounterNotifications analises={analises} />
 
         <TarotCountdown analises={analises} />
         
