@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,24 @@ const RelatorioIndividual = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
   const [analises] = useState(getAtendimentos());
+
+  // Função para formatar data de forma segura
+  const formatarDataSegura = (data: string) => {
+    if (!data || data.trim() === '') {
+      return 'Data não informada';
+    }
+    
+    try {
+      const dataObj = new Date(data);
+      if (isNaN(dataObj.getTime())) {
+        return 'Data não informada';
+      }
+      return format(dataObj, 'dd/MM/yyyy', { locale: ptBR });
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
+      return 'Data não informada';
+    }
+  };
 
   const clientesUnicos = useMemo(() => {
     const clientesMap = new Map();
@@ -49,118 +68,131 @@ const RelatorioIndividual = () => {
   };
 
   const gerarRelatorioIndividual = useCallback((cliente: any) => {
-    const doc = new jsPDF();
-    
-    // Header elegante
-    doc.setFontSize(22);
-    doc.setTextColor(37, 99, 235);
-    doc.text('Relatório Individual', 105, 25, { align: 'center' });
-    
-    doc.setFontSize(16);
-    doc.setTextColor(120, 120, 120);
-    doc.text('Atendimentos Detalhados', 105, 35, { align: 'center' });
-    
-    // Linha decorativa
-    doc.setDrawColor(37, 99, 235);
-    doc.setLineWidth(0.5);
-    doc.line(20, 45, 190, 45);
-    
-    // Informações do cliente
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Cliente: ${cliente.nome}`, 20, 60);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, 20, 70);
-    
-    // Resumo em caixas
-    const totalGasto = calcularTotalCliente(cliente.atendimentos);
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    
-    // Box 1 - Total de atendimentos
-    doc.rect(20, 80, 50, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Total Atendimentos', 25, 87);
-    doc.setFontSize(16);
-    doc.setTextColor(37, 99, 235);
-    doc.text(cliente.atendimentos.length.toString(), 45, 96, { align: 'center' });
-    
-    // Box 2 - Valor total
-    doc.rect(80, 80, 50, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Valor Total', 85, 87);
-    doc.setFontSize(16);
-    doc.setTextColor(37, 99, 235);
-    doc.text(`R$ ${totalGasto.toFixed(2)}`, 105, 96, { align: 'center' });
-    
-    // Box 3 - Valor médio
-    doc.rect(140, 80, 50, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Valor Médio', 145, 87);
-    doc.setFontSize(16);
-    doc.setTextColor(37, 99, 235);
-    doc.text(`R$ ${(totalGasto / cliente.atendimentos.length).toFixed(2)}`, 165, 96, { align: 'center' });
+    try {
+      console.log('Gerando relatório para cliente:', cliente.nome);
+      console.log('Atendimentos do cliente:', cliente.atendimentos);
+      
+      const doc = new jsPDF();
+      
+      // Header elegante
+      doc.setFontSize(22);
+      doc.setTextColor(37, 99, 235);
+      doc.text('Relatório Individual', 105, 25, { align: 'center' });
+      
+      doc.setFontSize(16);
+      doc.setTextColor(120, 120, 120);
+      doc.text('Atendimentos Detalhados', 105, 35, { align: 'center' });
+      
+      // Linha decorativa
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(0.5);
+      doc.line(20, 45, 190, 45);
+      
+      // Informações do cliente
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Cliente: ${cliente.nome}`, 20, 60);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, 20, 70);
+      
+      // Resumo em caixas
+      const totalGasto = calcularTotalCliente(cliente.atendimentos);
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      
+      // Box 1 - Total de atendimentos
+      doc.rect(20, 80, 50, 20);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Total Atendimentos', 25, 87);
+      doc.setFontSize(16);
+      doc.setTextColor(37, 99, 235);
+      doc.text(cliente.atendimentos.length.toString(), 45, 96, { align: 'center' });
+      
+      // Box 2 - Valor total
+      doc.rect(80, 80, 50, 20);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Valor Total', 85, 87);
+      doc.setFontSize(16);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`R$ ${totalGasto.toFixed(2)}`, 105, 96, { align: 'center' });
+      
+      // Box 3 - Valor médio
+      doc.rect(140, 80, 50, 20);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Valor Médio', 145, 87);
+      doc.setFontSize(16);
+      doc.setTextColor(37, 99, 235);
+      const valorMedio = cliente.atendimentos.length > 0 ? (totalGasto / cliente.atendimentos.length).toFixed(2) : '0.00';
+      doc.text(`R$ ${valorMedio}`, 165, 96, { align: 'center' });
 
-    // Histórico de atendimentos detalhado
-    const tableData = cliente.atendimentos.slice(0, 8).map((atendimento: any) => [
-      format(new Date(atendimento.dataAtendimento), 'dd/MM/yyyy'),
-      atendimento.tipoServico || 'N/A',
-      `R$ ${parseFloat(atendimento.valor || "0").toFixed(2)}`,
-      atendimento.sessao || 'N/A',
-      atendimento.tratamento || 'N/A',
-      atendimento.indicacao || 'N/A'
-    ]);
+      // Histórico de atendimentos detalhado
+      const tableData = cliente.atendimentos.slice(0, 8).map((atendimento: any) => [
+        formatarDataSegura(atendimento.dataAtendimento || atendimento.data),
+        atendimento.tipoServico || 'N/A',
+        `R$ ${parseFloat(atendimento.valor || "0").toFixed(2)}`,
+        atendimento.sessao || 'N/A',
+        atendimento.tratamento || 'N/A',
+        atendimento.indicacao || 'N/A'
+      ]);
 
-    autoTable(doc, {
-      head: [['Data', 'Serviço', 'Valor', 'Sessão', 'Tratamento', 'Indicação']],
-      body: tableData,
-      startY: 115,
-      theme: 'grid',
-      styles: {
-        fontSize: 8,
-        cellPadding: 4,
-        textColor: [60, 60, 60],
-      },
-      headStyles: {
-        fillColor: [37, 99, 235],
-        textColor: [255, 255, 255],
-        fontSize: 9,
-        fontStyle: 'bold',
-      },
-      alternateRowStyles: {
-        fillColor: [248, 248, 248],
-      },
-      margin: { left: 20, right: 20 },
-      columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 35 },
-        2: { cellWidth: 25 },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 35 },
-        5: { cellWidth: 35 }
+      console.log('Dados da tabela:', tableData);
+
+      autoTable(doc, {
+        head: [['Data', 'Serviço', 'Valor', 'Sessão', 'Tratamento', 'Indicação']],
+        body: tableData,
+        startY: 115,
+        theme: 'grid',
+        styles: {
+          fontSize: 8,
+          cellPadding: 4,
+          textColor: [60, 60, 60],
+        },
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontSize: 9,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [248, 248, 248],
+        },
+        margin: { left: 20, right: 20 },
+        columnStyles: {
+          0: { cellWidth: 25 },
+          1: { cellWidth: 35 },
+          2: { cellWidth: 25 },
+          3: { cellWidth: 25 },
+          4: { cellWidth: 35 },
+          5: { cellWidth: 35 }
+        }
+      });
+
+      // Footer elegante
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          `Libertá - Página ${i} de ${pageCount}`,
+          105,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
       }
-    });
 
-    // Footer elegante
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Libertá - Página ${i} de ${pageCount}`,
-        105,
-        doc.internal.pageSize.height - 10,
-        { align: 'center' }
-      );
+      console.log('PDF gerado com sucesso, iniciando download...');
+      doc.save(`relatorio-${cliente.nome.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+      
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+      alert('Erro ao gerar relatório. Verifique os dados do cliente.');
     }
-
-    doc.save(`relatorio-${cliente.nome.replace(/\s+/g, '-').toLowerCase()}.pdf`);
   }, []);
 
   const calcularTotalGeral = () => {
@@ -240,7 +272,7 @@ const RelatorioIndividual = () => {
                 <div>
                   <p className="text-sm font-medium text-slate-600 mb-1">Ticket Médio</p>
                   <p className="text-3xl font-bold text-slate-800">
-                    R$ {(calcularTotalGeral() / clientesUnicos.length).toFixed(2)}
+                    R$ {clientesUnicos.length > 0 ? (calcularTotalGeral() / clientesUnicos.length).toFixed(2) : '0.00'}
                   </p>
                 </div>
                 <div className="rounded-xl p-3 bg-[#2563EB]/10">
@@ -354,7 +386,7 @@ const RelatorioIndividual = () => {
                                   <div>
                                     <span className="font-medium text-blue-600">Data:</span>
                                     <span className="ml-2 text-slate-700">
-                                      {atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A'}
+                                      {formatarDataSegura(atendimento.dataAtendimento || atendimento.data)}
                                     </span>
                                   </div>
                                   <div>
