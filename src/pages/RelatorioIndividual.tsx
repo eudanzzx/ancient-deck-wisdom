@@ -13,10 +13,10 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import Logo from "@/components/Logo";
 
 const RelatorioIndividual = () => {
-  const { getAllAnalyses } = useUserDataService();
+  const { getAtendimentos } = useUserDataService();
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
-  const [analises] = useState(getAllAnalyses());
+  const [analises] = useState(getAtendimentos());
 
   const clientesUnicos = useMemo(() => {
     const clientesMap = new Map();
