@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import TarotCountdown from "@/components/TarotCountdown";
+import TarotCounterNotifications from "@/components/TarotCounterNotifications";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 
 const ListagemTarot = () => {
@@ -175,8 +175,8 @@ const ListagemTarot = () => {
     return { finalizados, emAndamento, atencao };
   };
 
-  const analisesToShow = getFilteredAnalisesByTab();
-  const { finalizados, emAndamento, atencao } = getStatusCounts();
+  const analisesToShow = useMemo(() => getFilteredAnalisesByTab(), [activeTab, filteredAnalises]);
+  const { finalizados, emAndamento, atencao } = useMemo(() => getStatusCounts(), [analises]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100 relative overflow-hidden">
@@ -191,6 +191,8 @@ const ListagemTarot = () => {
 
       <main className="pt-20 p-4 animate-fade-in relative z-10">
         <TarotCountdown analises={analises} />
+        
+        <TarotCounterNotifications analises={analises} />
         
         {aniversarianteHoje && (
           <div className="animate-scale-in mb-6">
