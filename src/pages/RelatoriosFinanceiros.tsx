@@ -1,23 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Download, DollarSign, TrendingUp, Users, Activity, Sparkles } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import useUserDataService from "@/services/userDataService";
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { jsPDF } from 'jspdf';
+import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
+import { toast } from 'sonner';
 
 interface Atendimento {
   id: string;
@@ -37,7 +31,7 @@ const RelatoriosFinanceiros = () => {
   );
   const [periodoVisualizacao, setPeriodoVisualizacao] = useState("6meses");
 
-  const calcularEstatisticas = () => {
+  const stats = useMemo(() => {
     const hoje = new Date();
     const receitaTotal = atendimentos.reduce((sum, atendimento) => sum + parseFloat(atendimento.valor), 0);
     
@@ -60,13 +54,12 @@ const RelatoriosFinanceiros = () => {
       ticketMedio,
       totalAtendimentos: atendimentos.length
     };
-  };
+  }, [atendimentos]);
 
-  const gerarDadosGraficoReceita = () => {
+  const dadosReceita = useMemo(() => {
     const dadosPorMes: { [key: string]: number } = {};
     const mesesParaMostrar = periodoVisualizacao === "6meses" ? 6 : 12;
 
-    // Inicializar últimos meses
     for (let i = mesesParaMostrar - 1; i >= 0; i--) {
       const data = subMonths(new Date(), i);
       const chave = format(data, 'MMM/yy', { locale: ptBR });
@@ -86,9 +79,9 @@ const RelatoriosFinanceiros = () => {
       mes,
       receita: receita
     }));
-  };
+  }, [atendimentos, periodoVisualizacao]);
 
-  const gerarDadosGraficoPagamentos = () => {
+  const dadosPagamentos = useMemo(() => {
     const pagos = atendimentos.filter(a => a.statusPagamento === 'pago').length;
     const pendentes = atendimentos.filter(a => a.statusPagamento === 'pendente').length;
     const parcelados = atendimentos.filter(a => a.statusPagamento === 'parcelado').length;
@@ -98,9 +91,9 @@ const RelatoriosFinanceiros = () => {
       { name: 'Pendentes', value: pendentes, color: '#EF4444' },
       { name: 'Parcelados', value: parcelados, color: '#F59E0B' },
     ];
-  };
+  }, [atendimentos]);
 
-  const gerarDadosGraficoServicos = () => {
+  const dadosServicos = useMemo(() => {
     const servicosPorTipo: { [key: string]: { count: number; receita: number } } = {};
 
     atendimentos.forEach(atendimento => {
@@ -117,67 +110,251 @@ const RelatoriosFinanceiros = () => {
       quantidade: dados.count,
       receita: dados.receita
     }));
-  };
+  }, [atendimentos]);
 
-  const gerarRelatorioFinanceiro = () => {
-    const doc = new jsPDF();
-    const stats = calcularEstatisticas();
-    
-    // Cabeçalho
-    doc.setFontSize(20);
-    doc.setTextColor(30, 64, 175);
-    doc.text('Relatório Financeiro', 20, 30);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 45);
-    
-    // Estatísticas Financeiras
-    doc.setFontSize(16);
-    doc.setTextColor(30, 64, 175);
-    doc.text('Resumo Financeiro', 20, 65);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Receita Total: R$ ${stats.receitaTotal.toFixed(2)}`, 20, 80);
-    doc.text(`Receita Mês Atual: R$ ${stats.receitaMesAtual.toFixed(2)}`, 20, 95);
-    doc.text(`Ticket Médio: R$ ${stats.ticketMedio.toFixed(2)}`, 20, 110);
-    doc.text(`Total de Atendimentos: ${stats.totalAtendimentos}`, 20, 125);
-    doc.text(`Pagamentos Confirmados: ${stats.atendimentosPagos}`, 20, 140);
-    doc.text(`Pagamentos Pendentes: ${stats.atendimentosPendentes}`, 20, 155);
+  const gerarRelatorioFinanceiro = useCallback(() => {
+    try {
+      const doc = new jsPDF();
+      
+      // Configurações de cores
+      const primaryColor = [30, 64, 175];
+      const secondaryColor = [59, 130, 246];
+      const textColor = [30, 30, 30];
+      const lightGray = [248, 250, 252];
+      const darkGray = [71, 85, 105];
+      
+      // Background gradient effect
+      doc.setFillColor(30, 64, 175);
+      doc.rect(0, 0, 210, 40, 'F');
+      
+      // Header principal
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(28);
+      doc.setFont(undefined, 'bold');
+      doc.text('RELATÓRIO FINANCEIRO', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'normal');
+      doc.text('Atendimentos Gerais - Análise Completa', 105, 30, { align: 'center' });
+      
+      // Data e período
+      doc.setFontSize(10);
+      doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} | Período: ${periodoVisualizacao}`, 15, 50);
+      
+      // Cálculos financeiros
+      const receitaTotal = atendimentos.reduce((sum, atendimento) => sum + parseFloat(atendimento.valor), 0);
+      const atendimentosPagos = atendimentos.filter(a => a.statusPagamento === 'pago').length;
+      const atendimentosPendentes = atendimentos.filter(a => a.statusPagamento === 'pendente').length;
+      const ticketMedio = receitaTotal / atendimentos.length || 0;
+      const clientesUnicos = new Set(atendimentos.map(a => a.nome)).size;
+      
+      // Receita do mês atual
+      const hoje = new Date();
+      const receitaMesAtual = atendimentos
+        .filter(atendimento => {
+          const data = new Date(atendimento.dataAtendimento);
+          return data.getMonth() === hoje.getMonth() && data.getFullYear() === hoje.getFullYear();
+        })
+        .reduce((sum, atendimento) => sum + parseFloat(atendimento.valor), 0);
+      
+      // Grid de métricas principais (2x3)
+      let yPos = 65;
+      const boxWidth = 60;
+      const boxHeight = 30;
+      const spacing = 5;
+      
+      // Primeira linha
+      // Receita Total
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(15, yPos, boxWidth, boxHeight, 'F');
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setLineWidth(0.8);
+      doc.rect(15, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('RECEITA TOTAL', 45, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(`R$ ${receitaTotal.toFixed(2)}`, 45, yPos + 20, { align: 'center' });
+      
+      // Receita Mês Atual
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(80, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(80, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('RECEITA MÊS ATUAL', 110, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(`R$ ${receitaMesAtual.toFixed(2)}`, 110, yPos + 20, { align: 'center' });
+      
+      // Ticket Médio
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(145, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(145, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('TICKET MÉDIO', 175, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(`R$ ${ticketMedio.toFixed(2)}`, 175, yPos + 20, { align: 'center' });
+      
+      yPos += boxHeight + spacing;
+      
+      // Segunda linha
+      // Total Atendimentos
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(15, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(15, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('TOTAL ATENDIMENTOS', 45, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(atendimentos.length.toString(), 45, yPos + 20, { align: 'center' });
+      
+      // Pagos
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(80, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(80, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('PAGAMENTOS PAGOS', 110, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(34, 197, 94); // Green
+      doc.text(atendimentosPagos.toString(), 110, yPos + 20, { align: 'center' });
+      
+      // Clientes Únicos
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.rect(145, yPos, boxWidth, boxHeight, 'F');
+      doc.rect(145, yPos, boxWidth, boxHeight, 'S');
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('CLIENTES ÚNICOS', 175, yPos + 8, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(clientesUnicos.toString(), 175, yPos + 20, { align: 'center' });
+      
+      yPos += 45;
+      
+      // Top 10 Clientes por Valor
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text('TOP 10 CLIENTES POR VALOR', 15, yPos);
+      
+      yPos += 8;
+      
+      // Agrupa clientes por valor
+      const clientesValor = atendimentos.reduce((acc, atendimento) => {
+        const cliente = atendimento.nome;
+        const valor = parseFloat(atendimento.valor);
+        if (!acc[cliente]) {
+          acc[cliente] = { nome: cliente, valor: 0, quantidade: 0 };
+        }
+        acc[cliente].valor += valor;
+        acc[cliente].quantidade += 1;
+        return acc;
+      }, {} as Record<string, { nome: string; valor: number; quantidade: number }>);
+      
+      const topClientes = Object.values(clientesValor)
+        .sort((a, b) => b.valor - a.valor)
+        .slice(0, 10);
+      
+      // Header da tabela
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.rect(15, yPos, 180, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text('CLIENTE', 20, yPos + 5);
+      doc.text('QTD', 120, yPos + 5);
+      doc.text('VALOR TOTAL', 155, yPos + 5);
+      
+      yPos += 8;
+      
+      // Linhas da tabela
+      topClientes.forEach((cliente, index) => {
+        if (yPos > 250) return; // Limite da página
+        
+        const rowColor = index % 2 === 0 ? [255, 255, 255] : lightGray;
+        doc.setFillColor(rowColor[0], rowColor[1], rowColor[2]);
+        doc.rect(15, yPos, 180, 7, 'F');
+        
+        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text(cliente.nome.substring(0, 30), 20, yPos + 4);
+        doc.text(cliente.quantidade.toString(), 120, yPos + 4);
+        doc.text(`R$ ${cliente.valor.toFixed(2)}`, 155, yPos + 4);
+        
+        yPos += 7;
+      });
+      
+      // Faturamento mensal (mini gráfico)
+      if (yPos < 240) {
+        yPos += 10;
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text('EVOLUÇÃO MENSAL', 15, yPos);
+        
+        yPos += 8;
+        
+        const dadosMensais = dadosReceita.slice(-6); // Últimos 6 meses
+        const maxValor = Math.max(...dadosMensais.map(d => d.receita));
+        
+        dadosMensais.forEach((mes, index) => {
+          if (yPos > 270) return;
+          
+          const barWidth = maxValor > 0 ? (mes.receita / maxValor) * 100 : 0;
+          
+          // Barra
+          doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+          doc.rect(15, yPos, barWidth, 4, 'F');
+          
+          // Texto
+          doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+          doc.setFontSize(8);
+          doc.text(`${mes.mes}: R$ ${mes.receita.toFixed(2)}`, 125, yPos + 3);
+          
+          yPos += 8;
+        });
+      }
+      
+      // Footer decorativo
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setLineWidth(2);
+      doc.line(15, 285, 195, 285);
+      
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.setFontSize(8);
+      doc.text('Libertá - Sistema de Gestão | Relatório Financeiro Personalizado', 105, 292, { align: 'center' });
+      
+      // Salvar
+      const fileName = `Relatorio_Financeiro_Geral_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+      doc.save(fileName);
+      
+      toast.success('Relatório financeiro personalizado gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar relatório financeiro');
+    }
+  }, [atendimentos, periodoVisualizacao, dadosReceita]);
 
-    // Tabela detalhada
-    const tableData = atendimentos.map(atendimento => [
-      atendimento.nome,
-      format(new Date(atendimento.dataAtendimento), 'dd/MM/yyyy'),
-      atendimento.tipoServico,
-      `R$ ${parseFloat(atendimento.valor).toFixed(2)}`,
-      atendimento.statusPagamento || 'N/A'
-    ]);
-
-    doc.autoTable({
-      head: [['Cliente', 'Data', 'Serviço', 'Valor', 'Status']],
-      body: tableData,
-      startY: 170,
-      styles: {
-        fontSize: 9,
-        textColor: [0, 0, 0],
-      },
-      headStyles: {
-        fillColor: [30, 64, 175],
-        textColor: [255, 255, 255],
-      },
-    });
-
-    doc.save('relatorio-financeiro.pdf');
-  };
-
-  const stats = calcularEstatisticas();
-  const dadosReceita = gerarDadosGraficoReceita();
-  const dadosPagamentos = gerarDadosGraficoPagamentos();
-  const dadosServicos = gerarDadosGraficoServicos();
-
-  const chartConfig = {
+  const chartConfig = useMemo(() => ({
     receita: {
       label: "Receita",
       color: "#1E40AF",
@@ -186,7 +363,11 @@ const RelatoriosFinanceiros = () => {
       label: "Quantidade",
       color: "#3B82F6",
     },
-  };
+  }), []);
+
+  const handlePeriodoChange = useCallback((value: string | undefined) => {
+    if (value) setPeriodoVisualizacao(value);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 relative overflow-hidden">
@@ -216,9 +397,7 @@ const RelatoriosFinanceiros = () => {
             <ToggleGroup 
               type="single" 
               value={periodoVisualizacao} 
-              onValueChange={(value) => {
-                if (value) setPeriodoVisualizacao(value);
-              }}
+              onValueChange={handlePeriodoChange}
               className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30"
             >
               <ToggleGroupItem value="6meses" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white">
@@ -234,7 +413,7 @@ const RelatoriosFinanceiros = () => {
               className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
             >
               <Download className="h-4 w-4 mr-2" />
-              Gerar PDF
+              Relatório PDF
             </Button>
           </div>
         </div>
