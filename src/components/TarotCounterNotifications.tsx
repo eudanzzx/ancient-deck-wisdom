@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, BellRing } from 'lucide-react';
@@ -45,7 +44,7 @@ const TarotCounterNotifications: React.FC<TarotCounterNotificationsProps> = ({ a
                   lembreteTexto: lembrete.texto,
                   diasRestantes: daysDiff,
                   horasRestantes: hoursDiff,
-                  horasRemainingInDay: horasRemaining,
+                  hoursRemaining: hoursRemaining,
                   minutosRestantes: minutesRemaining,
                   dataExpiracao: dataExpiracao,
                   timeDiff: timeDiff // Para ordenação
@@ -72,20 +71,20 @@ const TarotCounterNotifications: React.FC<TarotCounterNotificationsProps> = ({ a
 
   const formatTimeRemaining = (notification: any) => {
     if (notification.diasRestantes === 0) {
-      if (notification.horasRemainingInDay === 0) {
+      if (notification.hoursRemaining === 0) {
         return `${notification.minutosRestantes} minutos`;
       }
-      return `${notification.horasRemainingInDay}h ${notification.minutosRestantes}min`;
+      return `${notification.hoursRemaining}h ${notification.minutosRestantes}min`;
     }
     if (notification.diasRestantes === 1) {
-      return `1 dia e ${notification.horasRemainingInDay}h`;
+      return `1 dia e ${notification.hoursRemaining}h`;
     }
     return `${notification.diasRestantes} dias`;
   };
 
   const getUrgencyLevel = (notification: any) => {
     if (notification.diasRestantes === 0) {
-      if (notification.horasRemainingInDay <= 2) return 'critical';
+      if (notification.hoursRemaining <= 2) return 'critical';
       return 'urgent';
     }
     if (notification.diasRestantes <= 1) return 'warning';
