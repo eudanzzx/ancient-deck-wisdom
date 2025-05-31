@@ -49,7 +49,7 @@ export const useRelatorioIndividual = () => {
       const precoValue = atendimento.preco || atendimento.valor || "0";
       const precoNumber = parseFloat(precoValue.toString());
       const validNumber = isNaN(precoNumber) ? 0 : precoNumber;
-      const currentTotal = Number(clienteData.valorTotal) || 0;
+      const currentTotal = typeof clienteData.valorTotal === 'number' ? clienteData.valorTotal : 0;
       clienteData.valorTotal = currentTotal + validNumber;
       
       const dataAtendimento = new Date(atendimento.dataAtendimento);
@@ -59,7 +59,7 @@ export const useRelatorioIndividual = () => {
     });
     
     return Array.from(clientesMap.values()).sort((a, b) => 
-      new Date(b.ultimaConsulta) - new Date(a.ultimaConsulta)
+      new Date(b.ultimaConsulta).getTime() - new Date(a.ultimaConsulta).getTime()
     );
   }, [filteredAtendimentos]);
 
