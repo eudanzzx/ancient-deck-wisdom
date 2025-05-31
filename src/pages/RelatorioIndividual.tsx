@@ -31,78 +31,150 @@ const RelatorioIndividual = () => {
     try {
       const doc = new jsPDF();
       
-      // Header elegante
-      doc.setFontSize(18);
+      // Header compacto
+      doc.setFontSize(16);
       doc.setTextColor(37, 99, 235);
-      doc.text(`Relatório - ${cliente.nome}`, 105, 20, { align: 'center' });
+      doc.text(`Relatório - ${cliente.nome}`, 105, 15, { align: 'center' });
       
       // Linha decorativa
       doc.setDrawColor(37, 99, 235);
-      doc.setLineWidth(0.5);
-      doc.line(30, 28, 180, 28);
+      doc.setLineWidth(0.3);
+      doc.line(30, 20, 180, 20);
       
-      // Resumo compacto
-      doc.setFontSize(10);
+      // Resumo ultra compacto
+      doc.setFontSize(8);
       doc.setTextColor(0, 0, 0);
-      doc.text(`Atendimentos: ${cliente.totalConsultas}`, 30, 40);
-      doc.text(`Total: R$ ${cliente.valorTotal.toFixed(2)}`, 105, 40);
-      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 140, 40);
+      doc.text(`Atendimentos: ${cliente.totalConsultas} | Total: R$ ${cliente.valorTotal.toFixed(2)} | Gerado: ${new Date().toLocaleDateString('pt-BR')}`, 30, 28);
 
-      // Tabela compacta com apenas os primeiros 15 atendimentos
-      const atendimentosLimitados = cliente.atendimentos.slice(0, 15);
+      // Histórico detalhado dos atendimentos
+      let yPos = 38;
+      doc.setFontSize(10);
+      doc.setTextColor(37, 99, 235);
+      doc.text('Histórico de Atendimentos:', 30, yPos);
+      yPos += 8;
+
+      // Limitar a 8 atendimentos para caber em uma página
+      const atendimentosLimitados = cliente.atendimentos.slice(0, 8);
       
-      const tableData = atendimentosLimitados.map((atendimento: any) => {
-        const detalhesResumo = atendimento.detalhes ? 
-          (atendimento.detalhes.length > 40 ? atendimento.detalhes.substring(0, 40) + '...' : atendimento.detalhes) : 
-          'N/A';
+      atendimentosLimitados.forEach((atendimento: any, index: number) => {
+        if (yPos > 250) return; // Parar se não couber na página
         
-        return [
-          atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
-          atendimento.tipoServico?.replace(/[-_]/g, ' ') || 'Consulta',
-          `R$ ${parseFloat(atendimento.valor || atendimento.preco || "0").toFixed(2)}`,
-          detalhesResumo
-        ];
-      });
-
-      autoTable(doc, {
-        head: [["Data", "Serviço", "Valor", "Resumo"]],
-        body: tableData,
-        startY: 50,
-        theme: 'grid',
-        styles: { 
-          fontSize: 8, 
-          cellPadding: 3,
-          textColor: [40, 40, 40],
-          lineColor: [220, 220, 220],
-          lineWidth: 0.3,
-        },
-        headStyles: { 
-          fillColor: [37, 99, 235], 
-          textColor: [255, 255, 255],
-          fontSize: 9,
-          fontStyle: 'bold',
-        },
-        columnStyles: {
-          0: { cellWidth: 25 },
-          1: { cellWidth: 35 },
-          2: { cellWidth: 25 },
-          3: { cellWidth: 85 }
-        },
-        alternateRowStyles: {
-          fillColor: [250, 250, 250],
-        },
-        margin: { left: 20, right: 20 },
-        pageBreak: 'avoid'
-      });
-
-      // Adicionar nota se houver mais atendimentos
-      if (cliente.atendimentos.length > 15) {
-        const finalY = (doc as any).lastAutoTable.finalY + 10;
-        if (finalY < 260) { // Só adiciona se couber na página
-          doc.setFontSize(8);
-          doc.setTextColor(100, 100, 100);
-          doc.text(`Mostrando 15 de ${cliente.atendimentos.length} atendimentos`, 105, finalY, { align: 'center' });
+        // Cabeçalho do atendimento
+        doc.setFontSize(9);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${index + 1}. ${atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A'} - ${atendimento.tipoServico?.replace(/[-_]/g, ' ') || 'Consulta'} - R$ ${parseFloat(atendimento.valor || "0").toFixed(2)}`, 30, yPos);
+        yPos += 6;
+        
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(60, 60, 60);
+        
+        // Informações básicas em linha compacta
+        const infos = [];
+        if (atendimento.statusPagamento) infos.push(`Status: ${atendimento.statusPagamento}`);
+        if (atendimento.signo) infos.push(`Signo: ${atendimento.signo}`);
+        if (atendimento.destino) infos.push(`Destino: ${atendimento.destino}`);
+        if (atendimento.ano) infos.push(`Ano: ${atendimento.ano}`);
+        
+        if (infos.length > 0) {
+          const infoText = infos.join(' | ');
+          const infoLines = doc.splitTextToSize(infoText, 150);
+          doc.text(infoLines, 30, yPos);
+          yPos += infoLines.length * 4 + 2;
         }
+        
+        // Detalhes da sessão
+        if (atendimento.detalhes) {
+          doc.setTextColor(37, 99, 235);
+          doc.text('Detalhes:', 30, yPos);
+          yPos += 4;
+          doc.setTextColor(60, 60, 60);
+          const detalhesLines = doc.splitTextToSize(atendimento.detalhes, 150);
+          const maxDetalhesLines = Math.min(detalhesLines.length, 3); // Máximo 3 linhas
+          for (let i = 0; i < maxDetalhesLines; i++) {
+            doc.text(detalhesLines[i], 30, yPos);
+            yPos += 4;
+          }
+          if (detalhesLines.length > 3) {
+            doc.text('...', 30, yPos);
+            yPos += 4;
+          }
+          yPos += 2;
+        }
+        
+        // Tratamento
+        if (atendimento.tratamento) {
+          doc.setTextColor(37, 99, 235);
+          doc.text('Tratamento:', 30, yPos);
+          yPos += 4;
+          doc.setTextColor(60, 60, 60);
+          const tratamentoLines = doc.splitTextToSize(atendimento.tratamento, 150);
+          const maxTratamentoLines = Math.min(tratamentoLines.length, 2); // Máximo 2 linhas
+          for (let i = 0; i < maxTratamentoLines; i++) {
+            doc.text(tratamentoLines[i], 30, yPos);
+            yPos += 4;
+          }
+          if (tratamentoLines.length > 2) {
+            doc.text('...', 30, yPos);
+            yPos += 4;
+          }
+          yPos += 2;
+        }
+        
+        // Indicação
+        if (atendimento.indicacao) {
+          doc.setTextColor(37, 99, 235);
+          doc.text('Indicação:', 30, yPos);
+          yPos += 4;
+          doc.setTextColor(60, 60, 60);
+          const indicacaoLines = doc.splitTextToSize(atendimento.indicacao, 150);
+          const maxIndicacaoLines = Math.min(indicacaoLines.length, 2); // Máximo 2 linhas
+          for (let i = 0; i < maxIndicacaoLines; i++) {
+            doc.text(indicacaoLines[i], 30, yPos);
+            yPos += 4;
+          }
+          if (indicacaoLines.length > 2) {
+            doc.text('...', 30, yPos);
+            yPos += 4;
+          }
+          yPos += 2;
+        }
+        
+        // Ponto de atenção
+        if (atendimento.atencaoFlag && atendimento.atencaoNota) {
+          doc.setTextColor(220, 53, 69);
+          doc.text('⚠ ATENÇÃO:', 30, yPos);
+          yPos += 4;
+          const atencaoLines = doc.splitTextToSize(atendimento.atencaoNota, 150);
+          const maxAtencaoLines = Math.min(atencaoLines.length, 2); // Máximo 2 linhas
+          for (let i = 0; i < maxAtencaoLines; i++) {
+            doc.text(atencaoLines[i], 30, yPos);
+            yPos += 4;
+          }
+          if (atencaoLines.length > 2) {
+            doc.text('...', 30, yPos);
+            yPos += 4;
+          }
+          yPos += 2;
+        }
+        
+        // Linha separadora
+        if (index < atendimentosLimitados.length - 1 && yPos < 240) {
+          doc.setDrawColor(200, 200, 200);
+          doc.setLineWidth(0.2);
+          doc.line(30, yPos, 180, yPos);
+          yPos += 6;
+        } else {
+          yPos += 4;
+        }
+      });
+
+      // Nota se houver mais atendimentos
+      if (cliente.atendimentos.length > 8 && yPos < 270) {
+        doc.setFontSize(7);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Mostrando 8 de ${cliente.atendimentos.length} atendimentos`, 105, yPos, { align: 'center' });
       }
 
       // Footer compacto
