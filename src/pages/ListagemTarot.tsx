@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ const ListagemTarot = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("asc"); // 'asc' or 'desc'
   const [sortBy, setSortBy] = useState("nomeCliente"); // Default sort by client name
-  const { getAllTarotAnalyses, deleteTarotAnalysis } = useUserDataService();
+  const { getAllTarotAnalyses, deleteTarotAnalise } = useUserDataService();
 
   useEffect(() => {
     const storedAnalises = getAllTarotAnalyses();
@@ -38,14 +38,14 @@ const ListagemTarot = () => {
 
   const handleDelete = useCallback(async (id: string) => {
     try {
-      await deleteTarotAnalysis(id);
+      await deleteTarotAnalise(id);
       const updatedAnalises = getAllTarotAnalyses();
       setAnalises(updatedAnalises);
       toast.success("Análise excluída com sucesso!");
     } catch (error) {
       toast.error("Erro ao excluir análise.");
     }
-  }, [deleteTarotAnalysis, getAllTarotAnalyses]);
+  }, [deleteTarotAnalise, getAllTarotAnalyses]);
 
   const handleFinalizar = useCallback((id: string) => {
     const analisesAtualizadas = analises.map((analise) =>
