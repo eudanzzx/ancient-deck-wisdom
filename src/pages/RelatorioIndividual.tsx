@@ -3,14 +3,22 @@ import React, { useState } from 'react';
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import DetailedClientReportGenerator from "@/components/reports/DetailedClientReportGenerator";
 import RelatorioIndividualStats from "@/components/relatorio-individual/RelatorioIndividualStats";
-import ClientesLista from "@/components/relatorio-individual/ClientesLista";
 import { useRelatorioIndividual } from "@/hooks/useRelatorioIndividual";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search, FileText, Download, Calendar, DollarSign, User, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { useNavigate } from "react-router-dom";
 
 const RelatorioIndividual = () => {
-  const [selectedClient, setSelectedClient] = useState(null);
-  const { toast } = useToast();
+  const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const navigate = useNavigate();
   
   const {
     searchTerm,
@@ -20,15 +28,192 @@ const RelatorioIndividual = () => {
     getTotalValue
   } = useRelatorioIndividual();
 
-  const handleDownloadIndividual = (cliente) => {
-    setSelectedClient(cliente);
+  const downloadIndividualClientReport = (cliente: any) => {
+    try {
+      const doc = new jsPDF();
+      
+      // Header elegante
+      doc.setFontSize(20);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`Relatório Individual - ${cliente.nome}`, 105, 25, { align: 'center' });
+      
+      // Linha decorativa
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(0.5);
+      doc.line(30, 35, 180, 35);
+      
+      // Resumo em boxes elegantes
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      
+      // Box com informações resumidas
+      doc.rect(40, 45, 120, 30, 'S');
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('RESUMO', 100, 55, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Atendimentos: ${cliente.totalConsultas}`, 50, 65);
+      doc.text(`Total: R$ ${cliente.valorTotal.toFixed(2)}`, 120, 65);
+
+      // Tabela de atendimentos
+      const tableData = cliente.atendimentos.map((atendimento: any) => [
+        atendimento.dataAtendimento ? new Date(atendimento.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
+        atendimento.tipoServico?.replace('-', ' ') || 'Consulta',
+        `R$ ${parseFloat(atendimento.valor || atendimento.preco || "0").toFixed(2)}`
+      ]);
+
+      autoTable(doc, {
+        head: [['Data', 'Serviço', 'Valor']],
+        body: tableData,
+        startY: 90,
+        theme: 'grid',
+        styles: {
+          fontSize: 10,
+          cellPadding: 8,
+          textColor: [40, 40, 40],
+          lineColor: [220, 220, 220],
+          lineWidth: 0.5,
+        },
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontSize: 11,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [250, 250, 250],
+        },
+        margin: { left: 30, right: 30 },
+      });
+
+      // Footer
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          `Libertá - Página ${i} de ${totalPages}`,
+          105,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
+      }
+      
+      doc.save(`Relatorio_Cliente_${cliente.nome.replace(/ /g, '_')}.pdf`);
+      
+      toast.success(`Relatório de ${cliente.nome} gerado com sucesso!`);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar relatório");
+    }
   };
 
-  const handleDownloadConsolidated = () => {
-    toast({
-      title: "Gerando relatório consolidado",
-      description: "O relatório de todos os clientes está sendo gerado.",
-    });
+  const downloadGeneralReport = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Header elegante
+      doc.setFontSize(22);
+      doc.setTextColor(37, 99, 235);
+      doc.text('Relatório Geral', 105, 25, { align: 'center' });
+      
+      doc.setFontSize(14);
+      doc.setTextColor(120, 120, 120);
+      doc.text('Resumo de Atendimentos', 105, 35, { align: 'center' });
+      
+      // Linha decorativa
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(0.5);
+      doc.line(30, 45, 180, 45);
+      
+      // Estatísticas em boxes
+      const totalAtendimentos = atendimentos.length;
+      const totalValue = parseFloat(getTotalValue());
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      
+      // Box 1 - Total
+      doc.rect(20, 55, 45, 25);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Total', 25, 63);
+      doc.setFontSize(16);
+      doc.setTextColor(37, 99, 235);
+      doc.text(totalAtendimentos.toString(), 42, 75, { align: 'center' });
+      
+      // Box 2 - Valor
+      doc.rect(75, 55, 60, 25);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Receita Total', 80, 63);
+      doc.setFontSize(16);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`R$ ${totalValue.toFixed(2)}`, 105, 75, { align: 'center' });
+      
+      // Box 3 - Clientes
+      doc.rect(145, 55, 45, 25);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Clientes', 150, 63);
+      doc.setFontSize(16);
+      doc.setTextColor(37, 99, 235);
+      doc.text(clientesUnicos.length.toString(), 167, 75, { align: 'center' });
+      
+      // Tabela simplificada
+      const tableData = atendimentos.slice(0, 20).map(a => [
+        a.nome || 'N/A',
+        a.dataAtendimento ? new Date(a.dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
+        a.tipoServico?.replace('-', ' ') || 'N/A',
+        `R$ ${parseFloat(a.valor || a.preco || "0").toFixed(2)}`
+      ]);
+      
+      autoTable(doc, {
+        head: [["Cliente", "Data", "Serviço", "Valor"]],
+        body: tableData,
+        startY: 95,
+        theme: 'grid',
+        styles: { 
+          fontSize: 9, 
+          cellPadding: 6,
+          textColor: [60, 60, 60],
+        },
+        headStyles: { 
+          fillColor: [37, 99, 235], 
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [248, 248, 248],
+        },
+        margin: { left: 20, right: 20 },
+      });
+      
+      // Footer
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          `Libertá - Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} - Página ${i} de ${totalPages}`,
+          105,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
+      }
+      
+      doc.save(`Relatorio_Geral_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+      
+      toast.success("Relatório geral gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar relatório");
+    }
   };
 
   return (
@@ -48,6 +233,14 @@ const RelatorioIndividual = () => {
               <p className="text-blue-600/80 mt-1">Relatórios detalhados por cliente</p>
             </div>
           </div>
+          <Button 
+            variant="outline" 
+            className="border-blue-600/30 text-blue-600 hover:bg-blue-600/10 hover:border-blue-600"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar ao Início
+          </Button>
         </div>
 
         <RelatorioIndividualStats
@@ -56,21 +249,106 @@ const RelatorioIndividual = () => {
           totalClientes={clientesUnicos.length}
         />
 
-        <ClientesLista
-          clientesUnicos={clientesUnicos}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onDownloadIndividual={handleDownloadIndividual}
-          onDownloadConsolidated={handleDownloadConsolidated}
-        />
+        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl mb-6">
+          <CardHeader className="border-b border-slate-200/50">
+            <CardTitle className="text-blue-600">Relatórios Gerais</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={downloadGeneralReport}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Relatório Geral
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-        {selectedClient && (
-          <DetailedClientReportGenerator
-            atendimentos={selectedClient.atendimentos}
-            clients={[{ name: selectedClient.nome, count: selectedClient.totalConsultas }]}
-            onClose={() => setSelectedClient(null)}
-          />
-        )}
+        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl">
+          <CardHeader className="border-b border-slate-200/50 pb-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Clientes para Relatório
+                </CardTitle>
+                <Badge variant="secondary" className="bg-blue-600/10 text-blue-600 border-blue-600/20">
+                  {clientesUnicos.length} clientes
+                </Badge>
+              </div>
+              <div className="relative">
+                <Input 
+                  type="text" 
+                  placeholder="Buscar cliente..." 
+                  className="pr-10 bg-white/90 border-white/30 focus:border-blue-600 focus:ring-blue-600/20"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            {clientesUnicos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <FileText className="h-16 w-16 text-slate-300 mb-4" />
+                <h3 className="text-xl font-medium text-slate-600">Nenhum cliente encontrado</h3>
+                <p className="text-slate-500 mt-2">
+                  {searchTerm 
+                    ? "Tente ajustar sua busca ou limpar o filtro" 
+                    : "Nenhum atendimento registrado ainda"
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {clientesUnicos.map((cliente, index) => (
+                  <div key={`${cliente.nome}-${index}`} className="border border-white/20 rounded-xl bg-white/50 hover:bg-white/70 transition-all duration-300 shadow-md">
+                    <div className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <User className="h-5 w-5 text-blue-600" />
+                            <span className="font-medium text-slate-800">{cliente.nome}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-slate-500">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              <span>
+                                Última: {cliente.ultimaConsulta 
+                                  ? new Date(cliente.ultimaConsulta).toLocaleDateString('pt-BR')
+                                  : 'N/A'
+                                }
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="h-4 w-4 text-emerald-600" />
+                              <span className="font-medium text-emerald-600">
+                                R$ {cliente.valorTotal.toFixed(2)}
+                              </span>
+                            </div>
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                              {cliente.totalConsultas} consulta{cliente.totalConsultas !== 1 ? 's' : ''}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => downloadIndividualClientReport(cliente)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Relatório Individual
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
