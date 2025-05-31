@@ -11,34 +11,61 @@ interface TarotCountdownProps {
 const TarotCountdown: React.FC<TarotCountdownProps> = memo(({ analises }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Update time every 5 minutes instead of every minute
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
-    }, 300000); // 5 minutes
+    }, 60000); // Atualizar a cada minuto
     return () => clearInterval(interval);
   }, []);
 
-  // Memoize expensive calculations
   const expiringAnalyses = useMemo(() => {
     const now = currentTime;
     const expiring = [];
 
+    console.log('TarotCountdown - Verificando análises:', analises.length);
+
     analises.forEach(analise => {
-      if (analise.lembretes && analise.lembretes.length > 0) {
-        analise.lembretes.forEach(lembrete => {
+      console.log('TarotCountdown - Análise:', analise.nomeCliente, 'Lembretes:', analise.lembretes);
+      
+      if (analise.lembretes && Array.isArray(analise.lembretes) && analise.lembretes.length > 0) {
+        analise.lembretes.forEach((lembrete, index) => {
+          console.log('TarotCountdown - Lembrete:', lembrete);
+          
+          // Verificar se o lembrete tem dataLembrete diretamente
           if (lembrete.dataLembrete && !lembrete.concluido) {
             const lembreteDate = new Date(lembrete.dataLembrete);
             const timeDiff = lembreteDate.getTime() - now.getTime();
             const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
             
-            // Show if expiring within 3 days
+            console.log('TarotCountdown - Dias restantes:', daysDiff);
+            
+            // Mostrar se expirando em 3 dias ou menos
+            if (daysDiff <= 3 && daysDiff >= 0) {
+              expiring.push({
+                nomeCliente: analise.nomeCliente,
+                diasRestantes: daysDiff,
+                lembreteTexto: lembrete.texto || "Lembrete programado",
+                dataLembrete: lembreteDate
+              });
+            }
+          }
+          // Verificar se o lembrete tem dias (contador baseado em data de início)
+          else if (lembrete.dias && analise.dataInicio && lembrete.texto) {
+            const dataInicio = new Date(analise.dataInicio);
+            const dataExpiracao = new Date(dataInicio);
+            dataExpiracao.setDate(dataExpiracao.getDate() + parseInt(lembrete.dias));
+            
+            const timeDiff = dataExpiracao.getTime() - now.getTime();
+            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            console.log('TarotCountdown - Contador - Dias restantes:', daysDiff);
+            
             if (daysDiff <= 3 && daysDiff >= 0) {
               expiring.push({
                 nomeCliente: analise.nomeCliente,
                 diasRestantes: daysDiff,
                 lembreteTexto: lembrete.texto,
-                dataLembrete: lembreteDate
+                dataLembrete: dataExpiracao
               });
             }
           }
@@ -46,6 +73,7 @@ const TarotCountdown: React.FC<TarotCountdownProps> = memo(({ analises }) => {
       }
     });
 
+    console.log('TarotCountdown - Lembretes expirando:', expiring);
     return expiring;
   }, [analises, currentTime]);
 
@@ -79,7 +107,7 @@ const TarotCountdown: React.FC<TarotCountdownProps> = memo(({ analises }) => {
                     Lembrete para {item.nomeCliente}
                   </h3>
                   <p className="text-amber-700 text-sm">
-                    {item.lembreteTexto || "Retorno programado"}
+                    {item.lembreteTexto}
                   </p>
                 </div>
               </div>

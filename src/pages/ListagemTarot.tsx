@@ -76,6 +76,7 @@ const ListagemTarot = () => {
 
   const loadAnalises = () => {
     const data = getAllTarotAnalyses();
+    console.log('ListagemTarot - Dados carregados:', data);
     setAnalises(data);
     setFilteredAnalises(data);
   };
@@ -153,7 +154,10 @@ const ListagemTarot = () => {
   };
 
   const calculateTimeRemaining = (analise) => {
-    if (!analise.lembretes || analise.lembretes.length === 0 || !analise.dataInicio) {
+    console.log('ListagemTarot - Calculando tempo restante para:', analise.nomeCliente, 'Lembretes:', analise.lembretes);
+    
+    if (!analise.lembretes || !Array.isArray(analise.lembretes) || analise.lembretes.length === 0 || !analise.dataInicio) {
+      console.log('ListagemTarot - Sem lembretes ou data de início');
       return null;
     }
 
@@ -162,12 +166,16 @@ const ListagemTarot = () => {
     let closestDiff = Infinity;
 
     analise.lembretes.forEach((lembrete) => {
+      console.log('ListagemTarot - Processando lembrete:', lembrete);
+      
       if (lembrete.texto && lembrete.dias) {
         const dataInicio = new Date(analise.dataInicio);
         const dataExpiracao = new Date(dataInicio);
-        dataExpiracao.setDate(dataExpiracao.getDate() + lembrete.dias);
+        dataExpiracao.setDate(dataExpiracao.getDate() + parseInt(lembrete.dias));
         
         const timeDiff = dataExpiracao.getTime() - now.getTime();
+        
+        console.log('ListagemTarot - Tempo diferença:', timeDiff, 'Data expiração:', dataExpiracao);
         
         if (timeDiff < closestDiff && timeDiff >= 0) {
           closestDiff = timeDiff;
@@ -180,6 +188,7 @@ const ListagemTarot = () => {
       }
     });
 
+    console.log('ListagemTarot - Resultado tempo restante:', closestExpiration);
     return closestExpiration;
   };
 
@@ -382,6 +391,8 @@ const ListagemTarot = () => {
                     {analisesToShow.map((analise, index) => {
                       const timeRemaining = calculateTimeRemaining(analise);
                       const formattedTime = formatTimeRemaining(timeRemaining);
+                      
+                      console.log('ListagemTarot - Renderizando análise:', analise.nomeCliente, 'Tempo restante:', formattedTime);
                       
                       return (
                         <Card 

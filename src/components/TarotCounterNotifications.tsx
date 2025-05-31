@@ -16,17 +16,25 @@ const TarotCounterNotifications: React.FC<TarotCounterNotificationsProps> = ({ a
       const now = new Date();
       const activeCounters: any[] = [];
 
+      console.log('TarotCounterNotifications - Verificando contadores para:', analises.length, 'análises');
+
       analises.forEach(analise => {
-        if (analise.lembretes && analise.lembretes.length > 0 && analise.dataInicio) {
+        console.log('TarotCounterNotifications - Análise:', analise.nomeCliente, 'Lembretes:', analise.lembretes);
+        
+        if (analise.lembretes && Array.isArray(analise.lembretes) && analise.lembretes.length > 0 && analise.dataInicio) {
           analise.lembretes.forEach((lembrete: any) => {
+            console.log('TarotCounterNotifications - Processando lembrete:', lembrete);
+            
             if (lembrete.texto && lembrete.dias) {
               const dataInicio = new Date(analise.dataInicio);
               const dataExpiracao = new Date(dataInicio);
-              dataExpiracao.setDate(dataExpiracao.getDate() + lembrete.dias);
+              dataExpiracao.setDate(dataExpiracao.getDate() + parseInt(lembrete.dias));
               
               const timeDiff = dataExpiracao.getTime() - now.getTime();
               const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
               const hoursDiff = Math.ceil(timeDiff / (1000 * 3600));
+
+              console.log('TarotCounterNotifications - Dias restantes:', daysDiff, 'Horas restantes:', hoursDiff);
 
               // Mostrar se falta 2 dias ou menos
               if (daysDiff <= 2 && daysDiff >= 0) {
@@ -43,6 +51,7 @@ const TarotCounterNotifications: React.FC<TarotCounterNotificationsProps> = ({ a
         }
       });
 
+      console.log('TarotCounterNotifications - Contadores ativos:', activeCounters);
       setNotifications(activeCounters);
     };
 
