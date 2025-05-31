@@ -137,6 +137,15 @@ const ListagemTarot = () => {
       const analise = analises.find(a => a.id === id);
       const newStatus = !analise.finalizado;
       
+      // Dispatch event when analysis is finalized to remove counters
+      if (newStatus) {
+        console.log('ListagemTarot - Disparando evento de finalização para:', id);
+        const event = new CustomEvent('tarotAnalysisFinalized', {
+          detail: { analysisId: id }
+        });
+        window.dispatchEvent(event);
+      }
+      
       toast({
         title: newStatus ? "Análise finalizada" : "Análise reaberta",
         description: newStatus 

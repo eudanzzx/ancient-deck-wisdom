@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, AlertTriangle, Timer, ChevronDown, ChevronUp, Minimize, User } from 'lucide-react';
@@ -20,6 +19,7 @@ interface CounterData {
   dataExpiracao: Date;
   priority: number;
   timeDiff: number;
+  analysisId: string; // Add analysis ID to track which analysis this counter belongs to
 }
 
 interface TarotCounterPriorityNotificationsProps {
@@ -39,6 +39,12 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
       console.log('TarotCounterPriorityNotifications - Verificando contadores para:', analises.length, 'análises');
 
       analises.forEach(analise => {
+        // Skip finalized analyses
+        if (analise.finalizado) {
+          console.log('TarotCounterPriorityNotifications - Pulando análise finalizada:', analise.nomeCliente);
+          return;
+        }
+
         if (analise.lembretes && Array.isArray(analise.lembretes) && analise.lembretes.length > 0 && analise.dataInicio) {
           analise.lembretes.forEach((lembrete: any) => {
             if (lembrete.texto && lembrete.dias) {
@@ -73,7 +79,8 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
                   minutosRestantes,
                   dataExpiracao,
                   priority,
-                  timeDiff
+                  timeDiff,
+                  analysisId: analise.id // Track which analysis this counter belongs to
                 });
               }
             }
@@ -94,6 +101,25 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
     
     return () => clearInterval(interval);
   }, [analises]);
+
+  // Listen for analysis finalization events
+  useEffect(() => {
+    const handleAnalysisFinalized = (event: CustomEvent) => {
+      const { analysisId } = event.detail;
+      console.log('TarotCounterPriorityNotifications - Análise finalizada, removendo contadores:', analysisId);
+      
+      setCounters(prevCounters => 
+        prevCounters.filter(counter => counter.analysisId !== analysisId)
+      );
+    };
+
+    // Listen for the custom event
+    window.addEventListener('tarotAnalysisFinalized' as any, handleAnalysisFinalized);
+    
+    return () => {
+      window.removeEventListener('tarotAnalysisFinalized' as any, handleAnalysisFinalized);
+    };
+  }, []);
 
   const formatDetailedTime = (counter: CounterData) => {
     if (counter.diasRestantes === 0) {
@@ -154,7 +180,6 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
     return <Clock className="h-5 w-5 text-blue-600" />;
   };
 
-  // Agrupar contadores por cliente
   const groupedCounters = counters.reduce((acc, counter) => {
     if (!acc[counter.nomeCliente]) {
       acc[counter.nomeCliente] = [];
@@ -163,7 +188,6 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
     return acc;
   }, {} as Record<string, CounterData[]>);
 
-  // Obter os 3 grupos de clientes com contadores mais próximos
   const topClientGroups = Object.entries(groupedCounters)
     .sort(([, a], [, b]) => a[0].timeDiff - b[0].timeDiff)
     .slice(0, 3);
