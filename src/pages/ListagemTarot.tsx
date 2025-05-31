@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import TarotCountdown from "@/components/TarotCountdown";
 import TarotCounterNotifications from "@/components/TarotCounterNotifications";
+import TarotCounterPriorityNotifications from "@/components/TarotCounterPriorityNotifications";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 
 const ListagemTarot = () => {
@@ -263,6 +264,8 @@ const ListagemTarot = () => {
       <DashboardHeader />
 
       <main className="pt-20 p-4 animate-fade-in relative z-10">
+        <TarotCounterPriorityNotifications analises={analises} />
+        
         <TarotCountdown analises={analises} />
         
         <TarotCounterNotifications analises={analises} />

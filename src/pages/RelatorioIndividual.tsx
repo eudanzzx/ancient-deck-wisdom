@@ -1,302 +1,231 @@
-
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Download, Search, Calendar, DollarSign, FileText, Users } from "lucide-react";
-import useUserDataService from "@/services/userDataService";
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { 
+  Search, 
+  FileText, 
+  Download,
+  Calendar,
+  DollarSign,
+  Users,
+  BarChart3
+} from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 import Logo from "@/components/Logo";
-
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
+import useUserDataService from "@/services/userDataService";
+import { useToast } from "@/hooks/use-toast";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DetailedClientReportGenerator from "@/components/reports/DetailedClientReportGenerator";
 
 const RelatorioIndividual = () => {
-  const { getAllAtendimentos } = useUserDataService();
   const [searchTerm, setSearchTerm] = useState('');
-  const [atendimentos] = useState(getAllAtendimentos());
+  const [atendimentos, setAtendimentos] = useState([]);
+  const [filteredAtendimentos, setFilteredAtendimentos] = useState([]);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const { getAtendimentos } = useUserDataService();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadAtendimentos();
+  }, []);
+
+  useEffect(() => {
+    const filtered = atendimentos.filter(atendimento =>
+      atendimento.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredAtendimentos(filtered);
+  }, [searchTerm, atendimentos]);
+
+  const loadAtendimentos = () => {
+    const data = getAtendimentos();
+    console.log('RelatorioIndividual - Dados carregados:', data);
+    setAtendimentos(data);
+    setFilteredAtendimentos(data);
+  };
 
   const clientesUnicos = useMemo(() => {
     const clientesMap = new Map();
     
-    atendimentos.forEach(atendimento => {
-      const clienteKey = atendimento.nomeCliente.toLowerCase();
-      if (!clientesMap.has(clienteKey)) {
-        clientesMap.set(clienteKey, {
-          nome: atendimento.nomeCliente,
-          atendimentos: []
+    filteredAtendimentos.forEach(atendimento => {
+      const cliente = atendimento.nomeCliente;
+      if (!clientesMap.has(cliente)) {
+        clientesMap.set(cliente, {
+          nome: cliente,
+          atendimentos: [],
+          totalConsultas: 0,
+          valorTotal: 0,
+          ultimaConsulta: null
         });
       }
-      clientesMap.get(clienteKey).atendimentos.push(atendimento);
+      
+      const clienteData = clientesMap.get(cliente);
+      clienteData.atendimentos.push(atendimento);
+      clienteData.totalConsultas += 1;
+      clienteData.valorTotal += parseFloat(atendimento.preco || "0");
+      
+      const dataAtendimento = new Date(atendimento.dataAtendimento);
+      if (!clienteData.ultimaConsulta || dataAtendimento > new Date(clienteData.ultimaConsulta)) {
+        clienteData.ultimaConsulta = atendimento.dataAtendimento;
+      }
     });
-
-    return Array.from(clientesMap.values());
-  }, [atendimentos]);
-
-  const clientesFiltrados = useMemo(() => {
-    return clientesUnicos.filter(cliente =>
-      cliente.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    return Array.from(clientesMap.values()).sort((a, b) => 
+      new Date(b.ultimaConsulta) - new Date(a.ultimaConsulta)
     );
-  }, [clientesUnicos, searchTerm]);
+  }, [filteredAtendimentos]);
 
-  const calcularTotalCliente = (atendimentos: any[]) => {
-    return atendimentos.reduce((total, atendimento) => {
-      const preco = parseFloat(atendimento.preco || "0");
-      return total + preco;
-    }, 0);
+  const getTotalValue = () => {
+    return atendimentos.reduce((acc, curr) => acc + parseFloat(curr.preco || "0"), 0).toFixed(2);
   };
 
-  const gerarRelatorioIndividual = useCallback((cliente: any) => {
-    const doc = new jsPDF();
-    
-    doc.setFontSize(20);
-    doc.setTextColor(59, 130, 246);
-    doc.text('Relatório Individual - Consultas', 20, 30);
-    
-    doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Cliente: ${cliente.nome}`, 20, 50);
-    
-    doc.setFontSize(12);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 65);
-    
-    const totalGasto = calcularTotalCliente(cliente.atendimentos);
-    doc.text(`Total gasto: R$ ${totalGasto.toFixed(2)}`, 20, 80);
-    doc.text(`Número de consultas: ${cliente.atendimentos.length}`, 20, 95);
+  const handleDownloadIndividual = (cliente) => {
+    setSelectedClient(cliente);
+  };
 
-    const tableData = cliente.atendimentos.map((atendimento: any) => [
-      format(new Date(atendimento.dataConsulta), 'dd/MM/yyyy'),
-      atendimento.tipoConsulta,
-      `R$ ${parseFloat(atendimento.preco || "0").toFixed(2)}`,
-      atendimento.observacoes || 'Sem observações'
-    ]);
-
-    doc.autoTable({
-      head: [['Data', 'Tipo de Consulta', 'Valor', 'Observações']],
-      body: tableData,
-      startY: 110,
-      styles: {
-        fontSize: 9,
-        textColor: [0, 0, 0],
-      },
-      headStyles: {
-        fillColor: [59, 130, 246],
-        textColor: [255, 255, 255],
-      },
+  const handleDownloadConsolidated = () => {
+    toast({
+      title: "Gerando relatório consolidado",
+      description: "O relatório de todos os clientes está sendo gerado.",
     });
-
-    doc.save(`relatorio-individual-${cliente.nome.replace(/\s+/g, '-').toLowerCase()}.pdf`);
-  }, []);
-
-  const gerarRelatorioConsolidado = useCallback(() => {
-    const doc = new jsPDF();
-    
-    doc.setFontSize(20);
-    doc.setTextColor(59, 130, 246);
-    doc.text('Relatório Consolidado - Todos os Clientes', 20, 30);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 45);
-    
-    const totalGeral = clientesUnicos.reduce((total, cliente) => {
-      return total + calcularTotalCliente(cliente.atendimentos);
-    }, 0);
-    
-    doc.text(`Total de clientes: ${clientesUnicos.length}`, 20, 65);
-    doc.text(`Receita total: R$ ${totalGeral.toFixed(2)}`, 20, 80);
-
-    const tableData = clientesUnicos.map(cliente => [
-      cliente.nome,
-      cliente.atendimentos.length.toString(),
-      `R$ ${calcularTotalCliente(cliente.atendimentos).toFixed(2)}`
-    ]);
-
-    doc.autoTable({
-      head: [['Cliente', 'Consultas', 'Total Gasto']],
-      body: tableData,
-      startY: 95,
-      styles: {
-        fontSize: 10,
-        textColor: [0, 0, 0],
-      },
-      headStyles: {
-        fillColor: [59, 130, 246],
-        textColor: [255, 255, 255],
-      },
-    });
-
-    doc.save('relatorio-consolidado-clientes.pdf');
-  }, [clientesUnicos]);
-
-  const totalReceita = useMemo(() => {
-    return clientesUnicos.reduce((total, cliente) => {
-      return total + calcularTotalCliente(cliente.atendimentos);
-    }, 0);
-  }, [clientesUnicos]);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100">
       <DashboardHeader />
-      
-      <main className="container mx-auto py-24 px-4">
+
+      <main className="pt-20 p-4">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Logo height={50} width={50} />
+            <div className="transform hover:scale-110 transition-all duration-300">
+              <Logo height={50} width={50} />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold text-blue-600">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Relatórios Individuais
               </h1>
-              <p className="text-blue-600 mt-1 opacity-80">Consultas por cliente</p>
+              <p className="text-blue-600/80 mt-1">Relatórios detalhados por cliente</p>
             </div>
           </div>
-          
-          <Button 
-            onClick={gerarRelatorioConsolidado}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Relatório Consolidado
-          </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/90 backdrop-blur-sm border border-white/30">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Total Clientes</p>
-                  <p className="text-3xl font-bold text-slate-800">{clientesUnicos.length}</p>
-                </div>
-                <div className="rounded-xl p-3 bg-blue-600/10">
-                  <Users className="h-8 w-8 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/90 backdrop-blur-sm border border-white/30">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Total Consultas</p>
-                  <p className="text-3xl font-bold text-slate-800">{atendimentos.length}</p>
-                </div>
-                <div className="rounded-xl p-3 bg-blue-600/10">
-                  <FileText className="h-8 w-8 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/90 backdrop-blur-sm border border-white/30">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Receita Total</p>
-                  <p className="text-3xl font-bold text-slate-800">R$ {totalReceita.toFixed(2)}</p>
-                </div>
-                <div className="rounded-xl p-3 bg-blue-600/10">
-                  <DollarSign className="h-8 w-8 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/90 backdrop-blur-sm border border-white/30">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Ticket Médio</p>
-                  <p className="text-3xl font-bold text-slate-800">
-                    R$ {clientesUnicos.length > 0 ? (totalReceita / clientesUnicos.length).toFixed(2) : "0.00"}
-                  </p>
-                </div>
-                <div className="rounded-xl p-3 bg-blue-600/10">
-                  <Calendar className="h-8 w-8 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <DashboardCard 
+            title="Total Arrecadado" 
+            value={`R$ ${getTotalValue()}`} 
+            icon={<DollarSign className="h-8 w-8 text-blue-600" />} 
+          />
+          <DashboardCard 
+            title="Total Consultas" 
+            value={atendimentos.length.toString()} 
+            icon={<BarChart3 className="h-8 w-8 text-blue-600" />} 
+          />
+          <DashboardCard 
+            title="Clientes Únicos" 
+            value={clientesUnicos.length.toString()} 
+            icon={<Users className="h-8 w-8 text-blue-600" />} 
+          />
         </div>
 
-        <Card className="bg-white/90 backdrop-blur-sm border border-white/30">
+        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl">
           <CardHeader className="border-b border-slate-200/50 pb-4">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-2xl font-bold text-blue-600">
-                Clientes
-              </CardTitle>
-              <div className="relative">
-                <Input 
-                  type="text" 
-                  placeholder="Buscar cliente..." 
-                  className="pr-10 bg-white/90 border-white/30 focus:border-blue-600"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Clientes para Relatório
+                </CardTitle>
+                <Badge variant="secondary" className="bg-blue-600/10 text-blue-600 border-blue-600/20">
+                  {clientesUnicos.length} clientes
+                </Badge>
+              </div>
+              <div className="flex gap-4">
+                <div className="relative">
+                  <Input 
+                    type="text" 
+                    placeholder="Buscar cliente..." 
+                    className="pr-10 bg-white/90 border-white/30 focus:border-blue-600 focus:ring-blue-600/20"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                </div>
+                <Button
+                  onClick={handleDownloadConsolidated}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Relatório Consolidado
+                </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-6">
-            {clientesFiltrados.length === 0 ? (
+            {clientesUnicos.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <FileText className="h-16 w-16 text-slate-300 mb-4" />
                 <h3 className="text-xl font-medium text-slate-600">Nenhum cliente encontrado</h3>
                 <p className="text-slate-500 mt-2">
                   {searchTerm 
-                    ? "Tente ajustar sua busca" 
-                    : "Nenhuma consulta foi registrada ainda"
+                    ? "Tente ajustar sua busca ou limpar o filtro" 
+                    : "Nenhum atendimento registrado ainda"
                   }
                 </p>
               </div>
             ) : (
               <div className="grid gap-4">
-                {clientesFiltrados.map((cliente, index) => (
+                {clientesUnicos.map((cliente, index) => (
                   <Card 
-                    key={index} 
+                    key={`${cliente.nome}-${index}`} 
                     className="bg-white/80 border border-white/30 hover:bg-white/90 hover:shadow-lg transition-all duration-300"
                   >
                     <CardContent className="p-6">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                            {cliente.nome}
-                          </h3>
+                          <div className="flex items-center gap-3 mb-3">
+                            <h3 className="text-lg font-semibold text-slate-800">
+                              {cliente.nome}
+                            </h3>
+                            <Badge 
+                              variant="secondary"
+                              className="bg-blue-100 text-blue-700 border-blue-200"
+                            >
+                              {cliente.totalConsultas} consulta{cliente.totalConsultas !== 1 ? 's' : ''}
+                            </Badge>
+                          </div>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-600">
                             <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-blue-600" />
-                              <span>{cliente.atendimentos.length} consulta(s)</span>
+                              <Calendar className="h-4 w-4 text-blue-600" />
+                              <span>
+                                Última: {cliente.ultimaConsulta 
+                                  ? new Date(cliente.ultimaConsulta).toLocaleDateString('pt-BR')
+                                  : 'N/A'
+                                }
+                              </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <DollarSign className="h-4 w-4 text-emerald-600" />
                               <span className="font-medium text-emerald-600">
-                                R$ {calcularTotalCliente(cliente.atendimentos).toFixed(2)}
+                                Total: R$ {cliente.valorTotal.toFixed(2)}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-blue-600" />
+                              <BarChart3 className="h-4 w-4 text-blue-600" />
                               <span>
-                                Última: {format(new Date(Math.max(...cliente.atendimentos.map((a: any) => new Date(a.dataConsulta).getTime()))), 'dd/MM/yyyy')}
+                                Média: R$ {(cliente.valorTotal / cliente.totalConsultas).toFixed(2)}
                               </span>
                             </div>
                           </div>
                         </div>
-                        <Button
-                          variant="outline"
-                          className="border-blue-600/30 text-blue-600 hover:bg-blue-600/10"
-                          onClick={() => gerarRelatorioIndividual(cliente)}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Relatório
-                        </Button>
+                        <div className="flex gap-2 ml-4">
+                          <Button
+                            size="sm"
+                            onClick={() => handleDownloadIndividual(cliente)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Relatório Individual
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -305,9 +234,32 @@ const RelatorioIndividual = () => {
             )}
           </CardContent>
         </Card>
+
+        {selectedClient && (
+          <DetailedClientReportGenerator
+            clientData={selectedClient}
+            onClose={() => setSelectedClient(null)}
+          />
+        )}
       </main>
     </div>
   );
 };
+
+const DashboardCard = ({ title, value, icon }) => (
+  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
+    <CardContent className="pt-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <p className="text-sm font-medium text-slate-600 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-slate-800">{value}</p>
+        </div>
+        <div className="rounded-xl p-3 bg-blue-600/10">
+          {icon}
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default RelatorioIndividual;
