@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,7 +66,8 @@ const RelatorioIndividual = () => {
       // Fix: Ensure proper number parsing for arithmetic operations
       const precoValue = atendimento.preco || atendimento.valor || "0";
       const precoNumber = parseFloat(precoValue.toString());
-      clienteData.valorTotal += isNaN(precoNumber) ? 0 : precoNumber;
+      const validNumber = isNaN(precoNumber) ? 0 : precoNumber;
+      clienteData.valorTotal = Number(clienteData.valorTotal) + Number(validNumber);
       
       const dataAtendimento = new Date(atendimento.dataAtendimento);
       if (!clienteData.ultimaConsulta || dataAtendimento > new Date(clienteData.ultimaConsulta)) {
@@ -81,12 +81,13 @@ const RelatorioIndividual = () => {
   }, [filteredAtendimentos]);
 
   const getTotalValue = () => {
-    return atendimentos.reduce((acc: number, curr) => {
+    const total = atendimentos.reduce((acc: number, curr: any) => {
       const precoValue = curr.preco || curr.valor || "0";
       const precoNumber = parseFloat(precoValue.toString());
       const validNumber = isNaN(precoNumber) ? 0 : precoNumber;
-      return acc + validNumber;
-    }, 0).toFixed(2);
+      return Number(acc) + Number(validNumber);
+    }, 0);
+    return total.toFixed(2);
   };
 
   const handleDownloadIndividual = (cliente) => {
