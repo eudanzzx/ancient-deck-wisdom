@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,7 +68,8 @@ const RelatorioIndividual = () => {
       const precoValue = atendimento.preco || atendimento.valor || "0";
       const precoNumber = parseFloat(precoValue.toString());
       const validNumber = isNaN(precoNumber) ? 0 : precoNumber;
-      clienteData.valorTotal = Number(clienteData.valorTotal) + Number(validNumber);
+      const currentTotal = Number(clienteData.valorTotal) || 0;
+      clienteData.valorTotal = currentTotal + validNumber;
       
       const dataAtendimento = new Date(atendimento.dataAtendimento);
       if (!clienteData.ultimaConsulta || dataAtendimento > new Date(clienteData.ultimaConsulta)) {
