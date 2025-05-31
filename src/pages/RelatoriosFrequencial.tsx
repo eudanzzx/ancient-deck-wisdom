@@ -11,7 +11,8 @@ import {
   CheckCircle,
   FileDown,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Download
 } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
@@ -585,8 +586,8 @@ const RelatoriosFrequencial = () => {
                                     className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-all duration-200"
                                     onClick={() => downloadIndividualAnalysisReport(analise)}
                                   >
-                                    <FileDown className="h-4 w-4 mr-2" />
-                                    Baixar Relatório
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Baixar PDF
                                   </Button>
                                 </div>
                               </div>
