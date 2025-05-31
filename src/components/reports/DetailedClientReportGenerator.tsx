@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 
@@ -9,12 +8,14 @@ interface DetailedClientReportGeneratorProps {
   atendimentos: any[];
   clients: Array<{ name: string; count: number }>;
   variant?: 'home' | 'tarot';
+  onClose?: () => void;
 }
 
 const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps> = ({ 
   atendimentos, 
   clients,
-  variant = 'home'
+  variant = 'home',
+  onClose
 }) => {
   const downloadAllDetailedReports = () => {
     try {
@@ -29,6 +30,11 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
         
         toast.success(`Gerando ${clients.length} relatorios individuais detalhados...`);
       }
+      
+      // Close the component after generating reports
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
       console.error("Erro ao gerar relatorios:", error);
       toast.error("Erro ao gerar relatorios");
@@ -38,7 +44,7 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
   const downloadDetailedClientReport = (clientName: string) => {
     try {
       const clientConsultations = atendimentos.filter(a => 
-        variant === 'tarot' ? a.nomeCliente === clientName : a.nome === clientName
+        variant === 'tarot' ? a.nomeCliente === clientName : a.nome === clientName || a.nomeCliente === clientName
       );
       
       if (clientConsultations.length === 0) {
@@ -92,7 +98,8 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
         doc.text(`Tipo de Servico: ${tipoServico}`, 14, yPos);
         yPos += 8;
         
-        const valor = parseFloat(consultation.valor || "0").toFixed(2);
+        const valorValue = consultation.valor || consultation.preco || "0";
+        const valor = parseFloat(valorValue.toString()).toFixed(2);
         doc.text(`Valor Cobrado: R$ ${valor}`, 14, yPos);
         yPos += 8;
         
@@ -346,13 +353,24 @@ const DetailedClientReportGenerator: React.FC<DetailedClientReportGeneratorProps
     'bg-[#2563EB] hover:bg-[#2563EB]/90 text-white';
 
   return (
-    <Button
-      onClick={downloadAllDetailedReports}
-      className={buttonColor}
-    >
-      <Download className="h-4 w-4 mr-2" />
-      Todos Detalhados
-    </Button>
+    <div className="flex gap-2">
+      <Button
+        onClick={downloadAllDetailedReports}
+        className={buttonColor}
+      >
+        <Download className="h-4 w-4 mr-2" />
+        Todos Detalhados
+      </Button>
+      {onClose && (
+        <Button
+          onClick={onClose}
+          variant="outline"
+          size="sm"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
   );
 };
 

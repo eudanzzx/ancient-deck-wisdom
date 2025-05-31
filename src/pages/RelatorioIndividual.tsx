@@ -62,7 +62,11 @@ const RelatorioIndividual = () => {
       const clienteData = clientesMap.get(cliente);
       clienteData.atendimentos.push(atendimento);
       clienteData.totalConsultas += 1;
-      clienteData.valorTotal += parseFloat(atendimento.preco || "0");
+      
+      // Fix: Ensure proper number parsing for arithmetic operations
+      const precoValue = atendimento.preco || atendimento.valor || "0";
+      const precoNumber = parseFloat(precoValue.toString());
+      clienteData.valorTotal += isNaN(precoNumber) ? 0 : precoNumber;
       
       const dataAtendimento = new Date(atendimento.dataAtendimento);
       if (!clienteData.ultimaConsulta || dataAtendimento > new Date(clienteData.ultimaConsulta)) {
@@ -76,7 +80,11 @@ const RelatorioIndividual = () => {
   }, [filteredAtendimentos]);
 
   const getTotalValue = () => {
-    return atendimentos.reduce((acc, curr) => acc + parseFloat(curr.preco || "0"), 0).toFixed(2);
+    return atendimentos.reduce((acc, curr) => {
+      const precoValue = curr.preco || curr.valor || "0";
+      const precoNumber = parseFloat(precoValue.toString());
+      return acc + (isNaN(precoNumber) ? 0 : precoNumber);
+    }, 0).toFixed(2);
   };
 
   const handleDownloadIndividual = (cliente) => {
@@ -237,7 +245,8 @@ const RelatorioIndividual = () => {
 
         {selectedClient && (
           <DetailedClientReportGenerator
-            clientData={selectedClient}
+            atendimentos={selectedClient.atendimentos}
+            clients={[{ name: selectedClient.nome, count: selectedClient.totalConsultas }]}
             onClose={() => setSelectedClient(null)}
           />
         )}
