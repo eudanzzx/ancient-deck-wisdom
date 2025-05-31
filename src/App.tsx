@@ -16,6 +16,7 @@ import ListagemTarot from "@/pages/ListagemTarot";
 import EditarAnaliseFrequencial from "@/pages/EditarAnaliseFrequencial";
 import RelatoriosFrequencial from "@/pages/RelatoriosFrequencial";
 import RelatoriosFinanceiros from "@/pages/RelatoriosFinanceiros";
+import RelatoriosFinanceirosTarot from "@/pages/RelatoriosFinanceirosTarot";
 import RelatoriosFrequenciaisTarot from "@/pages/RelatoriosFrequenciaisTarot";
 import RelatorioGeralTarot from "@/pages/RelatorioGeralTarot";
 import RelatorioIndividualTarot from "@/pages/RelatorioIndividualTarot";
@@ -45,6 +46,7 @@ function App() {
               <Route path="/editar-analise-frequencial/:id" element={<EditarAnaliseFrequencial />} />
               <Route path="/relatorios-frequencial" element={<RelatoriosFrequencial />} />
               <Route path="/relatorios-financeiros" element={<RelatoriosFinanceiros />} />
+              <Route path="/relatorios-financeiros-tarot" element={<RelatoriosFinanceirosTarot />} />
               <Route path="/relatorios-frequenciais-tarot" element={<RelatoriosFrequenciaisTarot />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
