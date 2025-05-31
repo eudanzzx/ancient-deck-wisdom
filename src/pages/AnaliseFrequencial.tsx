@@ -19,6 +19,7 @@ import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import useUserDataService from "@/services/userDataService";
 import ClientForm from "@/components/tarot/ClientForm";
 import AnalysisCards from "@/components/tarot/AnalysisCards";
+import TarotCounters from "@/components/tarot/TarotCounters";
 
 // Memoized reminder component to prevent unnecessary re-renders
 const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
@@ -93,9 +94,17 @@ const AnaliseFrequencial = () => {
   const [lembretes, setLembretes] = useState([
     { id: 1, texto: "", dias: 7 }
   ]);
+  const [analisesSalvas, setAnalisesSalvas] = useState([]);
+  const [mostrarContadores, setMostrarContadores] = useState(false);
   
-  const { checkClientBirthday } = useUserDataService();
+  const { checkClientBirthday, getAllTarotAnalyses } = useUserDataService();
   
+  // Carregar análises ao montar o componente
+  useEffect(() => {
+    const analises = getAllTarotAnalyses();
+    setAnalisesSalvas(analises);
+  }, [getAllTarotAnalyses]);
+
   // Verificar notificações ao carregar a página
   useEffect(() => {
     checkNotifications();
@@ -231,7 +240,7 @@ const AnaliseFrequencial = () => {
       analiseDepois,
       lembretes: [...lembretes],
       dataCriacao: new Date().toISOString(),
-      finalizado: false // Inicialmente, a análise não está finalizada
+      finalizado: false
     };
 
     // Recuperar análises existentes
@@ -243,8 +252,17 @@ const AnaliseFrequencial = () => {
     // Salvar no localStorage
     localStorage.setItem("analises", JSON.stringify(analises));
     
-    // Notificar usuário
-    toast.success("Análise frequencial salva com sucesso!");
+    // Atualizar estado local
+    setAnalisesSalvas(analises);
+    
+    // Mostrar contadores se houver lembretes
+    const temLembretes = lembretes.some(l => l.texto && l.dias > 0);
+    if (temLembretes) {
+      setMostrarContadores(true);
+      toast.success("Análise salva! Contadores ativados para os tratamentos.");
+    } else {
+      toast.success("Análise frequencial salva com sucesso!");
+    }
     
     // Configurar lembretes automáticos
     const lembretesStorage = JSON.parse(localStorage.getItem("lembretes") || "[]");
@@ -307,6 +325,13 @@ const AnaliseFrequencial = () => {
             birthDate={dataNascimento}
             context="tarot"
           />
+        )}
+
+        {/* Mostrar contadores se estiver ativo */}
+        {mostrarContadores && (
+          <div className="mb-6">
+            <TarotCounters analises={analisesSalvas} />
+          </div>
         )}
 
         <Card className="border-[#6B21A8]/20 shadow-sm mb-6 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-300">
