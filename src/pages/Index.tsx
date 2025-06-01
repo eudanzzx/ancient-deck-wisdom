@@ -1,19 +1,15 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useUserDataService from "@/services/userDataService";
-import DashboardBirthdayNotifications from "@/components/DashboardBirthdayNotifications";
-import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import PeriodSelector from "@/components/dashboard/PeriodSelector";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import AtendimentosTable from "@/components/dashboard/AtendimentosTable";
-import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
+import DashboardContent from "@/components/dashboard/DashboardContent";
+import DashboardTitle from "@/components/dashboard/DashboardTitle";
 import { CalendarDays, Users, Activity, BellRing, Search, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import TratamentoCountdown from "@/components/TratamentoCountdown";
-import Logo from "@/components/Logo";
 
 interface Atendimento {
   id: string;
@@ -215,36 +211,12 @@ const Index = () => {
       <DashboardHeader />
 
       <main className="container mx-auto py-24 px-4 relative z-10">
-        <DashboardBirthdayNotifications />
-        
-        {/* Tarot Plan Notifications */}
-        <TarotPlanoNotifications />
-        
-        {aniversarianteHoje && (
-          <ClientBirthdayAlert 
-            clientName={aniversarianteHoje.nome}
-            birthDate={aniversarianteHoje.dataNascimento}
-            context="tarot"
-          />
-        )}
+        <DashboardContent 
+          aniversarianteHoje={aniversarianteHoje}
+          atendimentos={atendimentos}
+        />
 
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="transform hover:scale-110 transition-transform duration-300 cursor-pointer">
-              <Logo height={50} width={50} />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-blue-800 bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent">
-                Dashboard
-              </h1>
-              <p className="text-blue-600 mt-1 opacity-80">Gerencie seus atendimentos</p>
-            </div>
-          </div>
-          <div className="hidden md:flex items-center gap-2 text-blue-600/60 hover:text-blue-600 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-1">
-            <Sparkles className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
-            <span className="text-sm font-medium">Sistema Inteligente</span>
-          </div>
-        </div>
+        <DashboardTitle />
 
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-blue-800">Visão Geral</h2>
@@ -269,10 +241,6 @@ const Index = () => {
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
-        </div>
-
-        <div className="transform hover:scale-[1.02] transition-all duration-500 hover:-translate-y-1">
-          <TratamentoCountdown analises={atendimentos} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
