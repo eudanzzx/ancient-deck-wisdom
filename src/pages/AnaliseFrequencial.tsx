@@ -98,7 +98,7 @@ const AnaliseFrequencial = () => {
     { id: 1, texto: "", dias: 7 }
   ]);
   
-  const { checkClientBirthday } = useUserDataService();
+  const { checkClientBirthday, saveTarotAnalysisWithPlan } = useUserDataService();
   
   // Verificar notificações ao carregar a página
   useEffect(() => {
@@ -245,14 +245,8 @@ const AnaliseFrequencial = () => {
       finalizado: false // Inicialmente, a análise não está finalizada
     };
 
-    // Recuperar análises existentes
-    const analises = JSON.parse(localStorage.getItem("analises") || "[]");
-    
-    // Adicionar nova análise
-    analises.push(novaAnalise);
-    
-    // Salvar no localStorage
-    localStorage.setItem("analises", JSON.stringify(analises));
+    // Use the new function to save with plan integration
+    saveTarotAnalysisWithPlan(novaAnalise);
     
     // Notificar usuário
     toast.success("Análise frequencial salva com sucesso!");
@@ -278,7 +272,7 @@ const AnaliseFrequencial = () => {
     
     // Voltar para a página de listagem
     navigate("/listagem-tarot");
-  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoMeses, planoValorMensal, lembretes, navigate]);
+  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoMeses, planoValorMensal, lembretes, navigate, saveTarotAnalysisWithPlan]);
 
   const handleBack = useCallback(() => {
     navigate("/listagem-tarot");
