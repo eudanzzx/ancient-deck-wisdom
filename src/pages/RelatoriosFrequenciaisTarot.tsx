@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import useUserDataService from "@/services/userDataService";
@@ -111,14 +110,14 @@ const RelatoriosFrequenciaisTarot = () => {
       acc[clientName].valor += parseFloat(analise.valor || analise.preco || '0');
       if (analise.finalizado) acc[clientName].finalizadas++;
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, { total: number; valor: number; finalizadas: number }>);
     
-    const clientTableData = Object.entries(clientStats).map(([cliente, stats]) => [
+    const clientTableData = Object.entries(clientStats).map(([cliente, clientData]) => [
       cliente,
-      stats.total.toString(),
-      stats.finalizadas.toString(),
-      (stats.total - stats.finalizadas).toString(),
-      `R$ ${stats.valor.toFixed(2)}`
+      clientData.total.toString(),
+      clientData.finalizadas.toString(),
+      (clientData.total - clientData.finalizadas).toString(),
+      `R$ ${clientData.valor.toFixed(2)}`
     ]);
 
     autoTable(doc, {
