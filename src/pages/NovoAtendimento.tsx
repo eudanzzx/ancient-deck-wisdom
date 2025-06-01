@@ -37,7 +37,7 @@ const NovoAtendimento = () => {
     nome: "",
     dataNascimento: "",
     tipoServico: "",
-    statusPagamento: "",
+    statusPagamento: "" as 'pago' | 'pendente' | 'parcelado' | "",
     dataAtendimento: "",
     valor: "",
     destino: "",
@@ -193,6 +193,7 @@ const NovoAtendimento = () => {
     const novoAtendimento = {
       id: Date.now().toString(),
       ...formData,
+      statusPagamento: formData.statusPagamento as 'pago' | 'pendente' | 'parcelado',
       signo,
       atencaoFlag: atencao,
       data: new Date().toISOString(),

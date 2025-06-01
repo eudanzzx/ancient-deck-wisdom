@@ -4,21 +4,26 @@ import useUserDataService from "@/services/userDataService";
 interface AtendimentoData {
   id: string;
   nome: string;
-  dataNascimento: string;
-  signo: string;
+  dataNascimento?: string;
+  signo?: string;
   tipoServico: string;
-  statusPagamento: string;
+  statusPagamento: 'pago' | 'pendente' | 'parcelado';
   dataAtendimento: string;
   valor: string;
-  destino: string;
-  ano: string;
-  atencaoNota: string;
-  detalhes: string;
-  tratamento: string;
-  indicacao: string;
-  atencaoFlag: boolean;
-  data: string;
+  destino?: string;
+  ano?: string;
+  atencaoNota?: string;
+  detalhes?: string;
+  tratamento?: string;
+  indicacao?: string;
+  atencaoFlag?: boolean;
+  data?: string;
   dataUltimaEdicao?: string;
+  planoAtivo?: boolean;
+  planoData?: {
+    meses: string;
+    valorMensal: string;
+  } | null;
 }
 
 // Function to save a new atendimento

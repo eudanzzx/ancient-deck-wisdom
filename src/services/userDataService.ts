@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 interface Atendimento {
@@ -6,7 +7,7 @@ interface Atendimento {
   dataAtendimento: string;
   tipoServico: string;
   valor: string;
-  statusPagamento?: 'pago' | 'pendente' | 'parcelado';
+  statusPagamento: 'pago' | 'pendente' | 'parcelado';
   dataNascimento?: string;
   signo?: string;
   destino?: string;
@@ -107,6 +108,46 @@ const useUserDataService = () => {
     }
   };
 
+  // Legacy functions for backward compatibility
+  const getAllTarotAnalyses = getTarotAnalyses;
+  const saveAllTarotAnalyses = saveTarotAnalyses;
+  
+  const deleteTarotAnalysis = (id: string): void => {
+    const analyses = getTarotAnalyses();
+    const updatedAnalyses = analyses.filter(analysis => analysis.id !== id);
+    saveTarotAnalyses(updatedAnalyses);
+  };
+
+  const getClientsWithConsultations = () => {
+    const atendimentos = getAtendimentos();
+    const clientMap = new Map();
+    
+    atendimentos.forEach(atendimento => {
+      const clientName = atendimento.nome;
+      if (!clientMap.has(clientName)) {
+        clientMap.set(clientName, {
+          nome: clientName,
+          consultations: []
+        });
+      }
+      clientMap.get(clientName).consultations.push(atendimento);
+    });
+    
+    return Array.from(clientMap.values());
+  };
+
+  const checkClientBirthday = (birthDate: string) => {
+    if (!birthDate) return false;
+    
+    const today = new Date();
+    const birth = new Date(birthDate);
+    
+    return (
+      birth.getDate() === today.getDate() &&
+      birth.getMonth() === today.getMonth()
+    );
+  };
+
   // Planos functions
   const getPlanos = (): Plano[] => {
     if (!initialized) return [];
@@ -150,6 +191,12 @@ const useUserDataService = () => {
     // Tarot Analyses
     getTarotAnalyses,
     saveTarotAnalyses,
+    getAllTarotAnalyses,
+    saveAllTarotAnalyses,
+    deleteTarotAnalysis,
+    // Client functions
+    getClientsWithConsultations,
+    checkClientBirthday,
     // Planos
     getPlanos,
     savePlanos,
