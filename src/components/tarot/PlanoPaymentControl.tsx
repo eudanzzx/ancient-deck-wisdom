@@ -40,25 +40,26 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
   }, [analysisId, planoData, startDate]);
 
   const initializePlanoMonths = () => {
-    const totalMonths = parseInt(planoData.meses);
+    const totalWeeks = parseInt(planoData.meses);
     const baseDate = new Date(startDate);
     const planos = getPlanos();
     
     const months: PlanoMonth[] = [];
     
-    for (let i = 1; i <= totalMonths; i++) {
-      // Sempre vencer no dia 30 do mês
+    for (let i = 1; i <= totalWeeks; i++) {
+      // Vencer toda segunda-feira
       const dueDate = new Date(baseDate);
-      dueDate.setMonth(dueDate.getMonth() + i);
-      dueDate.setDate(30);
+      dueDate.setDate(dueDate.getDate() + (i * 7)); // Adicionar 7 dias por semana
       
-      // Ajustar para meses com menos de 30 dias
-      if (dueDate.getDate() !== 30) {
-        dueDate.setDate(0); // Último dia do mês anterior
+      // Ajustar para a próxima segunda-feira se necessário
+      const dayOfWeek = dueDate.getDay();
+      if (dayOfWeek !== 1) { // Se não é segunda-feira (1)
+        const daysUntilMonday = (1 + 7 - dayOfWeek) % 7;
+        dueDate.setDate(dueDate.getDate() + daysUntilMonday);
       }
       
       const planoForMonth = planos.find(plano => 
-        plano.id.startsWith(`${analysisId}-month-${i}`)
+        plano.id.startsWith(`${analysisId}-week-${i}`)
       );
       
       months.push({
@@ -77,8 +78,8 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Verificar se hoje é dia 29 (um dia antes do vencimento)
-    if (today.getDate() === 29) {
+    // Verificar se hoje é domingo (um dia antes do vencimento de segunda)
+    if (today.getDay() === 0) { // Domingo
       planoMonths.forEach(month => {
         if (!month.isPaid) {
           const dueDate = new Date(month.dueDate);
@@ -91,7 +92,7 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
               `⏰ Lembrete: ${clientName} tem um pagamento para fazer amanhã!`,
               {
                 duration: 10000,
-                description: `Mês ${month.month} - Valor: R$ ${parseFloat(planoData.valorMensal).toFixed(2)} - Vence em ${dueDate.toLocaleDateString('pt-BR')}`,
+                description: `Semana ${month.month} - Valor: R$ ${parseFloat(planoData.valorMensal).toFixed(2)} - Vence em ${dueDate.toLocaleDateString('pt-BR')}`,
                 action: {
                   label: "Ver detalhes",
                   onClick: () => console.log("Detalhes do pagamento:", month)
@@ -119,7 +120,7 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
       savePlanos(updatedPlanos);
     } else if (newIsPaid) {
       const newPlano = {
-        id: `${analysisId}-month-${month.month}`,
+        id: `${analysisId}-week-${month.month}`,
         clientName: clientName,
         type: 'plano' as const,
         amount: parseFloat(planoData.valorMensal),
@@ -151,8 +152,8 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
     
     toast.success(
       newIsPaid 
-        ? `💫 Mês ${month.month} marcado como pago` 
-        : `📋 Mês ${month.month} marcado como pendente`
+        ? `💫 Semana ${month.month} marcada como paga` 
+        : `📋 Semana ${month.month} marcada como pendente`
     );
   };
 
@@ -167,7 +168,7 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
               <div className="h-6 bg-gradient-to-r from-purple-200 via-slate-200 to-purple-200 rounded-xl w-64 mx-auto"></div>
               <div className="h-4 bg-gradient-to-r from-slate-200 via-purple-200 to-slate-200 rounded-lg w-40 mx-auto"></div>
             </div>
-            <p className="mt-6 text-slate-600 font-medium">✨ Carregando meses do plano...</p>
+            <p className="mt-6 text-slate-600 font-medium">✨ Carregando semanas do plano...</p>
           </div>
         ) : (
           <>
