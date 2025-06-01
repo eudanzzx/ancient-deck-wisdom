@@ -38,8 +38,6 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
 }) => {
   const { getPlanos, savePlanos } = useUserDataService();
   const [planoMonths, setPlanoMonths] = useState<PlanoMonth[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
-  const [paymentDate, setPaymentDate] = useState<Date | undefined>(undefined);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -74,83 +72,72 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
     setPlanoMonths(months);
   };
 
-  const handleSelectMonth = (monthNumber: number) => {
-    setSelectedMonth(monthNumber);
-    const month = planoMonths.find(m => m.month === monthNumber);
-    if (month?.paymentDate) {
-      setPaymentDate(new Date(month.paymentDate));
-    } else {
-      setPaymentDate(new Date());
-    }
-  };
-
-  const handleMarkPayment = () => {
-    if (selectedMonth === null || !paymentDate) return;
-
-    const monthIndex = selectedMonth - 1;
+  const handlePaymentToggle = (monthIndex: number) => {
     const month = planoMonths[monthIndex];
     const planos = getPlanos();
     
+    const newIsPaid = !month.isPaid;
+    
     if (month.planoId) {
-      // Atualizar plano existente
+      // Atualizar o status do plano existente
       const updatedPlanos = planos.map(plano => 
         plano.id === month.planoId 
-          ? { ...plano, active: false, created: paymentDate.toISOString() }
+          ? { ...plano, active: !newIsPaid } // Se vai ser marcado como pago, plano não fica ativo
           : plano
       );
       savePlanos(updatedPlanos);
-    } else {
-      // Criar novo registro de plano
+    } else if (newIsPaid) {
+      // Criar novo registro de plano quando marcar como pago
       const newPlano = {
-        id: `${analysisId}-month-${selectedMonth}`,
+        id: `${analysisId}-month-${month.month}`,
         clientName: clientName,
         type: 'plano' as const,
         amount: parseFloat(planoData.valorMensal),
         dueDate: month.dueDate,
-        month: selectedMonth,
+        month: month.month,
         totalMonths: parseInt(planoData.meses),
-        created: paymentDate.toISOString(),
+        created: new Date().toISOString(),
         active: false // Não ativo porque foi pago
       };
       
       const updatedPlanos = [...planos, newPlano];
       savePlanos(updatedPlanos);
+      
+      // Atualizar o planoId no estado local
+      const updatedMonths = [...planoMonths];
+      updatedMonths[monthIndex].planoId = newPlano.id;
+      updatedMonths[monthIndex].isPaid = true;
+      setPlanoMonths(updatedMonths);
+    } else {
+      // Atualizar apenas o estado local se está desmarcando um mês que não tinha planoId
+      const updatedMonths = [...planoMonths];
+      updatedMonths[monthIndex].isPaid = false;
+      setPlanoMonths(updatedMonths);
     }
     
-    // Atualizar estado local
-    const updatedMonths = [...planoMonths];
-    updatedMonths[monthIndex] = {
-      ...updatedMonths[monthIndex],
-      isPaid: true,
-      paymentDate: paymentDate.toISOString().split('T')[0]
-    };
-    setPlanoMonths(updatedMonths);
+    // Se não criou novo plano, atualizar estado local
+    if (month.planoId || !newIsPaid) {
+      const updatedMonths = [...planoMonths];
+      updatedMonths[monthIndex].isPaid = newIsPaid;
+      setPlanoMonths(updatedMonths);
+    }
     
-    toast.success(`Pagamento do mês ${selectedMonth} registrado para ${format(paymentDate, 'dd/MM/yyyy')}`);
-    setSelectedMonth(null);
-    setPaymentDate(undefined);
+    toast.success(
+      newIsPaid 
+        ? `Mês ${month.month} marcado como pago` 
+        : `Mês ${month.month} marcado como pendente`
+    );
   };
 
-  const handleUnmarkPayment = (monthNumber: number) => {
-    const monthIndex = monthNumber - 1;
-    const month = planoMonths[monthIndex];
-    
-    if (month.planoId) {
-      const planos = getPlanos();
-      const updatedPlanos = planos.filter(plano => plano.id !== month.planoId);
-      savePlanos(updatedPlanos);
-      
-      // Atualizar estado local
-      const updatedMonths = [...planoMonths];
-      updatedMonths[monthIndex] = {
-        ...updatedMonths[monthIndex],
-        isPaid: false,
-        paymentDate: undefined,
-        planoId: undefined
-      };
-      setPlanoMonths(updatedMonths);
-      
-      toast.success(`Pagamento do mês ${monthNumber} removido`);
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Data inválida';
+      }
+      return date.toLocaleDateString('pt-BR');
+    } catch (error) {
+      return 'Data inválida';
     }
   };
 
@@ -166,7 +153,7 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-[#6B21A8]">
                 <CreditCard className="h-5 w-5" />
-                Controle de Pagamentos - {clientName}
+                Controle de Pagamentos do Plano
                 <Badge variant="secondary" className="bg-[#6B21A8]/10 text-[#6B21A8] ml-2">
                   {paidCount}/{planoMonths.length}
                 </Badge>
@@ -188,114 +175,135 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
         
         <CollapsibleContent>
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Lista de meses */}
-              <div>
-                <h4 className="text-sm font-medium text-slate-700 mb-3">Selecione o mês para marcar pagamento:</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  {planoMonths.map((month) => (
+            {planoMonths.length === 0 ? (
+              <div className="text-center text-slate-500 py-8">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-slate-200 rounded w-48 mx-auto mb-2"></div>
+                  <div className="h-3 bg-slate-200 rounded w-32 mx-auto"></div>
+                </div>
+                <p className="mt-4">Carregando meses do plano...</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                  {planoMonths.map((month, index) => (
                     <Button
                       key={month.month}
-                      variant={selectedMonth === month.month ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleSelectMonth(month.month)}
-                      className={cn(
-                        "relative h-16 flex flex-col items-center justify-center",
-                        month.isPaid && "bg-emerald-100 border-emerald-300 text-emerald-700",
-                        selectedMonth === month.month && "bg-[#6B21A8] text-white"
-                      )}
+                      onClick={() => handlePaymentToggle(index)}
+                      variant="outline"
+                      className={`
+                        relative h-auto min-h-[120px] p-4 flex flex-col items-center justify-center gap-3 
+                        transition-all duration-300 hover:scale-105 hover:shadow-xl group
+                        border-2 rounded-xl overflow-hidden
+                        ${month.isPaid 
+                          ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-emerald-400 shadow-emerald-200/50' 
+                          : 'bg-gradient-to-br from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 border-slate-300 text-slate-700 shadow-slate-200/50 hover:border-[#6B21A8]/50'
+                        }
+                      `}
                     >
-                      {month.isPaid && (
-                        <Check className="absolute top-1 right-1 h-3 w-3 text-emerald-600" />
-                      )}
-                      <span className="text-sm font-medium">Mês {month.month}</span>
-                      {month.isPaid && month.paymentDate && (
-                        <span className="text-xs opacity-75">
-                          {format(new Date(month.paymentDate), 'dd/MM')}
-                        </span>
-                      )}
+                      {/* Background decoration */}
+                      <div className={`
+                        absolute inset-0 opacity-10 transition-opacity duration-300
+                        ${month.isPaid 
+                          ? 'bg-gradient-to-br from-white/20 to-transparent' 
+                          : 'bg-gradient-to-br from-[#6B21A8]/10 to-transparent group-hover:opacity-20'
+                        }
+                      `} />
+                      
+                      {/* Status icon */}
+                      <div className={`
+                        absolute top-3 right-3 p-1.5 rounded-full transition-all duration-300
+                        ${month.isPaid 
+                          ? 'bg-white/20 text-white' 
+                          : 'bg-slate-200 text-slate-500 group-hover:bg-[#6B21A8]/20 group-hover:text-[#6B21A8]'
+                        }
+                      `}>
+                        {month.isPaid ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
+                      </div>
+                      
+                      {/* Month number */}
+                      <div className="relative z-10 text-center">
+                        <div className={`
+                          text-2xl font-bold mb-1 transition-colors duration-300
+                          ${month.isPaid ? 'text-white' : 'text-slate-700 group-hover:text-[#6B21A8]'}
+                        `}>
+                          {month.month}º
+                        </div>
+                        <div className={`
+                          text-xs font-medium uppercase tracking-wider
+                          ${month.isPaid ? 'text-white/90' : 'text-slate-500 group-hover:text-[#6B21A8]/80'}
+                        `}>
+                          Mês
+                        </div>
+                      </div>
+                      
+                      {/* Due date */}
+                      <div className="relative z-10 text-center">
+                        <div className={`
+                          text-xs opacity-75 mb-1 transition-colors duration-300
+                          ${month.isPaid ? 'text-white/80' : 'text-slate-500'}
+                        `}>
+                          Vencimento
+                        </div>
+                        <div className={`
+                          text-sm font-medium transition-colors duration-300
+                          ${month.isPaid ? 'text-white' : 'text-slate-600 group-hover:text-[#6B21A8]'}
+                        `}>
+                          {formatDate(month.dueDate)}
+                        </div>
+                      </div>
+                      
+                      {/* Status badge */}
+                      <Badge 
+                        variant="outline"
+                        className={`
+                          relative z-10 text-xs font-medium border transition-all duration-300
+                          ${month.isPaid 
+                            ? 'bg-white/20 text-white border-white/30 hover:bg-white/30' 
+                            : 'bg-red-50 text-red-700 border-red-200 group-hover:bg-red-100 group-hover:border-red-300'
+                          }
+                        `}
+                      >
+                        {month.isPaid ? 'Pago' : 'Pendente'}
+                      </Badge>
                     </Button>
                   ))}
                 </div>
-              </div>
-
-              {/* Seletor de data e ações */}
-              <div className="space-y-4">
-                {selectedMonth && (
-                  <>
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-700 mb-2">
-                        Data do pagamento - Mês {selectedMonth}:
-                      </h4>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !paymentDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {paymentDate ? format(paymentDate, "dd/MM/yyyy") : "Selecione a data"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 z-50" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={paymentDate}
-                            onSelect={setPaymentDate}
-                            initialFocus
-                            className="p-3 pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                
+                {/* Summary section */}
+                <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-sm"></div>
+                      <span className="text-sm font-medium text-slate-700">Pago</span>
                     </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleMarkPayment}
-                        disabled={!paymentDate}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        Marcar como Pago
-                      </Button>
-                      
-                      {planoMonths[selectedMonth - 1]?.isPaid && (
-                        <Button
-                          onClick={() => handleUnmarkPayment(selectedMonth)}
-                          variant="outline"
-                          className="border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Desmarcar
-                        </Button>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-gradient-to-r from-slate-300 to-slate-400 rounded-full shadow-sm"></div>
+                      <span className="text-sm font-medium text-slate-700">Pendente</span>
                     </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Resumo */}
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-emerald-500 rounded"></div>
-                  <span className="text-sm text-slate-600">Pago</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Badge 
+                      variant="secondary" 
+                      className="bg-[#6B21A8]/10 text-[#6B21A8] border border-[#6B21A8]/20 font-medium px-3 py-1"
+                    >
+                      {paidCount}/{planoMonths.length} pagos
+                    </Badge>
+                    <div className="text-sm text-slate-600">
+                      <span className="font-medium">
+                        R$ {paidValue.toFixed(2)}
+                      </span>
+                      <span className="text-slate-500"> / R$ {totalValue.toFixed(2)}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-slate-300 rounded"></div>
-                  <span className="text-sm text-slate-600">Pendente</span>
-                </div>
-              </div>
-              
-              <div className="text-sm text-slate-600">
-                <span className="font-medium">R$ {paidValue.toFixed(2)}</span>
-                <span className="text-slate-500"> / R$ {totalValue.toFixed(2)}</span>
-              </div>
-            </div>
+              </>
+            )}
           </CardContent>
         </CollapsibleContent>
       </Card>
