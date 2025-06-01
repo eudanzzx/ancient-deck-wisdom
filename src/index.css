@@ -72,17 +72,160 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
-/* Tarot specific styles */
+/* Elegant animations and effects */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes slideInUp {
+  0% { 
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  0% { 
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInScale {
+  0% { 
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Utility classes for elegant effects */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 8s ease infinite;
+}
+
+.animate-slide-up {
+  animation: slideInUp 0.8s ease-out forwards;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+.animate-fade-scale {
+  animation: fadeInScale 0.6s ease-out forwards;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Elegant gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.gradient-elegant {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+.gradient-ocean {
+  background: linear-gradient(135deg, #2196F3 0%, #21CBF3 100%);
+}
+
+.gradient-sunset {
+  background: linear-gradient(135deg, #FA709A 0%, #FEE140 100%);
+}
+
+/* Tarot specific elegant styles */
 .tarot-card {
-  @apply relative w-24 h-36 md:w-32 md:h-48 rounded-lg shadow-lg cursor-pointer;
-  @apply transition-all duration-500 ease-in-out;
+  @apply relative w-24 h-36 md:w-32 md:h-48 rounded-xl shadow-2xl cursor-pointer;
+  @apply transition-all duration-700 ease-in-out;
   @apply bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800;
-  @apply border border-yellow-400/30;
+  @apply border-2 border-gradient-to-r from-yellow-400 to-yellow-600;
   perspective: 1000px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 
+              0 0 20px rgba(255, 215, 0, 0.2);
+}
+
+.tarot-card:hover {
+  transform: translateY(-10px) rotateY(5deg);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), 
+              0 0 40px rgba(255, 215, 0, 0.4);
 }
 
 .tarot-card-inner {
@@ -95,54 +238,111 @@
 }
 
 .tarot-card-face {
-  @apply absolute inset-0 w-full h-full rounded-lg;
+  @apply absolute inset-0 w-full h-full rounded-xl;
   backface-visibility: hidden;
 }
 
 .tarot-card-back {
   @apply bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800;
-  @apply border border-yellow-400/50;
+  @apply border-2 border-yellow-400/50;
   @apply flex items-center justify-center;
 }
 
 .tarot-card-front {
   @apply bg-gradient-to-br from-amber-50 to-yellow-100;
-  @apply border border-yellow-600;
+  @apply border-2 border-yellow-600;
   @apply flex flex-col items-center justify-center p-2;
   transform: rotateY(180deg);
 }
 
 .mystical-bg {
-  background: radial-gradient(circle at 20% 30%, rgba(120, 53, 15, 0.3) 0%, transparent 50%),
-              radial-gradient(circle at 80% 70%, rgba(75, 0, 130, 0.3) 0%, transparent 50%),
-              radial-gradient(circle at 40% 80%, rgba(25, 25, 112, 0.2) 0%, transparent 50%),
-              linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(120, 53, 15, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(75, 0, 130, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(25, 25, 112, 0.3) 0%, transparent 50%),
+    linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
 }
 
 .card-glow {
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 
-              0 0 40px rgba(255, 215, 0, 0.1),
-              inset 0 0 20px rgba(255, 215, 0, 0.1);
+  box-shadow: 
+    0 0 30px rgba(255, 215, 0, 0.4), 
+    0 0 60px rgba(255, 215, 0, 0.2),
+    inset 0 0 30px rgba(255, 215, 0, 0.1);
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+/* Elegant text effects */
+.text-shadow-elegant {
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.animate-shimmer {
-  animation: shimmer 2s ease-in-out infinite alternate;
+/* Elegant scroll effects */
+.smooth-scroll {
+  scroll-behavior: smooth;
 }
 
-@keyframes shimmer {
-  0% { opacity: 0.5; }
-  100% { opacity: 1; }
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.text-shadow {
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Elegant button hover effects */
+.btn-elegant {
+  @apply relative overflow-hidden;
+  @apply transition-all duration-300 ease-in-out;
+  @apply transform hover:scale-105 hover:-translate-y-1;
+  @apply shadow-lg hover:shadow-2xl;
+}
+
+.btn-elegant::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-elegant:hover::before {
+  left: 100%;
+}
+
+/* Elegant form inputs */
+.input-elegant {
+  @apply transition-all duration-300 ease-in-out;
+  @apply border-2 border-transparent bg-white/80 backdrop-blur-sm;
+  @apply focus:border-blue-500 focus:bg-white focus:shadow-lg;
+  @apply hover:bg-white/90;
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+  .animate-float {
+    animation-duration: 4s;
+  }
+  
+  .tarot-card:hover {
+    transform: translateY(-5px);
+  }
 }
