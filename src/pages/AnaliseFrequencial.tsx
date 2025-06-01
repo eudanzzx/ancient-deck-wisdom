@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -243,9 +244,13 @@ const AnaliseFrequencial = () => {
     });
 
     try {
-      // Preparar dados da análise no formato TarotAnalysis
+      // Gerar ID único para a nova análise
+      const novoId = Date.now().toString();
+      console.log('handleSalvarAnalise - Novo ID gerado:', novoId);
+
+      // Preparar dados da análise no formato correto
       const novaAnalise = {
-        id: Date.now().toString(),
+        id: novoId,
         nomeCliente,
         dataNascimento,
         signo,
@@ -253,7 +258,7 @@ const AnaliseFrequencial = () => {
         dataInicio,
         dataAtendimento: dataInicio,
         data: new Date().toISOString(),
-        preco,
+        preco: preco || "150",
         pergunta: "Análise Frequencial",
         resposta: analiseAntes + (analiseDepois ? ` | Depois: ${analiseDepois}` : ""),
         dataAnalise: new Date().toISOString(),
@@ -265,35 +270,53 @@ const AnaliseFrequencial = () => {
         dataCriacao: new Date().toISOString(),
         finalizado: false,
         status: 'ativo' as const,
-        atencaoFlag: atencao
+        atencaoFlag: atencao,
+        valor: preco || "150",
+        tipoServico: "Tarot Frequencial"
       };
 
       console.log('handleSalvarAnalise - Nova análise criada:', novaAnalise);
 
       // Obter análises existentes
       const analisesExistentes = getTarotAnalyses();
-      console.log('handleSalvarAnalise - Análises existentes:', analisesExistentes.length);
+      console.log('handleSalvarAnalise - Análises existentes encontradas:', analisesExistentes.length);
 
       // Adicionar a nova análise
       const analisesAtualizadas = [...analisesExistentes, novaAnalise];
-      console.log('handleSalvarAnalise - Total após adicionar:', analisesAtualizadas.length);
+      console.log('handleSalvarAnalise - Total de análises após adicionar:', analisesAtualizadas.length);
 
       // Salvar as análises atualizadas
       saveTarotAnalyses(analisesAtualizadas);
-      console.log('handleSalvarAnalise - Dados salvos no localStorage');
+      console.log('handleSalvarAnalise - Análises salvas via userDataService');
+
+      // Salvar também no localStorage diretamente como backup
+      localStorage.setItem("analises", JSON.stringify(analisesAtualizadas));
+      console.log('handleSalvarAnalise - Backup salvo no localStorage');
 
       // Verificar se foi salvo corretamente
       const analisesVerificacao = getTarotAnalyses();
       console.log('handleSalvarAnalise - Verificação após salvar:', analisesVerificacao.length);
       
       // Verificar se a nova análise está na lista
-      const analiseEncontrada = analisesVerificacao.find(a => a.id === novaAnalise.id);
+      const analiseEncontrada = analisesVerificacao.find(a => a.id === novoId);
       console.log('handleSalvarAnalise - Análise encontrada após salvar:', !!analiseEncontrada);
 
       if (!analiseEncontrada) {
         console.error('handleSalvarAnalise - ERRO: Análise não foi salva corretamente!');
-        toast.error("Erro ao salvar análise - tente novamente");
-        return;
+        
+        // Tentar salvar novamente diretamente no localStorage
+        console.log('handleSalvarAnalise - Tentando salvar diretamente no localStorage...');
+        localStorage.setItem("analises", JSON.stringify(analisesAtualizadas));
+        
+        // Verificar novamente
+        const verificacaoFinal = JSON.parse(localStorage.getItem("analises") || "[]");
+        console.log('handleSalvarAnalise - Verificação final no localStorage:', verificacaoFinal.length);
+        
+        const analiseEncontradaFinal = verificacaoFinal.find((a: any) => a.id === novoId);
+        if (!analiseEncontradaFinal) {
+          toast.error("Erro ao salvar análise - tente novamente");
+          return;
+        }
       }
       
       // Notificar usuário
@@ -304,7 +327,7 @@ const AnaliseFrequencial = () => {
       toast.success(mensagem);
       console.log('handleSalvarAnalise - Sucesso:', mensagem);
 
-      // Configurar lembretes automáticos
+      // Configurar lembretes automáticos se necessário
       const lembretesStorage = JSON.parse(localStorage.getItem("lembretes") || "[]");
       
       lembretes.forEach(lembrete => {
@@ -313,7 +336,7 @@ const AnaliseFrequencial = () => {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
             texto: lembrete.texto,
             dataAlvo: new Date(Date.now() + lembrete.dias * 24 * 60 * 60 * 1000).toISOString(),
-            clienteId: novaAnalise.id,
+            clienteId: novoId,
             clienteNome: nomeCliente
           };
           
@@ -323,11 +346,24 @@ const AnaliseFrequencial = () => {
       
       localStorage.setItem("lembretes", JSON.stringify(lembretesStorage));
       
+      // Limpar o formulário
+      setNomeCliente("");
+      setDataNascimento("");
+      setSigno("");
+      setAtencao(false);
+      setDataInicio("");
+      setPreco("");
+      setAnaliseAntes("");
+      setAnaliseDepois("");
+      setPlanoAtivo(false);
+      setPlanoData({ meses: "", valorMensal: "" });
+      setLembretes([{ id: 1, texto: "", dias: 7 }]);
+      
       // Aguardar um pouco antes de navegar para garantir que o estado foi atualizado
       setTimeout(() => {
         console.log('handleSalvarAnalise - Navegando para listagem');
         navigate("/listagem-tarot");
-      }, 100);
+      }, 200);
 
     } catch (error) {
       console.error('handleSalvarAnalise - Erro ao salvar:', error);
