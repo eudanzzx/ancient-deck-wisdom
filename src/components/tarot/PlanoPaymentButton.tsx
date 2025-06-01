@@ -22,26 +22,25 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
   planoData,
   startDate,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="w-full">
+    <div className="mt-4">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <Button
             variant="outline"
             size="sm"
-            className="w-full border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 group"
+            className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200 flex items-center gap-2"
           >
-            <CreditCard className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-            <span className="font-medium">Controle de Pagamentos</span>
+            <CreditCard className="h-4 w-4" />
             <ChevronDown className={cn(
-              "h-3 w-3 transition-transform duration-300",
+              "h-3 w-3 transition-transform duration-200",
               isOpen && "rotate-180"
             )} />
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4 animate-fade-in">
+        <CollapsibleContent>
           <PlanoPaymentControl
             analysisId={analysisId}
             clientName={clientName}
