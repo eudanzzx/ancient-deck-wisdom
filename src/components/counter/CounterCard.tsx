@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, ChevronDown } from "lucide-react";
+import { User, ChevronDown, AlertTriangle, Timer, Clock } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
