@@ -100,7 +100,7 @@ const AnaliseFrequencial = () => {
     { id: 1, texto: "", dias: 7 }
   ]);
   
-  const { checkClientBirthday, saveTarotAnalysisWithPlan } = useUserDataService();
+  const { checkClientBirthday, getTarotAnalyses, saveTarotAnalyses } = useUserDataService();
   
   // Verificar notificações ao carregar a página
   useEffect(() => {
@@ -231,6 +231,13 @@ const AnaliseFrequencial = () => {
       return;
     }
 
+    console.log('Salvando análise com dados:', {
+      nomeCliente,
+      dataInicio,
+      planoAtivo,
+      planoData
+    });
+
     // Preparar dados da análise no formato TarotAnalysis
     const novaAnalise = {
       id: Date.now().toString(),
@@ -256,8 +263,22 @@ const AnaliseFrequencial = () => {
       atencaoFlag: atencao
     };
 
-    // Use the new function to save
-    saveTarotAnalysisWithPlan(novaAnalise);
+    console.log('Nova análise criada:', novaAnalise);
+
+    // Obter análises existentes
+    const analisesExistentes = getTarotAnalyses();
+    console.log('Análises existentes antes de salvar:', analisesExistentes);
+
+    // Adicionar a nova análise
+    const analisesAtualizadas = [...analisesExistentes, novaAnalise];
+    console.log('Análises após adicionar nova:', analisesAtualizadas);
+
+    // Salvar as análises atualizadas
+    saveTarotAnalyses(analisesAtualizadas);
+
+    // Verificar se foi salvo corretamente
+    const analisesVerificacao = getTarotAnalyses();
+    console.log('Análises após salvar:', analisesVerificacao);
     
     // Notificar usuário
     const mensagem = planoAtivo && planoData.meses && planoData.valorMensal
@@ -287,7 +308,7 @@ const AnaliseFrequencial = () => {
     
     // Voltar para a página de listagem
     navigate("/listagem-tarot");
-  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, lembretes, navigate, saveTarotAnalysisWithPlan]);
+  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, lembretes, navigate, getTarotAnalyses, saveTarotAnalyses]);
 
   const handleBack = useCallback(() => {
     navigate("/listagem-tarot");
