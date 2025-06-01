@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,6 @@ import BirthdayNotifications from "@/components/BirthdayNotifications";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import AtendimentoForm from "@/components/forms/AtendimentoForm";
-import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
 import useAtendimentoForm from "@/hooks/useAtendimentoForm";
 
 const NovoAtendimento = () => {
@@ -74,7 +74,7 @@ const NovoAtendimento = () => {
     existingAtendimentos.push(novoAtendimento);
     saveAtendimentos(existingAtendimentos);
     
-    // Salvar o atendimento para mostrar o visualizador
+    // Salvar o atendimento para mostrar o botão de finalizar
     setSavedAtendimento(novoAtendimento);
     
     // Se tem plano ativo, criar as notificações
@@ -141,10 +141,6 @@ const NovoAtendimento = () => {
           onPlanoAtivoChange={setPlanoAtivo}
           onPlanoDataChange={handlePlanoDataChange}
         />
-
-        {savedAtendimento && savedAtendimento.planoAtivo && savedAtendimento.planoData && (
-          <PlanoMonthsVisualizer atendimento={savedAtendimento} />
-        )}
 
         <CardFooter className="flex justify-end gap-3 border-t border-white/10 px-0 py-4">
           <Button 
