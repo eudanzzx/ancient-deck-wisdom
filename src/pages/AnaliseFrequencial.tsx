@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -21,6 +20,7 @@ import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
 import useUserDataService from "@/services/userDataService";
 import ClientForm from "@/components/tarot/ClientForm";
 import AnalysisCards from "@/components/tarot/AnalysisCards";
+import PlanoSelector from "@/components/tarot/PlanoSelector";
 
 // Memoized reminder component to prevent unnecessary re-renders
 const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
@@ -92,6 +92,11 @@ const AnaliseFrequencial = () => {
   const [preco, setPreco] = useState("");
   const [analiseAntes, setAnaliseAntes] = useState("");
   const [analiseDepois, setAnaliseDepois] = useState("");
+  const [planoAtivo, setPlanoAtivo] = useState(false);
+  const [planoData, setPlanoData] = useState({
+    meses: "",
+    valorMensal: "",
+  });
   const [lembretes, setLembretes] = useState([
     { id: 1, texto: "", dias: 7 }
   ]);
@@ -213,6 +218,13 @@ const AnaliseFrequencial = () => {
     ));
   }, []);
 
+  const handlePlanoDataChange = useCallback((field: string, value: string) => {
+    setPlanoData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
+
   const handleSalvarAnalise = useCallback(() => {
     // Validar campos obrigatórios
     if (!nomeCliente || !dataInicio) {
@@ -236,8 +248,8 @@ const AnaliseFrequencial = () => {
       dataAnalise: new Date().toISOString(),
       analiseAntes,
       analiseDepois,
-      planoAtivo: false, // Plano será configurado posteriormente nos detalhes
-      planoData: null,
+      planoAtivo,
+      planoData: planoAtivo ? planoData : null,
       lembretes: [...lembretes],
       dataCriacao: new Date().toISOString(),
       finalizado: false,
@@ -249,7 +261,11 @@ const AnaliseFrequencial = () => {
     saveTarotAnalysisWithPlan(novaAnalise);
     
     // Notificar usuário
-    toast.success("Análise frequencial salva com sucesso!");
+    const mensagem = planoAtivo && planoData.meses && planoData.valorMensal
+      ? `Análise frequencial salva! Plano de ${planoData.meses} meses criado com sucesso.`
+      : "Análise frequencial salva com sucesso!";
+    
+    toast.success(mensagem);
     
     // Configurar lembretes automáticos
     const lembretesStorage = JSON.parse(localStorage.getItem("lembretes") || "[]");
@@ -272,7 +288,7 @@ const AnaliseFrequencial = () => {
     
     // Voltar para a página de listagem
     navigate("/listagem-tarot");
-  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, lembretes, navigate, saveTarotAnalysisWithPlan]);
+  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, lembretes, navigate, saveTarotAnalysisWithPlan]);
 
   const handleBack = useCallback(() => {
     navigate("/listagem-tarot");
@@ -286,6 +302,16 @@ const AnaliseFrequencial = () => {
   const shouldShowBirthdayAlert = useMemo(() => {
     return nomeCliente && dataNascimento;
   }, [nomeCliente, dataNascimento]);
+
+  // Memoize the mock atendimento for PlanoMonthsVisualizer
+  const mockAtendimento = useMemo(() => ({
+    id: Date.now().toString(),
+    nome: nomeCliente,
+    planoAtivo,
+    planoData: planoAtivo ? planoData : null,
+    dataAtendimento: dataInicio,
+    data: new Date().toISOString(),
+  }), [nomeCliente, planoAtivo, planoData, dataInicio]);
 
   return (
     <div className="min-h-screen bg-[#F1F7FF] py-6 px-4">
@@ -339,6 +365,16 @@ const AnaliseFrequencial = () => {
               onAnaliseAntesChange={setAnaliseAntes}
               onAnaliseDepoisChange={setAnaliseDepois}
             />
+
+            {/* Seção de Plano */}
+            <div className="mt-8">
+              <PlanoSelector
+                planoAtivo={planoAtivo}
+                planoData={planoData}
+                onPlanoAtivoChange={setPlanoAtivo}
+                onPlanoDataChange={handlePlanoDataChange}
+              />
+            </div>
             
             <div className="mt-8">
               <div className="flex justify-between items-center mb-4">
@@ -382,6 +418,11 @@ const AnaliseFrequencial = () => {
             </Button>
           </CardFooter>
         </Card>
+
+        {/* Visualizador de Meses do Plano */}
+        {planoAtivo && nomeCliente && planoData.meses && planoData.valorMensal && dataInicio && (
+          <PlanoMonthsVisualizer atendimento={mockAtendimento} />
+        )}
       </div>
     </div>
   );
