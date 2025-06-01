@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -222,17 +223,20 @@ const AnaliseFrequencial = () => {
       return;
     }
 
-    // Preparar dados da análise
+    // Preparar dados da análise no formato TarotAnalysis
     const novaAnalise = {
       id: Date.now().toString(),
       nomeCliente,
       dataNascimento,
       signo,
-      atencaoFlag: atencao,
+      atencao, // Use atencao instead of atencaoFlag
       dataInicio,
       dataAtendimento: dataInicio, // Use dataInicio as dataAtendimento for consistency
       data: new Date().toISOString(), // Creation date
       preco,
+      pergunta: "Análise Frequencial", // Required field - using a default value
+      resposta: analiseAntes + (analiseDepois ? ` | Depois: ${analiseDepois}` : ""), // Required field - combine analyses
+      dataAnalise: new Date().toISOString(), // Required field
       analiseAntes,
       analiseDepois,
       planoAtivo,
@@ -242,7 +246,9 @@ const AnaliseFrequencial = () => {
       } : null,
       lembretes: [...lembretes],
       dataCriacao: new Date().toISOString(),
-      finalizado: false // Inicialmente, a análise não está finalizada
+      finalizado: false, // Inicialmente, a análise não está finalizada
+      status: 'ativo' as const,
+      atencaoFlag: atencao // For backward compatibility
     };
 
     // Use the new function to save with plan integration
