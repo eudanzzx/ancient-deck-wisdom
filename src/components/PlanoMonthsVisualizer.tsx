@@ -49,7 +49,7 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       return;
     }
 
-    // Use dataAtendimento se disponível, senão use a data de criação, senão use hoje
+    // Use data de criação como fallback se dataAtendimento estiver vazio
     let startDateString = atendimento.dataAtendimento;
     if (!startDateString || startDateString.trim() === '') {
       startDateString = atendimento.data || new Date().toISOString();
@@ -90,7 +90,7 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       
       months.push({
         month: i,
-        isPaid: planoForMonth ? !planoForMonth.active : false,
+        isPaid: planoForMonth ? !planoForMonth.active : false, // Se o plano existe e não está ativo, significa que foi pago
         dueDate: dueDate.toISOString().split('T')[0],
         planoId: planoForMonth?.id
       });
@@ -104,23 +104,54 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     const month = planoMonths[monthIndex];
     const planos = getPlanos();
     
+    const newIsPaid = !month.isPaid;
+    
     if (month.planoId) {
       // Atualizar o status do plano existente
       const updatedPlanos = planos.map(plano => 
         plano.id === month.planoId 
-          ? { ...plano, active: month.isPaid } // Se estava pago, volta a ser ativo
+          ? { ...plano, active: !newIsPaid } // Se vai ser marcado como pago, plano não fica ativo
           : plano
       );
       savePlanos(updatedPlanos);
+    } else if (newIsPaid) {
+      // Criar novo registro de plano quando marcar como pago
+      const newPlano = {
+        id: `${Date.now()}-${monthIndex}`,
+        clientName: atendimento.nome,
+        type: 'plano' as const,
+        amount: parseFloat(atendimento.planoData?.valorMensal || '0'),
+        dueDate: month.dueDate,
+        month: month.month,
+        totalMonths: parseInt(atendimento.planoData?.meses || '0'),
+        created: new Date().toISOString(),
+        active: false // Não ativo porque foi pago
+      };
+      
+      const updatedPlanos = [...planos, newPlano];
+      savePlanos(updatedPlanos);
+      
+      // Atualizar o planoId no estado local
+      const updatedMonths = [...planoMonths];
+      updatedMonths[monthIndex].planoId = newPlano.id;
+      updatedMonths[monthIndex].isPaid = true;
+      setPlanoMonths(updatedMonths);
+    } else {
+      // Atualizar apenas o estado local se está desmarcando um mês que não tinha planoId
+      const updatedMonths = [...planoMonths];
+      updatedMonths[monthIndex].isPaid = false;
+      setPlanoMonths(updatedMonths);
     }
     
-    // Atualizar o estado local
-    const updatedMonths = [...planoMonths];
-    updatedMonths[monthIndex].isPaid = !month.isPaid;
-    setPlanoMonths(updatedMonths);
+    // Se não criou novo plano, atualizar estado local
+    if (month.planoId || !newIsPaid) {
+      const updatedMonths = [...planoMonths];
+      updatedMonths[monthIndex].isPaid = newIsPaid;
+      setPlanoMonths(updatedMonths);
+    }
     
     toast.success(
-      !month.isPaid 
+      newIsPaid 
         ? `Mês ${month.month} marcado como pago` 
         : `Mês ${month.month} marcado como pendente`
     );
