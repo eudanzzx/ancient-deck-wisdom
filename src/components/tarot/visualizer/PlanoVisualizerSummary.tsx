@@ -75,7 +75,7 @@ const PlanoVisualizerSummary: React.FC<PlanoVisualizerSummaryProps> = ({
           
           <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200/50 shadow-sm hover:shadow-md transition-shadow duration-200">
             <Calendar className="h-4 w-4 text-orange-600" />
-            <span className="text-sm font-bold text-orange-700 tracking-wide">Vencimento: Segunda-feira</span>
+            <span className="text-sm font-bold text-orange-700 tracking-wide">Vencimento: Dia 30</span>
           </div>
         </div>
         
