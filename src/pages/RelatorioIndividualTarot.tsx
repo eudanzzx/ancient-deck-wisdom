@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,13 +9,13 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const RelatorioIndividualTarot = () => {
-  const { getAnalises } = useUserDataService();
+  const { getTarotAnalyses } = useUserDataService();
   const [analises, setAnalises] = useState<any[]>([]);
   const [selectedCliente, setSelectedCliente] = useState<string>("");
   const [clienteAnalises, setClienteAnalises] = useState<any[]>([]);
 
   useEffect(() => {
-    const data = getAnalises();
+    const data = getTarotAnalyses();
     console.log('Análises carregadas:', data);
     setAnalises(data);
   }, []);

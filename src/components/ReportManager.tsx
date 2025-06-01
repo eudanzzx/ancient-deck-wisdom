@@ -1,7 +1,6 @@
 
 import React from 'react';
 import useUserDataService from '@/services/userDataService';
-import DetailedClientReportGenerator from './reports/DetailedClientReportGenerator';
 import ClientReportButtons from './reports/ClientReportButtons';
 
 interface ReportManagerProps {
@@ -9,11 +8,11 @@ interface ReportManagerProps {
 }
 
 const ReportManager: React.FC<ReportManagerProps> = ({ variant = 'home' }) => {
-  const { getAtendimentos, getClientsWithConsultations, getAllTarotAnalyses } = useUserDataService();
+  const { getAtendimentos, getClientsWithConsultations, getTarotAnalyses } = useUserDataService();
   
   // Para tarot, usamos dados específicos
   if (variant === 'tarot') {
-    const analises = getAllTarotAnalyses();
+    const analises = getTarotAnalyses();
     const clientsMap = new Map();
 
     analises.forEach(analise => {
@@ -34,18 +33,10 @@ const ReportManager: React.FC<ReportManagerProps> = ({ variant = 'home' }) => {
 
     return (
       <div className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          <DetailedClientReportGenerator 
-            atendimentos={analises} 
-            clients={tarotClients}
-            variant="tarot"
-          />
-        </div>
-
         <ClientReportButtons 
-          clients={tarotClients} 
-          atendimentos={analises}
-          variant="tarot"
+          clientName=""
+          analises={analises}
+          allAnalises={analises}
         />
       </div>
     );
@@ -57,16 +48,10 @@ const ReportManager: React.FC<ReportManagerProps> = ({ variant = 'home' }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <DetailedClientReportGenerator 
-          atendimentos={atendimentos} 
-          clients={clients} 
-        />
-      </div>
-
       <ClientReportButtons 
-        clients={clients} 
-        atendimentos={atendimentos} 
+        clientName=""
+        analises={atendimentos}
+        allAnalises={atendimentos}
       />
     </div>
   );
