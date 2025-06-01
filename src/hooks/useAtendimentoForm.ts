@@ -108,7 +108,6 @@ const useAtendimentoForm = () => {
           `🎉 Hoje é aniversário desta pessoa! ${age} anos`,
           {
             duration: 8000,
-            icon: <Cake className="h-5 w-5" />,
             description: "Não esqueça de parabenizar!"
           }
         );
