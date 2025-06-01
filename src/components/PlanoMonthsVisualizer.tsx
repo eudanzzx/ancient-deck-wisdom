@@ -17,6 +17,7 @@ interface PlanoMonthsVisualizerProps {
       valorMensal: string;
     } | null;
     dataAtendimento: string;
+    data?: string; // Data de criação do atendimento
   };
 }
 
@@ -43,15 +44,22 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
   }, [atendimento]);
 
   const initializePlanoMonths = () => {
-    if (!atendimento.planoData || !atendimento.dataAtendimento) {
-      console.log('PlanoMonthsVisualizer - Missing planoData or dataAtendimento');
+    if (!atendimento.planoData) {
+      console.log('PlanoMonthsVisualizer - Missing planoData');
       return;
     }
 
+    // Use dataAtendimento se disponível, senão use a data de criação, senão use hoje
+    let startDateString = atendimento.dataAtendimento;
+    if (!startDateString || startDateString.trim() === '') {
+      startDateString = atendimento.data || new Date().toISOString();
+      console.log('PlanoMonthsVisualizer - Using fallback date:', startDateString);
+    }
+
     // Validate the date before using it
-    const startDate = new Date(atendimento.dataAtendimento);
+    const startDate = new Date(startDateString);
     if (isNaN(startDate.getTime())) {
-      console.error('Invalid date provided:', atendimento.dataAtendimento);
+      console.error('Invalid date provided:', startDateString);
       toast.error('Data de atendimento inválida');
       return;
     }
@@ -59,10 +67,11 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     const totalMonths = parseInt(atendimento.planoData.meses);
     if (isNaN(totalMonths) || totalMonths <= 0) {
       console.error('Invalid number of months:', atendimento.planoData.meses);
+      toast.error('Número de meses inválido');
       return;
     }
 
-    console.log('PlanoMonthsVisualizer - Creating months for:', totalMonths);
+    console.log('PlanoMonthsVisualizer - Creating months for:', totalMonths, 'starting from:', startDate);
 
     const planos = getPlanos();
     
@@ -151,7 +160,11 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       <CardContent className="p-6">
         {planoMonths.length === 0 ? (
           <div className="text-center text-slate-500 py-8">
-            Carregando meses do plano...
+            <div className="animate-pulse">
+              <div className="h-4 bg-slate-200 rounded w-48 mx-auto mb-2"></div>
+              <div className="h-3 bg-slate-200 rounded w-32 mx-auto"></div>
+            </div>
+            <p className="mt-4">Carregando meses do plano...</p>
           </div>
         ) : (
           <>
@@ -277,6 +290,44 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       </CardContent>
     </Card>
   );
+
+  function handlePaymentToggle(monthIndex: number) {
+    const month = planoMonths[monthIndex];
+    const planos = getPlanos();
+    
+    if (month.planoId) {
+      // Atualizar o status do plano existente
+      const updatedPlanos = planos.map(plano => 
+        plano.id === month.planoId 
+          ? { ...plano, active: month.isPaid } // Se estava pago, volta a ser ativo
+          : plano
+      );
+      savePlanos(updatedPlanos);
+    }
+    
+    // Atualizar o estado local
+    const updatedMonths = [...planoMonths];
+    updatedMonths[monthIndex].isPaid = !month.isPaid;
+    setPlanoMonths(updatedMonths);
+    
+    toast.success(
+      !month.isPaid 
+        ? `Mês ${month.month} marcado como pago` 
+        : `Mês ${month.month} marcado como pendente`
+    );
+  }
+
+  function formatDate(dateString: string) {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Data inválida';
+      }
+      return date.toLocaleDateString('pt-BR');
+    } catch (error) {
+      return 'Data inválida';
+    }
+  }
 };
 
 export default PlanoMonthsVisualizer;
