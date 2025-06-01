@@ -93,13 +93,15 @@ const AnaliseFrequencial = () => {
   const [analiseAntes, setAnaliseAntes] = useState("");
   const [analiseDepois, setAnaliseDepois] = useState("");
   const [planoAtivo, setPlanoAtivo] = useState(false);
-  const [planoMeses, setPlanoMeses] = useState("");
-  const [planoValorMensal, setPlanoValorMensal] = useState("");
+  const [planoData, setPlanoData] = useState({
+    meses: "",
+    valorMensal: "",
+  });
   const [lembretes, setLembretes] = useState([
     { id: 1, texto: "", dias: 7 }
   ]);
   
-  const { checkClientBirthday, saveTarotAnalysisWithPlan } = useUserDataService();
+  const { checkClientBirthday, saveTarotAnalysisWithPlan, getPlanos, savePlanos } = useUserDataService();
   
   // Verificar notificações ao carregar a página
   useEffect(() => {
@@ -149,6 +151,13 @@ const AnaliseFrequencial = () => {
     } else {
       setSigno("");
     }
+  }, []);
+
+  const handlePlanoDataChange = useCallback((field: string, value: string) => {
+    setPlanoData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   }, []);
 
   // Verifica se existem tratamentos que atingiram o prazo
@@ -216,6 +225,30 @@ const AnaliseFrequencial = () => {
     ));
   }, []);
 
+  const createPlanoNotifications = useCallback((nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
+    const notifications = [];
+    const startDate = new Date(dataInicio);
+    
+    for (let i = 1; i <= parseInt(meses); i++) {
+      const notificationDate = new Date(startDate);
+      notificationDate.setMonth(notificationDate.getMonth() + i);
+      
+      notifications.push({
+        id: `plano-${Date.now()}-${i}`,
+        clientName: nomeCliente,
+        type: 'plano',
+        amount: parseFloat(valorMensal),
+        dueDate: notificationDate.toISOString().split('T')[0],
+        month: i,
+        totalMonths: parseInt(meses),
+        created: new Date().toISOString(),
+        active: true
+      });
+    }
+    
+    return notifications;
+  }, []);
+
   const handleSalvarAnalise = useCallback(() => {
     // Validar campos obrigatórios
     if (!nomeCliente || !dataInicio) {
@@ -229,30 +262,46 @@ const AnaliseFrequencial = () => {
       nomeCliente,
       dataNascimento,
       signo,
-      atencao, // Use atencao instead of atencaoFlag
+      atencao,
       dataInicio,
-      dataAtendimento: dataInicio, // Use dataInicio as dataAtendimento for consistency
-      data: new Date().toISOString(), // Creation date
+      dataAtendimento: dataInicio,
+      data: new Date().toISOString(),
       preco,
-      pergunta: "Análise Frequencial", // Required field - using a default value
-      resposta: analiseAntes + (analiseDepois ? ` | Depois: ${analiseDepois}` : ""), // Required field - combine analyses
-      dataAnalise: new Date().toISOString(), // Required field
+      pergunta: "Análise Frequencial",
+      resposta: analiseAntes + (analiseDepois ? ` | Depois: ${analiseDepois}` : ""),
+      dataAnalise: new Date().toISOString(),
       analiseAntes,
       analiseDepois,
       planoAtivo,
-      planoData: planoAtivo ? {
-        meses: planoMeses,
-        valorMensal: planoValorMensal,
-      } : null,
+      planoData: planoAtivo ? planoData : null,
       lembretes: [...lembretes],
       dataCriacao: new Date().toISOString(),
-      finalizado: false, // Inicialmente, a análise não está finalizada
+      finalizado: false,
       status: 'ativo' as const,
-      atencaoFlag: atencao // For backward compatibility
+      atencaoFlag: atencao
     };
 
     // Use the new function to save with plan integration
     saveTarotAnalysisWithPlan(novaAnalise);
+    
+    // Se tem plano ativo, criar as notificações
+    if (planoAtivo && planoData.meses && planoData.valorMensal && dataInicio) {
+      const notifications = createPlanoNotifications(
+        nomeCliente,
+        planoData.meses,
+        planoData.valorMensal,
+        dataInicio
+      );
+      
+      // Salvar as notificações de plano
+      const existingPlanos = getPlanos() || [];
+      const updatedPlanos = [...existingPlanos, ...notifications];
+      savePlanos(updatedPlanos);
+      
+      toast.success(`Análise frequencial salva! Plano de ${planoData.meses} meses criado com sucesso.`);
+    } else {
+      toast.success("Análise frequencial salva com sucesso!");
+    }
     
     // Notificar usuário
     toast.success("Análise frequencial salva com sucesso!");
@@ -278,7 +327,7 @@ const AnaliseFrequencial = () => {
     
     // Voltar para a página de listagem
     navigate("/listagem-tarot");
-  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoMeses, planoValorMensal, lembretes, navigate, saveTarotAnalysisWithPlan]);
+  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, lembretes, navigate, saveTarotAnalysisWithPlan, createPlanoNotifications, getPlanos, savePlanos]);
 
   const handleBack = useCallback(() => {
     navigate("/listagem-tarot");
@@ -298,13 +347,10 @@ const AnaliseFrequencial = () => {
     id: Date.now().toString(),
     nome: nomeCliente,
     planoAtivo,
-    planoData: planoAtivo ? {
-      meses: planoMeses,
-      valorMensal: planoValorMensal,
-    } : null,
+    planoData: planoAtivo ? planoData : null,
     dataAtendimento: dataInicio,
     data: new Date().toISOString(),
-  }), [nomeCliente, planoAtivo, planoMeses, planoValorMensal, dataInicio]);
+  }), [nomeCliente, planoAtivo, planoData, dataInicio]);
 
   return (
     <div className="min-h-screen bg-[#F1F7FF] py-6 px-4">
@@ -355,11 +401,9 @@ const AnaliseFrequencial = () => {
             <div className="mt-6">
               <PlanoSelector
                 planoAtivo={planoAtivo}
-                planoMeses={planoMeses}
-                planoValorMensal={planoValorMensal}
+                planoData={planoData}
                 onPlanoAtivoChange={setPlanoAtivo}
-                onPlanoMesesChange={setPlanoMeses}
-                onPlanoValorMensalChange={setPlanoValorMensal}
+                onPlanoDataChange={handlePlanoDataChange}
               />
             </div>
 
@@ -414,7 +458,7 @@ const AnaliseFrequencial = () => {
         </Card>
 
         {/* Plan Months Visualizer */}
-        {planoAtivo && nomeCliente && planoMeses && planoValorMensal && dataInicio && (
+        {planoAtivo && nomeCliente && planoData.meses && planoData.valorMensal && dataInicio && (
           <PlanoMonthsVisualizer atendimento={mockAtendimento} />
         )}
       </div>
