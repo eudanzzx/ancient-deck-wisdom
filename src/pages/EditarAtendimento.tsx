@@ -25,6 +25,7 @@ import useUserDataService from "@/services/userDataService";
 import { updateAtendimento } from "@/utils/dataServices";
 import BirthdayNotifications from "@/components/BirthdayNotifications";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
+import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
 import Logo from "@/components/Logo";
 
 interface Atendimento {
@@ -52,6 +53,7 @@ const EditarAtendimento = () => {
   const { getAtendimentos } = userDataService;
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [atendimento, setAtendimento] = useState<Atendimento | null>(null);
   
   // Individual form states for better control
   const [nome, setNome] = useState("");
@@ -84,24 +86,25 @@ const EditarAtendimento = () => {
         const atendimentos = getAtendimentos();
         console.log('EditarAtendimento - Total de atendimentos:', atendimentos.length);
         
-        const atendimento = atendimentos.find((a: Atendimento) => a.id === id);
-        console.log('EditarAtendimento - Atendimento encontrado:', atendimento);
+        const atendimentoEncontrado = atendimentos.find((a: Atendimento) => a.id === id);
+        console.log('EditarAtendimento - Atendimento encontrado:', atendimentoEncontrado);
         
-        if (atendimento) {
-          setNome(atendimento.nome || "");
-          setDataNascimento(atendimento.dataNascimento || "");
-          setTipoServico(atendimento.tipoServico || "");
-          setStatusPagamento(atendimento.statusPagamento || "");
-          setDataAtendimento(atendimento.dataAtendimento || "");
-          setValor(atendimento.valor || "");
-          setDestino(atendimento.destino || "");
-          setAno(atendimento.ano || "");
-          setAtencaoNota(atendimento.atencaoNota || "");
-          setDetalhes(atendimento.detalhes || "");
-          setTratamento(atendimento.tratamento || "");
-          setIndicacao(atendimento.indicacao || "");
-          setSigno(atendimento.signo || "");
-          setAtencaoFlag(Boolean(atendimento.atencaoFlag));
+        if (atendimentoEncontrado) {
+          setAtendimento(atendimentoEncontrado);
+          setNome(atendimentoEncontrado.nome || "");
+          setDataNascimento(atendimentoEncontrado.dataNascimento || "");
+          setTipoServico(atendimentoEncontrado.tipoServico || "");
+          setStatusPagamento(atendimentoEncontrado.statusPagamento || "");
+          setDataAtendimento(atendimentoEncontrado.dataAtendimento || "");
+          setValor(atendimentoEncontrado.valor || "");
+          setDestino(atendimentoEncontrado.destino || "");
+          setAno(atendimentoEncontrado.ano || "");
+          setAtencaoNota(atendimentoEncontrado.atencaoNota || "");
+          setDetalhes(atendimentoEncontrado.detalhes || "");
+          setTratamento(atendimentoEncontrado.tratamento || "");
+          setIndicacao(atendimentoEncontrado.indicacao || "");
+          setSigno(atendimentoEncontrado.signo || "");
+          setAtencaoFlag(Boolean(atendimentoEncontrado.atencaoFlag));
           
           console.log('EditarAtendimento - Dados carregados com sucesso');
         } else {
@@ -484,6 +487,10 @@ const EditarAtendimento = () => {
             </Button>
           </CardFooter>
         </Card>
+
+        {atendimento && (
+          <PlanoMonthsVisualizer atendimento={atendimento} />
+        )}
       </div>
     </div>
   );
