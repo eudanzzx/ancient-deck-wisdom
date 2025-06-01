@@ -31,8 +31,6 @@ const NovoAtendimento = () => {
     setPlanoAtivo,
   } = useAtendimentoForm();
 
-  const [savedAtendimento, setSavedAtendimento] = React.useState<any>(null);
-
   const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
     const notifications = [];
     const startDate = new Date(dataInicio);
@@ -57,7 +55,7 @@ const NovoAtendimento = () => {
     return notifications;
   };
 
-  const handleSaveAtendimento = () => {
+  const handleSaveAndFinish = () => {
     const existingAtendimentos = getAtendimentos();
     
     const novoAtendimento = {
@@ -73,9 +71,6 @@ const NovoAtendimento = () => {
     
     existingAtendimentos.push(novoAtendimento);
     saveAtendimentos(existingAtendimentos);
-    
-    // Salvar o atendimento para mostrar o botão de finalizar
-    setSavedAtendimento(novoAtendimento);
     
     // Se tem plano ativo, criar as notificações
     if (planoAtivo && planoData.meses && planoData.valorMensal && formData.dataAtendimento) {
@@ -95,9 +90,8 @@ const NovoAtendimento = () => {
     } else {
       toast.success("Atendimento salvo com sucesso!");
     }
-  };
-
-  const handleFinishAndGoHome = () => {
+    
+    // Navegar diretamente de volta
     navigate("/");
   };
 
@@ -150,22 +144,13 @@ const NovoAtendimento = () => {
           >
             Cancelar
           </Button>
-          {savedAtendimento ? (
-            <Button 
-              className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/90 text-white"
-              onClick={handleFinishAndGoHome}
-            >
-              Finalizar e Voltar
-            </Button>
-          ) : (
-            <Button 
-              className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/90 text-white"
-              onClick={handleSaveAtendimento}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Salvar Atendimento
-            </Button>
-          )}
+          <Button 
+            className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/90 text-white"
+            onClick={handleSaveAndFinish}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Finalizar Atendimento
+          </Button>
         </CardFooter>
       </div>
     </div>

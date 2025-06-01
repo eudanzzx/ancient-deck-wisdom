@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CreditCard } from "lucide-react";
+import { Calendar, CreditCard, Check } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 
@@ -80,7 +79,7 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     setPlanoMonths(months);
   };
 
-  const handlePaymentChange = (monthIndex: number, checked: boolean) => {
+  const handlePaymentToggle = (monthIndex: number) => {
     const month = planoMonths[monthIndex];
     const planos = getPlanos();
     
@@ -88,7 +87,7 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       // Atualizar o status do plano existente
       const updatedPlanos = planos.map(plano => 
         plano.id === month.planoId 
-          ? { ...plano, active: !checked } // Se foi marcado como pago, não está mais ativo
+          ? { ...plano, active: month.isPaid } // Se estava pago, volta a ser ativo
           : plano
       );
       savePlanos(updatedPlanos);
@@ -96,11 +95,11 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     
     // Atualizar o estado local
     const updatedMonths = [...planoMonths];
-    updatedMonths[monthIndex].isPaid = checked;
+    updatedMonths[monthIndex].isPaid = !month.isPaid;
     setPlanoMonths(updatedMonths);
     
     toast.success(
-      checked 
+      !month.isPaid 
         ? `Mês ${month.month} marcado como pago` 
         : `Mês ${month.month} marcado como pendente`
     );
@@ -135,31 +134,45 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-12 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {planoMonths.map((month, index) => (
             <div
               key={month.month}
-              className="flex flex-col items-center space-y-2"
-            >
-              <div className={`
-                w-16 h-16 border-2 rounded-lg flex flex-col items-center justify-center p-2 transition-all duration-200
+              onClick={() => handlePaymentToggle(index)}
+              className={`
+                relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg
                 ${month.isPaid 
-                  ? 'bg-green-100 border-green-500' 
-                  : 'bg-red-100 border-red-500'
+                  ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-400 shadow-green-200/50' 
+                  : 'bg-gradient-to-br from-red-50 to-red-100 border-red-400 shadow-red-200/50'
                 }
-              `}>
-                <div className="text-xs font-medium mb-1">
+              `}
+            >
+              {month.isPaid && (
+                <div className="absolute top-2 right-2">
+                  <Check className="h-5 w-5 text-green-600" />
+                </div>
+              )}
+              
+              <div className="text-center">
+                <div className="text-lg font-bold text-slate-700 mb-1">
                   Mês {month.month}
                 </div>
-                <Checkbox
-                  checked={month.isPaid}
-                  onCheckedChange={(checked) => handlePaymentChange(index, checked as boolean)}
-                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                />
+                <div className="text-xs text-slate-500 mb-2">
+                  Vencimento
+                </div>
+                <div className="text-sm font-medium text-slate-600">
+                  {formatDate(month.dueDate)}
+                </div>
+                <div className={`
+                  mt-3 px-3 py-1 rounded-full text-xs font-medium
+                  ${month.isPaid 
+                    ? 'bg-green-200 text-green-800' 
+                    : 'bg-red-200 text-red-800'
+                  }
+                `}>
+                  {month.isPaid ? 'Pago' : 'Pendente'}
+                </div>
               </div>
-              <span className="text-xs text-slate-500 text-center">
-                {formatDate(month.dueDate)}
-              </span>
             </div>
           ))}
         </div>
