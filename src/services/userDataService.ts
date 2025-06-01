@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 interface Atendimento {
@@ -96,10 +97,11 @@ const useUserDataService = () => {
 
   // Atendimentos functions
   const getAtendimentos = (): Atendimento[] => {
-    if (!initialized) return [];
     try {
       const data = localStorage.getItem("atendimentos");
-      return data ? JSON.parse(data) : [];
+      const result = data ? JSON.parse(data) : [];
+      console.log('getAtendimentos - Retornando:', result.length, 'atendimentos');
+      return result;
     } catch (error) {
       console.error("Erro ao carregar atendimentos:", error);
       return [];
@@ -109,17 +111,19 @@ const useUserDataService = () => {
   const saveAtendimentos = (atendimentos: Atendimento[]): void => {
     try {
       localStorage.setItem("atendimentos", JSON.stringify(atendimentos));
+      console.log('saveAtendimentos - Salvou:', atendimentos.length, 'atendimentos');
     } catch (error) {
       console.error("Erro ao salvar atendimentos:", error);
     }
   };
 
-  // Tarot Analysis functions
+  // Tarot Analysis functions - improved with better error handling and logging
   const getTarotAnalyses = (): TarotAnalysis[] => {
-    if (!initialized) return [];
     try {
       const data = localStorage.getItem("analises");
-      return data ? JSON.parse(data) : [];
+      const result = data ? JSON.parse(data) : [];
+      console.log('getTarotAnalyses - Carregou:', result.length, 'análises do localStorage');
+      return result;
     } catch (error) {
       console.error("Erro ao carregar análises:", error);
       return [];
@@ -128,7 +132,17 @@ const useUserDataService = () => {
 
   const saveTarotAnalyses = (analyses: TarotAnalysis[]): void => {
     try {
+      console.log('saveTarotAnalyses - Salvando:', analyses.length, 'análises');
       localStorage.setItem("analises", JSON.stringify(analyses));
+      
+      // Verificar se foi salvo corretamente
+      const verificacao = localStorage.getItem("analises");
+      const analisesVerificacao = verificacao ? JSON.parse(verificacao) : [];
+      console.log('saveTarotAnalyses - Verificação após salvar:', analisesVerificacao.length, 'análises');
+      
+      if (analisesVerificacao.length !== analyses.length) {
+        console.error('saveTarotAnalyses - ERRO: Quantidade não confere após salvar!');
+      }
     } catch (error) {
       console.error("Erro ao salvar análises:", error);
     }
@@ -137,6 +151,8 @@ const useUserDataService = () => {
   // Enhanced tarot analysis functions with plan support
   const saveTarotAnalysisWithPlan = (analysis: TarotAnalysis): void => {
     try {
+      console.log('saveTarotAnalysisWithPlan - Salvando análise:', analysis.id);
+      
       // Save the analysis
       const analyses = getTarotAnalyses();
       const updatedAnalyses = [...analyses, analysis];
@@ -171,6 +187,7 @@ const useUserDataService = () => {
         }
         
         savePlanos(planos);
+        console.log('saveTarotAnalysisWithPlan - Plano criado com', totalMonths, 'meses');
       }
     } catch (error) {
       console.error("Erro ao salvar análise com plano:", error);
@@ -224,11 +241,20 @@ const useUserDataService = () => {
     }
   };
 
-  // Legacy functions for backward compatibility
-  const getAllTarotAnalyses = getTarotAnalyses;
-  const saveAllTarotAnalyses = saveTarotAnalyses;
+  // Legacy functions for backward compatibility - now properly synced
+  const getAllTarotAnalyses = (): TarotAnalysis[] => {
+    const result = getTarotAnalyses();
+    console.log('getAllTarotAnalyses - Retornando:', result.length, 'análises');
+    return result;
+  };
+  
+  const saveAllTarotAnalyses = (analyses: TarotAnalysis[]): void => {
+    console.log('saveAllTarotAnalyses - Salvando:', analyses.length, 'análises');
+    saveTarotAnalyses(analyses);
+  };
   
   const deleteTarotAnalysis = (id: string): void => {
+    console.log('deleteTarotAnalysis - Deletando análise:', id);
     const analyses = getTarotAnalyses();
     const updatedAnalyses = analyses.filter(analysis => analysis.id !== id);
     saveTarotAnalyses(updatedAnalyses);
@@ -266,7 +292,6 @@ const useUserDataService = () => {
 
   // Planos functions
   const getPlanos = (): Plano[] => {
-    if (!initialized) return [];
     try {
       const data = localStorage.getItem("planos");
       return data ? JSON.parse(data) : [];

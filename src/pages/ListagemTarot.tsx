@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +45,17 @@ const ListagemTarot = () => {
     loadAnalises();
   }, []);
 
+  // Reload analyses when returning to this page
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('ListagemTarot - Página focada, recarregando análises...');
+      loadAnalises();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   useEffect(() => {
     const filtered = analises.filter(analise =>
       analise.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase())
@@ -74,8 +86,10 @@ const ListagemTarot = () => {
   }, [aniversarianteHoje]);
 
   const loadAnalises = () => {
+    console.log('ListagemTarot - Carregando análises...');
     const data = getAllTarotAnalyses();
-    console.log('ListagemTarot - Dados carregados:', data);
+    console.log('ListagemTarot - Dados carregados:', data.length, 'análises');
+    console.log('ListagemTarot - Primeira análise:', data[0]);
     setAnalises(data);
     setFilteredAnalises(data);
   };

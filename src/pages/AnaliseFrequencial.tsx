@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -101,7 +100,7 @@ const AnaliseFrequencial = () => {
     { id: 1, texto: "", dias: 7 }
   ]);
   
-  const { checkClientBirthday, getTarotAnalyses, saveTarotAnalyses } = useUserDataService();
+  const { checkClientBirthday, saveTarotAnalysisWithPlan } = useUserDataService();
   
   // Verificar notificações ao carregar a página
   useEffect(() => {
@@ -277,46 +276,20 @@ const AnaliseFrequencial = () => {
 
       console.log('handleSalvarAnalise - Nova análise criada:', novaAnalise);
 
-      // Obter análises existentes
-      const analisesExistentes = getTarotAnalyses();
-      console.log('handleSalvarAnalise - Análises existentes encontradas:', analisesExistentes.length);
-
-      // Adicionar a nova análise
-      const analisesAtualizadas = [...analisesExistentes, novaAnalise];
-      console.log('handleSalvarAnalise - Total de análises após adicionar:', analisesAtualizadas.length);
-
-      // Salvar as análises atualizadas
-      saveTarotAnalyses(analisesAtualizadas);
-      console.log('handleSalvarAnalise - Análises salvas via userDataService');
-
-      // Salvar também no localStorage diretamente como backup
-      localStorage.setItem("analises", JSON.stringify(analisesAtualizadas));
-      console.log('handleSalvarAnalise - Backup salvo no localStorage');
+      // Usar a função específica para salvar com plano
+      saveTarotAnalysisWithPlan(novaAnalise);
+      console.log('handleSalvarAnalise - Análise salva via saveTarotAnalysisWithPlan');
 
       // Verificar se foi salvo corretamente
-      const analisesVerificacao = getTarotAnalyses();
-      console.log('handleSalvarAnalise - Verificação após salvar:', analisesVerificacao.length);
-      
-      // Verificar se a nova análise está na lista
-      const analiseEncontrada = analisesVerificacao.find(a => a.id === novoId);
+      const verificacao = JSON.parse(localStorage.getItem("analises") || "[]");
+      const analiseEncontrada = verificacao.find((a: any) => a.id === novoId);
+      console.log('handleSalvarAnalise - Verificação após salvar:', verificacao.length, 'análises');
       console.log('handleSalvarAnalise - Análise encontrada após salvar:', !!analiseEncontrada);
 
       if (!analiseEncontrada) {
         console.error('handleSalvarAnalise - ERRO: Análise não foi salva corretamente!');
-        
-        // Tentar salvar novamente diretamente no localStorage
-        console.log('handleSalvarAnalise - Tentando salvar diretamente no localStorage...');
-        localStorage.setItem("analises", JSON.stringify(analisesAtualizadas));
-        
-        // Verificar novamente
-        const verificacaoFinal = JSON.parse(localStorage.getItem("analises") || "[]");
-        console.log('handleSalvarAnalise - Verificação final no localStorage:', verificacaoFinal.length);
-        
-        const analiseEncontradaFinal = verificacaoFinal.find((a: any) => a.id === novoId);
-        if (!analiseEncontradaFinal) {
-          toast.error("Erro ao salvar análise - tente novamente");
-          return;
-        }
+        toast.error("Erro ao salvar análise - tente novamente");
+        return;
       }
       
       // Notificar usuário
@@ -363,13 +336,13 @@ const AnaliseFrequencial = () => {
       setTimeout(() => {
         console.log('handleSalvarAnalise - Navegando para listagem');
         navigate("/listagem-tarot");
-      }, 200);
+      }, 500); // Aumentei o tempo para 500ms
 
     } catch (error) {
       console.error('handleSalvarAnalise - Erro ao salvar:', error);
       toast.error("Erro ao salvar análise - verifique os dados e tente novamente");
     }
-  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, lembretes, navigate, getTarotAnalyses, saveTarotAnalyses]);
+  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, lembretes, navigate, saveTarotAnalysisWithPlan]);
 
   const handleBack = useCallback(() => {
     navigate("/listagem-tarot");
