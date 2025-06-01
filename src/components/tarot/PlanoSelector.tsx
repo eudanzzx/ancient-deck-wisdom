@@ -39,22 +39,22 @@ const PlanoSelector: React.FC<PlanoSelectorProps> = ({
       {planoAtivo && (
         <div className="grid grid-cols-2 gap-2 mt-2">
           <div className="space-y-1">
-            <Label className="text-sm text-slate-600">Meses</Label>
+            <Label className="text-sm text-slate-600">Semanas</Label>
             <Select onValueChange={(value) => onPlanoDataChange("meses", value)}>
               <SelectTrigger className="bg-[#6B21A8]/10 border-[#6B21A8]/30 focus:border-[#6B21A8]">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                {[...Array(12)].map((_, i) => (
+                {[...Array(52)].map((_, i) => (
                   <SelectItem key={i + 1} value={(i + 1).toString()}>
-                    {i + 1} {i === 0 ? 'mês' : 'meses'}
+                    {i + 1} {i === 0 ? 'semana' : 'semanas'}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-sm text-slate-600">Valor Mensal (R$)</Label>
+            <Label className="text-sm text-slate-600">Valor Semanal (R$)</Label>
             <Input 
               type="number" 
               placeholder="0.00" 
