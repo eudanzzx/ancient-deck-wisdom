@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useUserDataService from "@/services/userDataService";
 import DashboardBirthdayNotifications from "@/components/DashboardBirthdayNotifications";
@@ -6,6 +7,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import PeriodSelector from "@/components/dashboard/PeriodSelector";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import AtendimentosTable from "@/components/dashboard/AtendimentosTable";
+import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
 import { CalendarDays, Users, Activity, BellRing, Search, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -214,6 +216,9 @@ const Index = () => {
 
       <main className="container mx-auto py-24 px-4 relative z-10">
         <DashboardBirthdayNotifications />
+        
+        {/* Tarot Plan Notifications */}
+        <TarotPlanoNotifications />
         
         {aniversarianteHoje && (
           <ClientBirthdayAlert 
