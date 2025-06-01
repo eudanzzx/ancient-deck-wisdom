@@ -51,15 +51,10 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
       <Button
         onClick={() => setIsOpen(!isOpen)}
         variant="outline"
+        size="sm"
         className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200"
       >
         <CreditCard className="h-4 w-4" />
-        <span className="mx-2 font-medium">{paidMonths}/{totalMonths}</span>
-        {isOpen ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
-        )}
       </Button>
 
       {isOpen && (
