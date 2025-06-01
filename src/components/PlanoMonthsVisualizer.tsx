@@ -290,44 +290,6 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       </CardContent>
     </Card>
   );
-
-  function handlePaymentToggle(monthIndex: number) {
-    const month = planoMonths[monthIndex];
-    const planos = getPlanos();
-    
-    if (month.planoId) {
-      // Atualizar o status do plano existente
-      const updatedPlanos = planos.map(plano => 
-        plano.id === month.planoId 
-          ? { ...plano, active: month.isPaid } // Se estava pago, volta a ser ativo
-          : plano
-      );
-      savePlanos(updatedPlanos);
-    }
-    
-    // Atualizar o estado local
-    const updatedMonths = [...planoMonths];
-    updatedMonths[monthIndex].isPaid = !month.isPaid;
-    setPlanoMonths(updatedMonths);
-    
-    toast.success(
-      !month.isPaid 
-        ? `Mês ${month.month} marcado como pago` 
-        : `Mês ${month.month} marcado como pendente`
-    );
-  }
-
-  function formatDate(dateString: string) {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return 'Data inválida';
-      }
-      return date.toLocaleDateString('pt-BR');
-    } catch (error) {
-      return 'Data inválida';
-    }
-  }
 };
 
 export default PlanoMonthsVisualizer;
