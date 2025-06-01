@@ -11,6 +11,7 @@ import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import AtendimentoForm from "@/components/forms/AtendimentoForm";
 import PlanoPaymentTracker from "@/components/forms/PlanoPaymentTracker";
+import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
 import useAtendimentoForm from "@/hooks/useAtendimentoForm";
 
 const NovoAtendimento = () => {
@@ -33,6 +34,8 @@ const NovoAtendimento = () => {
     setAtencao,
     setPlanoAtivo,
   } = useAtendimentoForm();
+
+  const [savedAtendimento, setSavedAtendimento] = React.useState<any>(null);
 
   const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
     const notifications = [];
@@ -75,6 +78,9 @@ const NovoAtendimento = () => {
     existingAtendimentos.push(novoAtendimento);
     saveAtendimentos(existingAtendimentos);
     
+    // Salvar o atendimento para mostrar o visualizador
+    setSavedAtendimento(novoAtendimento);
+    
     // Se tem plano ativo, criar as notificações e mostrar o tracker
     if (planoAtivo && planoData.meses && planoData.valorMensal && formData.dataAtendimento) {
       const notifications = createPlanoNotifications(
@@ -93,7 +99,6 @@ const NovoAtendimento = () => {
       toast.success(`Atendimento salvo! Plano de ${planoData.meses} meses criado com sucesso.`);
     } else {
       toast.success("Atendimento salvo com sucesso!");
-      navigate("/");
     }
   };
 
@@ -149,6 +154,10 @@ const NovoAtendimento = () => {
             monthlyValue={planoData.valorMensal}
             startDate={formData.dataAtendimento}
           />
+        )}
+
+        {savedAtendimento && savedAtendimento.planoAtivo && savedAtendimento.planoData && (
+          <PlanoMonthsVisualizer atendimento={savedAtendimento} />
         )}
 
         <CardFooter className="flex justify-end gap-3 border-t border-white/10 px-0 py-4">

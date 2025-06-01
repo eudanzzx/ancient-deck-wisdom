@@ -1,17 +1,30 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { 
-  Edit, 
-  Trash2, 
-  FileText, 
-  Calendar,
-  DollarSign,
-  User,
-  AlertTriangle
-} from 'lucide-react';
+import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Edit, Trash2, Calendar, AlertTriangle, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
 
 interface Atendimento {
   id: string;
@@ -29,6 +42,11 @@ interface Atendimento {
   indicacao?: string;
   atencaoFlag?: boolean;
   atencaoNota?: string;
+  planoAtivo?: boolean;
+  planoData?: {
+    meses: string;
+    valorMensal: string;
+  } | null;
 }
 
 interface AtendimentosTableProps {
@@ -36,56 +54,57 @@ interface AtendimentosTableProps {
   onDeleteAtendimento: (id: string) => void;
 }
 
-const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ 
-  atendimentos, 
-  onDeleteAtendimento 
-}) => {
+const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onDeleteAtendimento }) => {
   const navigate = useNavigate();
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const handleEdit = (id: string) => {
-    navigate(`/editar-atendimento/${id}`);
-  };
-
-  const handleViewReport = (id: string) => {
-    navigate(`/relatorio-individual/${id}`);
+  const toggleRowExpansion = (id: string) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedRows(newExpanded);
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const getStatusColor = (status?: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'pago':
-        return 'bg-green-50 text-green-700 border-green-200';
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Pago</Badge>;
+      case 'pendente':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pendente</Badge>;
       case 'parcelado':
-        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Parcelado</Badge>;
       default:
-        return 'bg-red-50 text-red-700 border-red-200';
+        return <Badge variant="secondary">-</Badge>;
     }
   };
 
-  const getStatusText = (status?: string) => {
-    switch (status) {
-      case 'pago':
-        return 'Pago';
-      case 'parcelado':
-        return 'Parcelado';
+  const getTipoServicoLabel = (tipo: string) => {
+    switch (tipo) {
+      case 'tarot':
+        return 'Tarot';
+      case 'terapia':
+        return 'Terapia';
+      case 'mesa-radionica':
+        return 'Mesa Radiônica';
       default:
-        return 'Pendente';
+        return tipo;
     }
   };
 
   if (atendimentos.length === 0) {
     return (
-      <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
-        <CardContent className="p-8">
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mb-6">
-              <FileText className="h-10 w-10 text-slate-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-slate-700 mb-2">Nenhum atendimento registrado</h3>
-            <p className="text-slate-500 mb-8 max-w-sm">Comece registrando seu primeiro atendimento</p>
+      <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl">
+        <CardContent className="pt-6">
+          <div className="text-center text-slate-500">
+            <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Nenhum atendimento encontrado</p>
           </div>
         </CardContent>
       </Card>
@@ -93,93 +112,137 @@ const AtendimentosTable: React.FC<AtendimentosTableProps> = ({
   }
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
-      <CardHeader className="border-b border-slate-200/50 pb-4">
-        <CardTitle className="text-2xl font-bold text-blue-800 flex items-center gap-2">
-          <FileText className="h-6 w-6" />
-          Últimos Atendimentos
+    <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl overflow-hidden">
+      <CardHeader>
+        <CardTitle className="text-blue-800 flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Lista de Atendimentos
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="divide-y divide-slate-200/50">
-          {atendimentos.map((atendimento, index) => (
-            <div 
-              key={atendimento.id} 
-              className="p-6 hover:bg-slate-50/80 transition-all duration-200 cursor-pointer"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                      {atendimento.nome.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-800">
-                        {atendimento.nome}
-                      </h4>
-                      {atendimento.atencaoFlag && (
-                        <div className="flex items-center gap-1 mt-1" title={atendimento.atencaoNota}>
-                          <AlertTriangle className="h-3 w-3 text-amber-500" />
-                          <span className="text-xs text-amber-600 font-medium">ATENÇÃO</span>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-slate-200">
+                <TableHead className="font-semibold text-slate-700">Cliente</TableHead>
+                <TableHead className="font-semibold text-slate-700">Data</TableHead>
+                <TableHead className="font-semibold text-slate-700">Serviço</TableHead>
+                <TableHead className="font-semibold text-slate-700">Valor</TableHead>
+                <TableHead className="font-semibold text-slate-700">Status</TableHead>
+                <TableHead className="font-semibold text-slate-700">Plano</TableHead>
+                <TableHead className="font-semibold text-slate-700 text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {atendimentos.map((atendimento) => (
+                <React.Fragment key={atendimento.id}>
+                  <TableRow className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <div className="font-medium text-slate-900">{atendimento.nome}</div>
+                          {atendimento.signo && (
+                            <div className="text-sm text-slate-500">{atendimento.signo}</div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-slate-700 mb-3">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3 text-blue-600" />
-                      <span>{formatDate(atendimento.dataAtendimento)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <FileText className="h-3 w-3 text-blue-600" />
-                      <span className="capitalize">{atendimento.tipoServico.replace('-', ' ')}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3 text-blue-600" />
-                      <span className="font-medium text-green-600">
-                        R$ {parseFloat(atendimento.valor || "0").toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <span className={`text-xs px-2 py-1 rounded-full border ${getStatusColor(atendimento.statusPagamento)}`}>
-                      {getStatusText(atendimento.statusPagamento)}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex gap-1">
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100 transition-all duration-200 hover:scale-110"
-                    onClick={() => handleViewReport(atendimento.id)}
-                  >
-                    <FileText className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-all duration-200 hover:scale-110"
-                    onClick={() => handleEdit(atendimento.id)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="h-8 w-8 p-0 text-red-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 hover:scale-110"
-                    onClick={() => onDeleteAtendimento(atendimento.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
+                        {atendimento.atencaoFlag && (
+                          <AlertTriangle className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-slate-600">
+                      {formatDate(atendimento.dataAtendimento)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {getTipoServicoLabel(atendimento.tipoServico)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium text-slate-900">
+                      R$ {parseFloat(atendimento.valor || '0').toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(atendimento.statusPagamento)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {atendimento.planoAtivo && atendimento.planoData && (
+                          <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            {atendimento.planoData.meses}x
+                          </Badge>
+                        )}
+                        {atendimento.planoAtivo && atendimento.planoData && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleRowExpansion(atendimento.id)}
+                            className="h-6 w-6 p-0"
+                          >
+                            {expandedRows.has(atendimento.id) ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => navigate(`/editar-atendimento/${atendimento.id}`)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir o atendimento de {atendimento.nome}? 
+                                Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => onDeleteAtendimento(atendimento.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {expandedRows.has(atendimento.id) && atendimento.planoAtivo && atendimento.planoData && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="p-0">
+                        <div className="p-4 bg-slate-50/50">
+                          <PlanoMonthsVisualizer atendimento={atendimento} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
     </Card>
