@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, CreditCard } from "lucide-react";
 import PlanoPaymentControl from "./PlanoPaymentControl";
+import useUserDataService from "@/services/userDataService";
 
 interface PlanoPaymentButtonProps {
   analysisId: string;
@@ -21,6 +22,29 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
   startDate,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { getPlanos } = useUserDataService();
+
+  // Calcular quantos meses foram pagos
+  const calculatePaidMonths = () => {
+    const planos = getPlanos();
+    const totalMonths = parseInt(planoData.meses);
+    let paidCount = 0;
+    
+    for (let i = 1; i <= totalMonths; i++) {
+      const planoForMonth = planos.find(plano => 
+        plano.id.startsWith(`${analysisId}-month-${i}`)
+      );
+      
+      if (planoForMonth && !planoForMonth.active) {
+        paidCount++;
+      }
+    }
+    
+    return paidCount;
+  };
+
+  const paidMonths = calculatePaidMonths();
+  const totalMonths = parseInt(planoData.meses);
 
   return (
     <div className="mt-4">
@@ -29,12 +53,12 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
         variant="outline"
         className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200"
       >
-        <CreditCard className="h-4 w-4 mr-2" />
-        Controle de Pagamentos do Plano
+        <CreditCard className="h-4 w-4" />
+        <span className="mx-2 font-medium">{paidMonths}/{totalMonths}</span>
         {isOpen ? (
-          <ChevronUp className="h-4 w-4 ml-2" />
+          <ChevronUp className="h-4 w-4" />
         ) : (
-          <ChevronDown className="h-4 w-4 ml-2" />
+          <ChevronDown className="h-4 w-4" />
         )}
       </Button>
 
