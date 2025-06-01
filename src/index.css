@@ -216,7 +216,7 @@
   @apply relative w-24 h-36 md:w-32 md:h-48 rounded-xl shadow-2xl cursor-pointer;
   @apply transition-all duration-700 ease-in-out;
   @apply bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800;
-  @apply border-2 border-gradient-to-r from-yellow-400 to-yellow-600;
+  @apply border-2 border-yellow-400;
   perspective: 1000px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 
               0 0 20px rgba(255, 215, 0, 0.2);
