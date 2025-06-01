@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import TarotCounterPriorityNotifications from "@/components/TarotCounterPriorityNotifications";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
+import PlanoPaymentButton from "@/components/tarot/PlanoPaymentButton";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -542,9 +541,9 @@ const ListagemTarot = () => {
                             </CardContent>
                           </Card>
                           
-                          {/* Controle de Pagamentos do Plano - aparece apenas se o plano estiver ativo */}
+                          {/* Botão de Pagamentos do Plano - aparece apenas se o plano estiver ativo */}
                           {analise.planoAtivo && analise.planoData && (
-                            <PlanoPaymentControl
+                            <PlanoPaymentButton
                               analysisId={analise.id}
                               clientName={analise.nomeCliente}
                               planoData={analise.planoData}
