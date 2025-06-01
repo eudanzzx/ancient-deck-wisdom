@@ -1,255 +1,185 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Download, FileText, TrendingUp, Users, Sparkles } from "lucide-react";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, TrendingUp, Users, DollarSign, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import useUserDataService from "@/services/userDataService";
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import ReportManager from "@/components/ReportManager";
-
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
+import Logo from "@/components/Logo";
 
 interface AnaliseFrequencial {
   id: string;
   nomeCliente: string;
-  dataAnalise: string;
-  tipoServico: string;
-  valor: number;
-  cartasEscolhidas: string[];
-  significados: string[];
-  orientacoes: string[];
-  pontosPotenciais: string[];
-  alertas: string[];
-  cartaMensal?: string;
+  dataInicio: string;
+  preco: string;
+  finalizado: boolean;
+  dataNascimento?: string;
+  signo?: string;
+  tipoServico?: string;
+  analiseAntes?: string;
+  analiseDepois?: string;
+  lembretes?: Array<{
+    id: number;
+    texto: string;
+    dias: number;
+  }>;
+  atencaoFlag?: boolean;
 }
 
-const RelatoriosFrequencial = () => {
+const RelatoriosFrequenciais = () => {
+  const navigate = useNavigate();
   const { getAllTarotAnalyses } = useUserDataService();
-  const [analises] = useState<AnaliseFrequencial[]>(getAllTarotAnalyses());
+  
+  const rawAnalises = getAllTarotAnalyses();
+  
+  // Convert to the expected interface format
+  const [analises] = useState<AnaliseFrequencial[]>(
+    rawAnalises.map(analise => ({
+      id: analise.id,
+      nomeCliente: analise.nomeCliente,
+      dataInicio: analise.dataInicio,
+      preco: analise.preco,
+      finalizado: analise.finalizado ?? false,
+      dataNascimento: analise.dataNascimento,
+      signo: analise.signo,
+      tipoServico: analise.tipoServico || 'tarot',
+      analiseAntes: analise.analiseAntes,
+      analiseDepois: analise.analiseDepois,
+      lembretes: analise.lembretes,
+      atencaoFlag: analise.atencaoFlag
+    }))
+  );
 
-  const calcularEstatisticas = () => {
-    const hoje = new Date();
-    const umMesAtras = new Date(hoje.getFullYear(), hoje.getMonth() - 1, hoje.getDate());
+  const totalAnalises = analises.length;
+  const totalClientes = useMemo(() => new Set(analises.map(a => a.nomeCliente)).size, [analises]);
+  const receitaTotal = useMemo(() => analises.reduce((acc, a) => acc + parseFloat(a.preco || '0'), 0), [analises]);
 
-    const analisesMesAtual = analises.filter(analise => {
-      const dataAnalise = new Date(analise.dataAnalise);
-      return dataAnalise >= umMesAtras && dataAnalise <= hoje;
-    });
-
-    const totalAnalises = analises.length;
-    const analisesMes = analisesMesAtual.length;
-    const receitaTotal = analises.reduce((sum, analise) => sum + Number(analise.valor || 0), 0);
-    const receitaMes = analisesMesAtual.reduce((sum, analise) => sum + Number(analise.valor || 0), 0);
-
-    return {
-      totalAnalises,
-      analisesMes,
-      receitaTotal,
-      receitaMes
-    };
-  };
-
-  const gerarDadosGraficoMensal = () => {
-    const dadosPorMes: { [key: string]: { analises: number; receita: number } } = {};
-
-    analises.forEach(analise => {
-      const data = new Date(analise.dataAnalise);
-      const mesAno = format(data, 'MM/yyyy');
-      
-      if (!dadosPorMes[mesAno]) {
-        dadosPorMes[mesAno] = { analises: 0, receita: 0 };
-      }
-      
-      dadosPorMes[mesAno].analises += 1;
-      dadosPorMes[mesAno].receita += Number(analise.valor || 0);
-    });
-
-    return Object.entries(dadosPorMes)
-      .map(([mes, dados]) => ({
-        mes,
-        analises: dados.analises,
-        receita: dados.receita
-      }))
-      .sort((a, b) => a.mes.localeCompare(b.mes))
-      .slice(-6);
-  };
-
-  const gerarRelatorioCompleto = () => {
-    const doc = new jsPDF();
-    const stats = calcularEstatisticas();
-    
-    // Cabeçalho
-    doc.setFontSize(20);
-    doc.setTextColor(107, 33, 168);
-    doc.text('Relatório Tarot - Análise Frequencial', 20, 30);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 45);
-    
-    // Estatísticas
-    doc.setFontSize(16);
-    doc.setTextColor(107, 33, 168);
-    doc.text('Estatísticas Gerais', 20, 65);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Total de Análises: ${stats.totalAnalises}`, 20, 80);
-    doc.text(`Análises este Mês: ${stats.analisesMes}`, 20, 95);
-    doc.text(`Receita Total: R$ ${stats.receitaTotal.toFixed(2)}`, 20, 110);
-    doc.text(`Receita este Mês: R$ ${stats.receitaMes.toFixed(2)}`, 20, 125);
-    
-    // Tabela de análises
-    const tableData = analises.map(analise => [
-      analise.nomeCliente,
-      format(new Date(analise.dataAnalise), 'dd/MM/yyyy'),
-      `R$ ${Number(analise.valor || 0).toFixed(2)}`,
-      analise.cartasEscolhidas?.slice(0, 3).join(', ') || 'N/A'
-    ]);
-
-    doc.autoTable({
-      head: [['Cliente', 'Data', 'Valor', 'Cartas Principais']],
-      body: tableData,
-      startY: 140,
-      styles: {
-        fontSize: 10,
-        textColor: [0, 0, 0],
-      },
-      headStyles: {
-        fillColor: [107, 33, 168],
-        textColor: [255, 255, 255],
-      },
-    });
-
-    doc.save('relatorio-tarot-frequencial.pdf');
-  };
-
-  const stats = calcularEstatisticas();
-  const dadosGrafico = gerarDadosGraficoMensal();
-
-  const chartConfig = {
-    analises: {
-      label: "Análises",
-      color: "#8B5CF6",
-    },
-    receita: {
-      label: "Receita",
-      color: "#A855F7",
-    },
-  };
+  const dataMaisRecente = useMemo(() => {
+    if (analises.length === 0) return 'N/A';
+    const datas = analises.map(a => new Date(a.dataInicio).getTime());
+    const maisRecente = new Date(Math.max(...datas));
+    return maisRecente.toLocaleDateString('pt-BR');
+  }, [analises]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100">
-      <DashboardHeader />
-      
-      <main className="container mx-auto py-24 px-4">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="transform hover:scale-110 transition-all duration-300 hover:rotate-12">
-              <Sparkles className="h-12 w-12 text-purple-600" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-purple-800 bg-gradient-to-r from-purple-800 to-purple-600 bg-clip-text text-transparent">
-                Relatórios Tarot
-              </h1>
-              <p className="text-purple-600 mt-1 opacity-80">Análise frequencial e insights</p>
-            </div>
-          </div>
-          
+    <div className="min-h-screen bg-[#F1F7FF] py-6 px-4">
+      <div className="container mx-auto max-w-5xl">
+        <div className="mb-6 flex items-center">
           <Button 
-            onClick={gerarRelatorioCompleto}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            variant="ghost" 
+            className="mr-2 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:text-[#6B21A8] transition-colors duration-200" 
+            onClick={() => navigate('/')}
           >
-            <Download className="h-4 w-4 mr-2" />
-            Gerar PDF
+            <ArrowLeft className="h-5 w-5" />
           </Button>
+          <div className="flex items-center gap-3">
+            <Logo height={40} width={40} />
+            <h1 className="text-2xl font-bold text-[#6B21A8]">
+              Relatórios Frequenciais
+            </h1>
+          </div>
         </div>
 
-        {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard 
-            title="Total Análises" 
-            value={stats.totalAnalises.toString()} 
-            icon={<FileText className="h-8 w-8 text-purple-600" />} 
-          />
-          <StatCard 
-            title="Este Mês" 
-            value={stats.analisesMes.toString()}
-            icon={<Calendar className="h-8 w-8 text-purple-600" />} 
-          />
-          <StatCard 
-            title="Receita Total"
-            value={`R$ ${stats.receitaTotal.toFixed(2)}`} 
-            icon={<TrendingUp className="h-8 w-8 text-purple-600" />} 
-          />
-          <StatCard 
-            title="Receita Mensal" 
-            value={`R$ ${stats.receitaMes.toFixed(2)}`} 
-            icon={<Users className="h-8 w-8 text-purple-600" />} 
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="border-[#6B21A8]/20 shadow-sm bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-300">
+            <CardHeader>
+              <CardTitle className="text-[#6B21A8] flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Total de Análises
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-800">{totalAnalises}</div>
+              <p className="text-sm text-gray-500">Análises realizadas</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-[#6B21A8]/20 shadow-sm bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-300">
+            <CardHeader>
+              <CardTitle className="text-[#6B21A8] flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Total de Clientes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-800">{totalClientes}</div>
+              <p className="text-sm text-gray-500">Clientes atendidos</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-[#6B21A8]/20 shadow-sm bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-300">
+            <CardHeader>
+              <CardTitle className="text-[#6B21A8] flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Receita Total
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-800">R$ {receitaTotal.toFixed(2)}</div>
+              <p className="text-sm text-gray-500">Valor total recebido</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-[#6B21A8]/20 shadow-sm bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-300">
+            <CardHeader>
+              <CardTitle className="text-[#6B21A8] flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Data Mais Recente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-800">{dataMaisRecente}</div>
+              <p className="text-sm text-gray-500">Última análise realizada</p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Gráfico */}
-        <Card className="mb-8 bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-purple-800">Evolução Mensal</CardTitle>
-            <CardDescription>Análises e receita por mês</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dadosGrafico}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="analises" fill="#8B5CF6" />
-                  <Bar dataKey="receita" fill="#A855F7" />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Relatórios */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-purple-800">Relatórios Detalhados</CardTitle>
-            <CardDescription>Gere relatórios personalizados</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ReportManager variant="tarot" />
-          </CardContent>
-        </Card>
-      </main>
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-[#6B21A8] mb-4">Análises Recentes</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full leading-normal">
+              <thead>
+                <tr>
+                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Cliente
+                  </th>
+                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Data de Início
+                  </th>
+                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Preço
+                  </th>
+                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {analises.slice(0, 5).map(analise => (
+                  <tr key={analise.id}>
+                    <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                      <p className="text-gray-900 whitespace-no-wrap">{analise.nomeCliente}</p>
+                    </td>
+                    <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                      <p className="text-gray-900 whitespace-no-wrap">{new Date(analise.dataInicio).toLocaleDateString('pt-BR')}</p>
+                    </td>
+                    <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                      <p className="text-gray-900 whitespace-no-wrap">R$ {parseFloat(analise.preco || '0').toFixed(2)}</p>
+                    </td>
+                    <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                      <Badge className={analise.finalizado ? "bg-green-500 text-white" : "bg-yellow-500 text-white"}>
+                        {analise.finalizado ? 'Finalizado' : 'Em Andamento'}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-const StatCard = ({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) => (
-  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-500 group hover:bg-white hover:-translate-y-2 hover:scale-105">
-    <CardContent className="pt-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300">{title}</p>
-          <p className="text-3xl font-bold text-slate-800 group-hover:text-purple-700 transition-colors duration-300">{value}</p>
-        </div>
-        <div className="rounded-xl p-3 bg-purple-600/10 group-hover:bg-purple-600/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12">
-          {icon}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
-
-export default RelatoriosFrequencial;
+export default RelatoriosFrequenciais;
