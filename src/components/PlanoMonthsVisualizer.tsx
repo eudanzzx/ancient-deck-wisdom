@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CreditCard, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, CreditCard, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 
@@ -134,46 +134,53 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {planoMonths.map((month, index) => (
-            <div
+            <Button
               key={month.month}
               onClick={() => handlePaymentToggle(index)}
+              variant={month.isPaid ? "default" : "outline"}
               className={`
-                relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg
+                h-auto p-4 flex flex-col items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg
                 ${month.isPaid 
-                  ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-400 shadow-green-200/50' 
-                  : 'bg-gradient-to-br from-red-50 to-red-100 border-red-400 shadow-red-200/50'
+                  ? 'bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-green-200/50' 
+                  : 'bg-gradient-to-br from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 border-slate-300 text-slate-700 shadow-slate-200/50'
                 }
               `}
             >
-              {month.isPaid && (
-                <div className="absolute top-2 right-2">
-                  <Check className="h-5 w-5 text-green-600" />
-                </div>
-              )}
-              
-              <div className="text-center">
-                <div className="text-lg font-bold text-slate-700 mb-1">
+              <div className="flex items-center justify-between w-full">
+                <span className="text-lg font-bold">
                   Mês {month.month}
-                </div>
-                <div className="text-xs text-slate-500 mb-2">
+                </span>
+                {month.isPaid ? (
+                  <Check className="h-5 w-5" />
+                ) : (
+                  <X className="h-4 w-4 opacity-50" />
+                )}
+              </div>
+              
+              <div className="text-center w-full">
+                <div className="text-xs opacity-75 mb-1">
                   Vencimento
                 </div>
-                <div className="text-sm font-medium text-slate-600">
+                <div className="text-sm font-medium">
                   {formatDate(month.dueDate)}
                 </div>
-                <div className={`
-                  mt-3 px-3 py-1 rounded-full text-xs font-medium
-                  ${month.isPaid 
-                    ? 'bg-green-200 text-green-800' 
-                    : 'bg-red-200 text-red-800'
-                  }
-                `}>
-                  {month.isPaid ? 'Pago' : 'Pendente'}
-                </div>
               </div>
-            </div>
+              
+              <Badge 
+                variant={month.isPaid ? "secondary" : "outline"}
+                className={`
+                  text-xs font-medium
+                  ${month.isPaid 
+                    ? 'bg-white/20 text-white hover:bg-white/30' 
+                    : 'bg-red-100 text-red-800 border-red-200'
+                  }
+                `}
+              >
+                {month.isPaid ? 'Pago' : 'Pendente'}
+              </Badge>
+            </Button>
           ))}
         </div>
         
@@ -184,7 +191,7 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
               <span className="text-sm text-slate-600">Pago</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded"></div>
+              <div className="w-3 h-3 bg-slate-400 rounded"></div>
               <span className="text-sm text-slate-600">Pendente</span>
             </div>
           </div>
