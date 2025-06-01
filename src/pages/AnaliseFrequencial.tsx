@@ -225,89 +225,114 @@ const AnaliseFrequencial = () => {
   }, []);
 
   const handleSalvarAnalise = useCallback(() => {
+    console.log('handleSalvarAnalise - Iniciando salvamento');
+    
     // Validar campos obrigatórios
     if (!nomeCliente || !dataInicio) {
+      console.log('handleSalvarAnalise - Campos obrigatórios não preenchidos');
       toast.error("Preencha o nome do cliente e a data de início");
       return;
     }
 
-    console.log('Salvando análise com dados:', {
+    console.log('handleSalvarAnalise - Dados para salvar:', {
       nomeCliente,
       dataInicio,
       planoAtivo,
-      planoData
+      planoData,
+      lembretes
     });
 
-    // Preparar dados da análise no formato TarotAnalysis
-    const novaAnalise = {
-      id: Date.now().toString(),
-      nomeCliente,
-      dataNascimento,
-      signo,
-      atencao,
-      dataInicio,
-      dataAtendimento: dataInicio,
-      data: new Date().toISOString(),
-      preco,
-      pergunta: "Análise Frequencial",
-      resposta: analiseAntes + (analiseDepois ? ` | Depois: ${analiseDepois}` : ""),
-      dataAnalise: new Date().toISOString(),
-      analiseAntes,
-      analiseDepois,
-      planoAtivo,
-      planoData: planoAtivo ? planoData : null,
-      lembretes: [...lembretes],
-      dataCriacao: new Date().toISOString(),
-      finalizado: false,
-      status: 'ativo' as const,
-      atencaoFlag: atencao
-    };
+    try {
+      // Preparar dados da análise no formato TarotAnalysis
+      const novaAnalise = {
+        id: Date.now().toString(),
+        nomeCliente,
+        dataNascimento,
+        signo,
+        atencao,
+        dataInicio,
+        dataAtendimento: dataInicio,
+        data: new Date().toISOString(),
+        preco,
+        pergunta: "Análise Frequencial",
+        resposta: analiseAntes + (analiseDepois ? ` | Depois: ${analiseDepois}` : ""),
+        dataAnalise: new Date().toISOString(),
+        analiseAntes,
+        analiseDepois,
+        planoAtivo,
+        planoData: planoAtivo ? planoData : null,
+        lembretes: [...lembretes],
+        dataCriacao: new Date().toISOString(),
+        finalizado: false,
+        status: 'ativo' as const,
+        atencaoFlag: atencao
+      };
 
-    console.log('Nova análise criada:', novaAnalise);
+      console.log('handleSalvarAnalise - Nova análise criada:', novaAnalise);
 
-    // Obter análises existentes
-    const analisesExistentes = getTarotAnalyses();
-    console.log('Análises existentes antes de salvar:', analisesExistentes);
+      // Obter análises existentes
+      const analisesExistentes = getTarotAnalyses();
+      console.log('handleSalvarAnalise - Análises existentes:', analisesExistentes.length);
 
-    // Adicionar a nova análise
-    const analisesAtualizadas = [...analisesExistentes, novaAnalise];
-    console.log('Análises após adicionar nova:', analisesAtualizadas);
+      // Adicionar a nova análise
+      const analisesAtualizadas = [...analisesExistentes, novaAnalise];
+      console.log('handleSalvarAnalise - Total após adicionar:', analisesAtualizadas.length);
 
-    // Salvar as análises atualizadas
-    saveTarotAnalyses(analisesAtualizadas);
+      // Salvar as análises atualizadas
+      saveTarotAnalyses(analisesAtualizadas);
+      console.log('handleSalvarAnalise - Dados salvos no localStorage');
 
-    // Verificar se foi salvo corretamente
-    const analisesVerificacao = getTarotAnalyses();
-    console.log('Análises após salvar:', analisesVerificacao);
-    
-    // Notificar usuário
-    const mensagem = planoAtivo && planoData.meses && planoData.valorMensal
-      ? `Análise frequencial salva! Plano de ${planoData.meses} meses criado com sucesso.`
-      : "Análise frequencial salva com sucesso!";
-    
-    toast.success(mensagem);
-    
-    // Configurar lembretes automáticos
-    const lembretesStorage = JSON.parse(localStorage.getItem("lembretes") || "[]");
-    
-    lembretes.forEach(lembrete => {
-      if (lembrete.texto && lembrete.dias > 0) {
-        const novoLembrete = {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-          texto: lembrete.texto,
-          dataAlvo: new Date(Date.now() + lembrete.dias * 24 * 60 * 60 * 1000).toISOString(),
-          clienteId: novaAnalise.id,
-          clienteNome: nomeCliente
-        };
-        
-        lembretesStorage.push(novoLembrete);
+      // Verificar se foi salvo corretamente
+      const analisesVerificacao = getTarotAnalyses();
+      console.log('handleSalvarAnalise - Verificação após salvar:', analisesVerificacao.length);
+      
+      // Verificar se a nova análise está na lista
+      const analiseEncontrada = analisesVerificacao.find(a => a.id === novaAnalise.id);
+      console.log('handleSalvarAnalise - Análise encontrada após salvar:', !!analiseEncontrada);
+
+      if (!analiseEncontrada) {
+        console.error('handleSalvarAnalise - ERRO: Análise não foi salva corretamente!');
+        toast.error("Erro ao salvar análise - tente novamente");
+        return;
       }
-    });
-    
-    localStorage.setItem("lembretes", JSON.stringify(lembretesStorage));
-    
-    // Voltar para a página de listagem
-    navigate("/listagem-tarot");
+      
+      // Notificar usuário
+      const mensagem = planoAtivo && planoData.meses && planoData.valorMensal
+        ? `Análise frequencial salva! Plano de ${planoData.meses} meses criado com sucesso.`
+        : "Análise frequencial salva com sucesso!";
+      
+      toast.success(mensagem);
+      console.log('handleSalvarAnalise - Sucesso:', mensagem);
+
+      // Configurar lembretes automáticos
+      const lembretesStorage = JSON.parse(localStorage.getItem("lembretes") || "[]");
+      
+      lembretes.forEach(lembrete => {
+        if (lembrete.texto && lembrete.dias > 0) {
+          const novoLembrete = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+            texto: lembrete.texto,
+            dataAlvo: new Date(Date.now() + lembrete.dias * 24 * 60 * 60 * 1000).toISOString(),
+            clienteId: novaAnalise.id,
+            clienteNome: nomeCliente
+          };
+          
+          lembretesStorage.push(novoLembrete);
+        }
+      });
+      
+      localStorage.setItem("lembretes", JSON.stringify(lembretesStorage));
+      
+      // Aguardar um pouco antes de navegar para garantir que o estado foi atualizado
+      setTimeout(() => {
+        console.log('handleSalvarAnalise - Navegando para listagem');
+        navigate("/listagem-tarot");
+      }, 100);
+
+    } catch (error) {
+      console.error('handleSalvarAnalise - Erro ao salvar:', error);
+      toast.error("Erro ao salvar análise - verifique os dados e tente novamente");
+    }
   }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, lembretes, navigate, getTarotAnalyses, saveTarotAnalyses]);
 
   const handleBack = useCallback(() => {
