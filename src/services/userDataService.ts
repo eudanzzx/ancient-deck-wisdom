@@ -65,6 +65,14 @@ interface TarotAnalysis {
     dias: number;
   }>;
   atencaoFlag?: boolean;
+  // Plan fields
+  planoAtivo?: boolean;
+  planoData?: {
+    meses: string;
+    valorMensal: string;
+  } | null;
+  dataAtendimento?: string;
+  data?: string;
 }
 
 interface Plano {

@@ -2,8 +2,15 @@
 import React, { useState, useCallback, useMemo, memo } from "react";
 import {
   Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,6 +33,9 @@ const formSchema = z.object({
   recommendedTreatment: z.string().min(1, "Tratamento recomendado é obrigatória"),
   price: z.number().min(0, "Valor não pode ser negativo"),
   attention: z.boolean().default(false),
+  planoAtivo: z.boolean().default(false),
+  planoMeses: z.string().default(""),
+  planoValorMensal: z.string().default(""),
   counters: z.array(
     z.object({
       id: z.string(),
@@ -76,9 +86,14 @@ const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
       recommendedTreatment: editingAnalysis?.recommendedTreatment || "",
       price: editingAnalysis?.price || 0,
       attention: editingAnalysis?.attention || false,
+      planoAtivo: editingAnalysis?.planoAtivo || false,
+      planoMeses: editingAnalysis?.planoData?.meses || "",
+      planoValorMensal: editingAnalysis?.planoData?.valorMensal || "",
       counters: initialCounters,
     },
   });
+
+  const planoAtivo = form.watch("planoAtivo");
 
   const handleAddCounter = useCallback(() => {
     const newCounter: Counter = {
@@ -121,6 +136,11 @@ const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
       recommendedTreatment: data.recommendedTreatment,
       price: data.price,
       attention: data.attention,
+      planoAtivo: data.planoAtivo,
+      planoData: data.planoAtivo ? {
+        meses: data.planoMeses,
+        valorMensal: data.planoValorMensal,
+      } : null,
       counters: data.counters,
       completed: false,
       createdAt: editingAnalysis?.createdAt || new Date(),
@@ -136,6 +156,76 @@ const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-4">
         <ClientInfoFields form={form} />
         <AnalysisFields form={form} />
+
+        {/* Plano Section */}
+        <div className="space-y-4 p-4 border border-[#6B21A8]/20 rounded-lg bg-[#6B21A8]/5">
+          <h3 className="text-lg font-medium text-[#6B21A8]">Plano de Pagamento</h3>
+          
+          <FormField
+            control={form.control}
+            name="planoAtivo"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Ativar Plano</FormLabel>
+                  <div className="text-sm text-muted-foreground">
+                    Habilita o sistema de pagamento parcelado
+                  </div>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          {planoAtivo && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="planoMeses"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantidade de Meses</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 12"
+                        {...field}
+                        className="bg-white/50 border-[#6B21A8]/20 focus:border-[#6B21A8]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="planoValorMensal"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor Mensal (R$)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Ex: 150.00"
+                        {...field}
+                        className="bg-white/50 border-[#6B21A8]/20 focus:border-[#6B21A8]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+        </div>
+
         <CountersSection
           counters={counters}
           onAddCounter={handleAddCounter}

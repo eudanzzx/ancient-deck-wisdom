@@ -16,6 +16,7 @@ import { ArrowLeft, Save, Plus, Trash2, BellRing } from "lucide-react";
 import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
+import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
 import useUserDataService from "@/services/userDataService";
 import ClientForm from "@/components/tarot/ClientForm";
 import AnalysisCards from "@/components/tarot/AnalysisCards";
@@ -90,6 +91,9 @@ const AnaliseFrequencial = () => {
   const [preco, setPreco] = useState("");
   const [analiseAntes, setAnaliseAntes] = useState("");
   const [analiseDepois, setAnaliseDepois] = useState("");
+  const [planoAtivo, setPlanoAtivo] = useState(false);
+  const [planoMeses, setPlanoMeses] = useState("");
+  const [planoValorMensal, setPlanoValorMensal] = useState("");
   const [lembretes, setLembretes] = useState([
     { id: 1, texto: "", dias: 7 }
   ]);
@@ -226,9 +230,16 @@ const AnaliseFrequencial = () => {
       signo,
       atencaoFlag: atencao,
       dataInicio,
+      dataAtendimento: dataInicio, // Use dataInicio as dataAtendimento for consistency
+      data: new Date().toISOString(), // Creation date
       preco,
       analiseAntes,
       analiseDepois,
+      planoAtivo,
+      planoData: planoAtivo ? {
+        meses: planoMeses,
+        valorMensal: planoValorMensal,
+      } : null,
       lembretes: [...lembretes],
       dataCriacao: new Date().toISOString(),
       finalizado: false // Inicialmente, a análise não está finalizada
@@ -267,7 +278,7 @@ const AnaliseFrequencial = () => {
     
     // Voltar para a página de listagem
     navigate("/listagem-tarot");
-  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, lembretes, navigate]);
+  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoMeses, planoValorMensal, lembretes, navigate]);
 
   const handleBack = useCallback(() => {
     navigate("/listagem-tarot");
@@ -281,6 +292,19 @@ const AnaliseFrequencial = () => {
   const shouldShowBirthdayAlert = useMemo(() => {
     return nomeCliente && dataNascimento;
   }, [nomeCliente, dataNascimento]);
+
+  // Create a mock atendimento object for PlanoMonthsVisualizer
+  const mockAtendimento = useMemo(() => ({
+    id: Date.now().toString(),
+    nome: nomeCliente,
+    planoAtivo,
+    planoData: planoAtivo ? {
+      meses: planoMeses,
+      valorMensal: planoValorMensal,
+    } : null,
+    dataAtendimento: dataInicio,
+    data: new Date().toISOString(),
+  }), [nomeCliente, planoAtivo, planoMeses, planoValorMensal, dataInicio]);
 
   return (
     <div className="min-h-screen bg-[#F1F7FF] py-6 px-4">
@@ -327,6 +351,53 @@ const AnaliseFrequencial = () => {
               onDataInicioChange={setDataInicio}
               onPrecoChange={setPreco}
             />
+
+            {/* Plano Section */}
+            <div className="mt-6 space-y-4 p-4 border border-[#6B21A8]/20 rounded-lg bg-[#6B21A8]/5">
+              <h3 className="text-lg font-medium text-[#6B21A8]">Plano de Pagamento</h3>
+              
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-white/50">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Ativar Plano</Label>
+                  <div className="text-sm text-muted-foreground">
+                    Habilita o sistema de pagamento parcelado
+                  </div>
+                </div>
+                <Switch
+                  checked={planoAtivo}
+                  onCheckedChange={setPlanoAtivo}
+                />
+              </div>
+
+              {planoAtivo && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="planoMeses">Quantidade de Meses</Label>
+                    <Input
+                      id="planoMeses"
+                      type="number"
+                      placeholder="Ex: 12"
+                      value={planoMeses}
+                      onChange={(e) => setPlanoMeses(e.target.value)}
+                      className="bg-white/50 border-[#6B21A8]/20 focus:border-[#6B21A8]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="planoValorMensal">Valor Mensal (R$)</Label>
+                    <Input
+                      id="planoValorMensal"
+                      type="number"
+                      step="0.01"
+                      placeholder="Ex: 150.00"
+                      value={planoValorMensal}
+                      onChange={(e) => setPlanoValorMensal(e.target.value)}
+                      className="bg-white/50 border-[#6B21A8]/20 focus:border-[#6B21A8]"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
             <AnalysisCards
               analiseAntes={analiseAntes}
@@ -377,6 +448,11 @@ const AnaliseFrequencial = () => {
             </Button>
           </CardFooter>
         </Card>
+
+        {/* Plan Months Visualizer */}
+        {planoAtivo && nomeCliente && planoMeses && planoValorMensal && dataInicio && (
+          <PlanoMonthsVisualizer atendimento={mockAtendimento} />
+        )}
       </div>
     </div>
   );
