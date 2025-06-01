@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import TarotCounterPriorityNotifications from "@/components/TarotCounterPriorityNotifications";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -415,131 +416,142 @@ const ListagemTarot = () => {
                       console.log('ListagemTarot - Renderizando análise:', analise.nomeCliente, 'Tempo restante:', formattedTime);
                       
                       return (
-                        <Card 
-                          key={analise.id} 
-                          className="bg-white/80 border border-white/30 hover:bg-white/90 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] animate-fade-in group"
-                          style={{ animationDelay: `${index * 0.1}s` }}
-                        >
-                          <CardContent className="p-6">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-3">
-                                  <h3 className="text-lg font-semibold text-slate-800 group-hover:text-[#673193] transition-colors duration-300 flex items-center gap-2">
-                                    {analise.nomeCliente}
-                                    {formattedTime && (
-                                      <Badge 
-                                        variant="outline" 
-                                        className={`text-xs flex items-center gap-1 ${
-                                          timeRemaining?.days === 0 
-                                            ? "border-red-300 text-red-600 bg-red-50" 
-                                            : timeRemaining?.days === 1
-                                            ? "border-amber-300 text-amber-600 bg-amber-50"
-                                            : "border-blue-300 text-blue-600 bg-blue-50"
-                                        }`}
-                                      >
-                                        <Clock className="h-3 w-3" />
-                                        {formattedTime}
-                                      </Badge>
+                        <div key={analise.id}>
+                          <Card 
+                            className="bg-white/80 border border-white/30 hover:bg-white/90 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] animate-fade-in group"
+                            style={{ animationDelay: `${index * 0.1}s` }}
+                          >
+                            <CardContent className="p-6">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <h3 className="text-lg font-semibold text-slate-800 group-hover:text-[#673193] transition-colors duration-300 flex items-center gap-2">
+                                      {analise.nomeCliente}
+                                      {formattedTime && (
+                                        <Badge 
+                                          variant="outline" 
+                                          className={`text-xs flex items-center gap-1 ${
+                                            timeRemaining?.days === 0 
+                                              ? "border-red-300 text-red-600 bg-red-50" 
+                                              : timeRemaining?.days === 1
+                                              ? "border-amber-300 text-amber-600 bg-amber-50"
+                                              : "border-blue-300 text-blue-600 bg-blue-50"
+                                          }`}
+                                        >
+                                          <Clock className="h-3 w-3" />
+                                          {formattedTime}
+                                        </Badge>
+                                      )}
+                                    </h3>
+                                    {analise.atencaoFlag && (
+                                      <AlertTriangle className="h-5 w-5 text-amber-500 animate-pulse" />
                                     )}
-                                  </h3>
-                                  {analise.atencaoFlag && (
-                                    <AlertTriangle className="h-5 w-5 text-amber-500 animate-pulse" />
-                                  )}
-                                  <Badge 
-                                    variant={analise.finalizado ? "default" : "secondary"}
-                                    className={`${
-                                      analise.finalizado 
-                                        ? "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200" 
-                                        : "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200"
-                                    } transition-all duration-300`}
-                                  >
-                                    {analise.finalizado ? "Finalizada" : "Em andamento"}
-                                  </Badge>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-600">
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4 text-[#673193]" />
-                                    <span>
-                                      {analise.dataInicio 
-                                        ? new Date(analise.dataInicio).toLocaleDateString('pt-BR')
-                                        : 'Data não informada'
-                                      }
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <DollarSign className="h-4 w-4 text-emerald-600" />
-                                    <span className="font-medium text-emerald-600">
-                                      R$ {parseFloat(analise.preco || "150").toFixed(2)}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Star className="h-4 w-4 text-amber-500" />
-                                    <span>{analise.signo || 'Signo não informado'}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex gap-2 ml-4">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className={`transition-all duration-300 hover:scale-105 ${
-                                    analise.finalizado 
-                                      ? "border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
-                                      : "border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-400"
-                                  }`}
-                                  onClick={() => handleToggleFinished(analise.id)}
-                                >
-                                  {analise.finalizado ? (
-                                    <X className="h-4 w-4" />
-                                  ) : (
-                                    <Check className="h-4 w-4" />
-                                  )}
-                                </Button>
-                                
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10 hover:border-[#673193] transition-all duration-300 hover:scale-105"
-                                  onClick={() => navigate(`/editar-analise-frequencial/${analise.id}`)}
-                                >
-                                  <Edit3 className="h-4 w-4" />
-                                </Button>
-                                
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 transition-all duration-300 hover:scale-105"
+                                    <Badge 
+                                      variant={analise.finalizado ? "default" : "secondary"}
+                                      className={`${
+                                        analise.finalizado 
+                                          ? "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200" 
+                                          : "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200"
+                                      } transition-all duration-300`}
                                     >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent className="bg-white/95 backdrop-blur-sm">
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Tem certeza que deseja excluir a análise de <strong>{analise.nomeCliente}</strong>? 
-                                        Esta ação não pode ser desfeita.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel className="hover:bg-slate-100 transition-colors duration-300">
-                                        Cancelar
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction 
-                                        onClick={() => handleDelete(analise.id)}
-                                        className="bg-red-600 hover:bg-red-700 text-white transition-colors duration-300"
+                                      {analise.finalizado ? "Finalizada" : "Em andamento"}
+                                    </Badge>
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-600">
+                                    <div className="flex items-center gap-2">
+                                      <Calendar className="h-4 w-4 text-[#673193]" />
+                                      <span>
+                                        {analise.dataInicio 
+                                          ? new Date(analise.dataInicio).toLocaleDateString('pt-BR')
+                                          : 'Data não informada'
+                                        }
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <DollarSign className="h-4 w-4 text-emerald-600" />
+                                      <span className="font-medium text-emerald-600">
+                                        R$ {parseFloat(analise.preco || "150").toFixed(2)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Star className="h-4 w-4 text-amber-500" />
+                                      <span>{analise.signo || 'Signo não informado'}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 ml-4">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className={`transition-all duration-300 hover:scale-105 ${
+                                      analise.finalizado 
+                                        ? "border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                                        : "border-emerald-300 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-400"
+                                    }`}
+                                    onClick={() => handleToggleFinished(analise.id)}
+                                  >
+                                    {analise.finalizado ? (
+                                      <X className="h-4 w-4" />
+                                    ) : (
+                                      <Check className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10 hover:border-[#673193] transition-all duration-300 hover:scale-105"
+                                    onClick={() => navigate(`/editar-analise-frequencial/${analise.id}`)}
+                                  >
+                                    <Edit3 className="h-4 w-4" />
+                                  </Button>
+                                  
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 transition-all duration-300 hover:scale-105"
                                       >
-                                        Excluir
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent className="bg-white/95 backdrop-blur-sm">
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Tem certeza que deseja excluir a análise de <strong>{analise.nomeCliente}</strong>? 
+                                          Esta ação não pode ser desfeita.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel className="hover:bg-slate-100 transition-colors duration-300">
+                                          Cancelar
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction 
+                                          onClick={() => handleDelete(analise.id)}
+                                          className="bg-red-600 hover:bg-red-700 text-white transition-colors duration-300"
+                                        >
+                                          Excluir
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                            </CardContent>
+                          </Card>
+                          
+                          {/* Controle de Pagamentos do Plano - aparece apenas se o plano estiver ativo */}
+                          {analise.planoAtivo && analise.planoData && (
+                            <PlanoPaymentControl
+                              analysisId={analise.id}
+                              clientName={analise.nomeCliente}
+                              planoData={analise.planoData}
+                              startDate={analise.dataInicio || analise.dataAtendimento || new Date().toISOString().split('T')[0]}
+                            />
+                          )}
+                        </div>
                       );
                     })}
                   </div>
