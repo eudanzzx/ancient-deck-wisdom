@@ -38,10 +38,22 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
   }, [atendimento]);
 
   const initializePlanoMonths = () => {
-    if (!atendimento.planoData) return;
+    if (!atendimento.planoData || !atendimento.dataAtendimento) return;
+
+    // Validate the date before using it
+    const startDate = new Date(atendimento.dataAtendimento);
+    if (isNaN(startDate.getTime())) {
+      console.error('Invalid date provided:', atendimento.dataAtendimento);
+      toast.error('Data de atendimento inválida');
+      return;
+    }
 
     const totalMonths = parseInt(atendimento.planoData.meses);
-    const startDate = new Date(atendimento.dataAtendimento);
+    if (isNaN(totalMonths) || totalMonths <= 0) {
+      console.error('Invalid number of months:', atendimento.planoData.meses);
+      return;
+    }
+
     const planos = getPlanos();
     
     const months: PlanoMonth[] = [];
@@ -95,8 +107,15 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Data inválida';
+      }
+      return date.toLocaleDateString('pt-BR');
+    } catch (error) {
+      return 'Data inválida';
+    }
   };
 
   if (!atendimento.planoAtivo || !atendimento.planoData) {
