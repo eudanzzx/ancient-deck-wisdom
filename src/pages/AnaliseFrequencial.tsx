@@ -20,6 +20,7 @@ import useUserDataService from "@/services/userDataService";
 import ClientForm from "@/components/tarot/ClientForm";
 import AnalysisCards from "@/components/tarot/AnalysisCards";
 import PlanoSelector from "@/components/tarot/PlanoSelector";
+import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
 
 // Memoized reminder component to prevent unnecessary re-renders
 const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
@@ -462,6 +463,16 @@ const AnaliseFrequencial = () => {
             </Button>
           </CardFooter>
         </Card>
+
+        {/* Controle de Pagamentos do Plano */}
+        {planoAtivo && planoData.meses && planoData.valorMensal && nomeCliente && dataInicio && (
+          <PlanoPaymentControl
+            analysisId={Date.now().toString()}
+            clientName={nomeCliente}
+            planoData={planoData}
+            startDate={dataInicio}
+          />
+        )}
       </div>
     </div>
   );
