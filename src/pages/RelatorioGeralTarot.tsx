@@ -8,6 +8,7 @@ import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import ReportManager from "@/components/ReportManager";
+import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
 
 const RelatorioGeralTarot = () => {
   const { getAllTarotAnalyses } = useUserDataService();
@@ -63,6 +64,9 @@ const RelatorioGeralTarot = () => {
             </div>
           </div>
         </div>
+
+        {/* Tarot Plan Notifications */}
+        <TarotPlanoNotifications />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard 

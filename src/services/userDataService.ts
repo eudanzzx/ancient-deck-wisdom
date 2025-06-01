@@ -134,6 +134,96 @@ const useUserDataService = () => {
     }
   };
 
+  // Enhanced tarot analysis functions with plan support
+  const saveTarotAnalysisWithPlan = (analysis: TarotAnalysis): void => {
+    try {
+      // Save the analysis
+      const analyses = getTarotAnalyses();
+      const updatedAnalyses = [...analyses, analysis];
+      saveTarotAnalyses(updatedAnalyses);
+
+      // If analysis has an active plan, create plan records
+      if (analysis.planoAtivo && analysis.planoData) {
+        const planos = getPlanos();
+        const totalMonths = parseInt(analysis.planoData.meses);
+        const monthlyValue = parseFloat(analysis.planoData.valorMensal);
+        
+        // Use analysis start date or current date
+        const startDate = new Date(analysis.dataInicio || analysis.dataAtendimento || new Date());
+        
+        for (let i = 1; i <= totalMonths; i++) {
+          const dueDate = new Date(startDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+          
+          const plano: Plano = {
+            id: `${analysis.id}-month-${i}`,
+            clientName: analysis.nomeCliente,
+            type: 'plano',
+            amount: monthlyValue,
+            dueDate: dueDate.toISOString().split('T')[0],
+            month: i,
+            totalMonths: totalMonths,
+            created: new Date().toISOString(),
+            active: true // Start as active (unpaid)
+          };
+          
+          planos.push(plano);
+        }
+        
+        savePlanos(planos);
+      }
+    } catch (error) {
+      console.error("Erro ao salvar análise com plano:", error);
+    }
+  };
+
+  const updateTarotAnalysisWithPlan = (id: string, analysis: TarotAnalysis): void => {
+    try {
+      // Update the analysis
+      const analyses = getTarotAnalyses();
+      const updatedAnalyses = analyses.map(a => 
+        a.id === id ? { ...a, ...analysis, dataAtualizacao: new Date().toISOString() } : a
+      );
+      saveTarotAnalyses(updatedAnalyses);
+
+      // Update plan records if plan is active
+      const planos = getPlanos();
+      
+      // Remove existing plan records for this analysis
+      const filteredPlanos = planos.filter(p => !p.id.startsWith(`${id}-month-`));
+      
+      if (analysis.planoAtivo && analysis.planoData) {
+        const totalMonths = parseInt(analysis.planoData.meses);
+        const monthlyValue = parseFloat(analysis.planoData.valorMensal);
+        
+        const startDate = new Date(analysis.dataInicio || analysis.dataAtendimento || new Date());
+        
+        for (let i = 1; i <= totalMonths; i++) {
+          const dueDate = new Date(startDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+          
+          const plano: Plano = {
+            id: `${id}-month-${i}`,
+            clientName: analysis.nomeCliente,
+            type: 'plano',
+            amount: monthlyValue,
+            dueDate: dueDate.toISOString().split('T')[0],
+            month: i,
+            totalMonths: totalMonths,
+            created: new Date().toISOString(),
+            active: true
+          };
+          
+          filteredPlanos.push(plano);
+        }
+      }
+      
+      savePlanos(filteredPlanos);
+    } catch (error) {
+      console.error("Erro ao atualizar análise com plano:", error);
+    }
+  };
+
   // Legacy functions for backward compatibility
   const getAllTarotAnalyses = getTarotAnalyses;
   const saveAllTarotAnalyses = saveTarotAnalyses;
@@ -220,6 +310,8 @@ const useUserDataService = () => {
     getAllTarotAnalyses,
     saveAllTarotAnalyses,
     deleteTarotAnalysis,
+    saveTarotAnalysisWithPlan,
+    updateTarotAnalysisWithPlan,
     // Client functions
     getClientsWithConsultations,
     checkClientBirthday,
