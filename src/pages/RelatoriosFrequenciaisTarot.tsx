@@ -10,19 +10,9 @@ import { FileDown, Filter, Search, Calendar, Users, TrendingUp, DollarSign } fro
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-interface TarotAnalysis {
-  id: string;
-  nomeCliente: string;
-  dataInicio: string;
-  valor: string;
-  finalizado: boolean;
-  tipoConsulta?: string;
-  observacoes?: string;
-}
-
 const RelatoriosFrequenciaisTarot = () => {
   const { getTarotAnalyses } = useUserDataService();
-  const [analises, setAnalises] = useState<TarotAnalysis[]>([]);
+  const [analises, setAnalises] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
 
@@ -32,8 +22,8 @@ const RelatoriosFrequenciaisTarot = () => {
   }, [getTarotAnalyses]);
 
   const filteredAnalises = analises.filter(analise => {
-    const matchesSearch = analise.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = !dateFilter || analise.dataInicio.includes(dateFilter);
+    const matchesSearch = analise.nomeCliente?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDate = !dateFilter || analise.dataInicio?.includes(dateFilter);
     return matchesSearch && matchesDate;
   });
 
@@ -41,7 +31,7 @@ const RelatoriosFrequenciaisTarot = () => {
     total: filteredAnalises.length,
     finalizadas: filteredAnalises.filter(a => a.finalizado).length,
     emAndamento: filteredAnalises.filter(a => !a.finalizado).length,
-    valorTotal: filteredAnalises.reduce((sum, a) => sum + (parseFloat(a.valor) || 0), 0)
+    valorTotal: filteredAnalises.reduce((sum, a) => sum + (parseFloat(a.valor || a.preco || '0') || 0), 0)
   };
 
   const generateFinancialReport = () => {
@@ -68,10 +58,10 @@ const RelatoriosFrequenciaisTarot = () => {
     
     // Detailed table
     const tableData = filteredAnalises.map(analise => [
-      new Date(analise.dataInicio).toLocaleDateString('pt-BR'),
-      analise.nomeCliente,
-      analise.tipoConsulta || 'Consulta Tarot',
-      `R$ ${parseFloat(analise.valor || '0').toFixed(2)}`,
+      new Date(analise.dataInicio || analise.dataAnalise || new Date()).toLocaleDateString('pt-BR'),
+      analise.nomeCliente || 'N/A',
+      analise.tipoConsulta || analise.tipoServico || 'Consulta Tarot',
+      `R$ ${parseFloat(analise.valor || analise.preco || '0').toFixed(2)}`,
       analise.finalizado ? 'Finalizada' : 'Em andamento'
     ]);
 
@@ -113,12 +103,13 @@ const RelatoriosFrequenciaisTarot = () => {
     
     // Client stats
     const clientStats = filteredAnalises.reduce((acc, analise) => {
-      if (!acc[analise.nomeCliente]) {
-        acc[analise.nomeCliente] = { total: 0, valor: 0, finalizadas: 0 };
+      const clientName = analise.nomeCliente || 'N/A';
+      if (!acc[clientName]) {
+        acc[clientName] = { total: 0, valor: 0, finalizadas: 0 };
       }
-      acc[analise.nomeCliente].total++;
-      acc[analise.nomeCliente].valor += parseFloat(analise.valor || '0');
-      if (analise.finalizado) acc[analise.nomeCliente].finalizadas++;
+      acc[clientName].total++;
+      acc[clientName].valor += parseFloat(analise.valor || analise.preco || '0');
+      if (analise.finalizado) acc[clientName].finalizadas++;
       return acc;
     }, {} as Record<string, any>);
     
