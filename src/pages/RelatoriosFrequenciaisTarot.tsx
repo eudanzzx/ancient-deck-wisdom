@@ -112,7 +112,7 @@ const RelatoriosFrequenciaisTarot = () => {
       return acc;
     }, {} as Record<string, { total: number; valor: number; finalizadas: number }>);
     
-    const clientTableData = Object.entries(clientStats).map(([cliente, clientData]) => [
+    const clientTableData = Object.entries(clientStats).map(([cliente, clientData]: [string, { total: number; valor: number; finalizadas: number }]) => [
       cliente,
       clientData.total.toString(),
       clientData.finalizadas.toString(),
