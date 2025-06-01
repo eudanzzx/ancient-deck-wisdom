@@ -10,7 +10,6 @@ import BirthdayNotifications from "@/components/BirthdayNotifications";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import AtendimentoForm from "@/components/forms/AtendimentoForm";
-import PlanoPaymentTracker from "@/components/forms/PlanoPaymentTracker";
 import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
 import useAtendimentoForm from "@/hooks/useAtendimentoForm";
 
@@ -81,7 +80,7 @@ const NovoAtendimento = () => {
     // Salvar o atendimento para mostrar o visualizador
     setSavedAtendimento(novoAtendimento);
     
-    // Se tem plano ativo, criar as notificações e mostrar o tracker
+    // Se tem plano ativo, criar as notificações
     if (planoAtivo && planoData.meses && planoData.valorMensal && formData.dataAtendimento) {
       const notifications = createPlanoNotifications(
         formData.nome,
@@ -95,7 +94,6 @@ const NovoAtendimento = () => {
       const updatedPlanos = [...existingPlanos, ...notifications];
       savePlanos(updatedPlanos);
       
-      setShowPaymentTracker(true);
       toast.success(`Atendimento salvo! Plano de ${planoData.meses} meses criado com sucesso.`);
     } else {
       toast.success("Atendimento salvo com sucesso!");
@@ -147,15 +145,6 @@ const NovoAtendimento = () => {
           onPlanoDataChange={handlePlanoDataChange}
         />
 
-        {showPaymentTracker && planoAtivo && planoData.meses && planoData.valorMensal && (
-          <PlanoPaymentTracker
-            clientName={formData.nome}
-            totalMonths={parseInt(planoData.meses)}
-            monthlyValue={planoData.valorMensal}
-            startDate={formData.dataAtendimento}
-          />
-        )}
-
         {savedAtendimento && savedAtendimento.planoAtivo && savedAtendimento.planoData && (
           <PlanoMonthsVisualizer atendimento={savedAtendimento} />
         )}
@@ -168,7 +157,7 @@ const NovoAtendimento = () => {
           >
             Cancelar
           </Button>
-          {showPaymentTracker ? (
+          {savedAtendimento ? (
             <Button 
               className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/90 text-white"
               onClick={handleFinishAndGoHome}
