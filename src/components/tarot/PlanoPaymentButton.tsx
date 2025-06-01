@@ -22,7 +22,7 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
   planoData,
   startDate,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
     <div className="mt-4">
