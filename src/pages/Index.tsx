@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useUserDataService from "@/services/userDataService";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -5,8 +6,7 @@ import PeriodSelector from "@/components/dashboard/PeriodSelector";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import AtendimentosTable from "@/components/dashboard/AtendimentosTable";
 import DashboardContent from "@/components/dashboard/DashboardContent";
-import DashboardTitle from "@/components/dashboard/DashboardTitle";
-import { CalendarDays, Users, Activity, BellRing, Search, Sparkles, TrendingUp } from "lucide-react";
+import { CalendarDays, Users, Activity, BellRing, Search, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -29,58 +29,43 @@ interface Atendimento {
   atencaoNota?: string;
 }
 
-// Componente elegante com React.memo e animações aprimoradas
-const ElegantDashboardCard = React.memo(({ 
+// Simple dashboard card component
+const DashboardCard = React.memo(({ 
   title, 
   value, 
   icon, 
-  delay = "0s",
-  gradient = "from-blue-500 to-purple-600"
+  delay = "0s"
 }: { 
   title: string; 
   value: string; 
   icon: React.ReactNode; 
   delay?: string;
-  gradient?: string;
 }) => (
   <Card 
-    className="group relative overflow-hidden bg-white/80 backdrop-blur-xl border-0 shadow-xl rounded-3xl hover:shadow-2xl transition-all duration-700 hover:bg-white hover:-translate-y-3 hover:scale-105 animate-fade-scale" 
+    className="bg-white border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300" 
     style={{ animationDelay: delay }}
   >
-    {/* Gradient border effect */}
-    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} p-[1px] rounded-3xl`}>
-      <div className="bg-white rounded-3xl h-full w-full" />
-    </div>
-    
-    {/* Shimmer effect */}
-    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-shimmer" />
-    </div>
-
-    <CardContent className="relative pt-8 pb-6 px-6 z-10">
+    <CardContent className="p-6">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300 tracking-wide">
+          <p className="text-sm font-medium text-slate-600 mb-1">
             {title}
           </p>
-          <p className="text-4xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-purple-700 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-purple-700 transition-all duration-500">
+          <p className="text-3xl font-bold text-blue-700">
             {value}
           </p>
         </div>
-        <div className={`rounded-2xl p-4 bg-gradient-to-br ${gradient} group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 shadow-lg`}>
-          <div className="text-white">
+        <div className="rounded-lg p-3 bg-blue-100">
+          <div className="text-blue-600">
             {icon}
           </div>
         </div>
       </div>
-      
-      {/* Decorative elements */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
     </CardContent>
   </Card>
 ));
 
-ElegantDashboardCard.displayName = "ElegantDashboardCard";
+DashboardCard.displayName = "DashboardCard";
 
 const Index = () => {
   const { getAtendimentos, saveAtendimentos } = useUserDataService();
@@ -235,59 +220,57 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-50 relative overflow-hidden">
-      {/* Elegant animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-float opacity-70"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-indigo-400/20 to-cyan-400/20 rounded-full blur-3xl animate-float opacity-70" style={{ animationDelay: '3s' }}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-violet-400/10 to-pink-400/10 rounded-full blur-3xl animate-pulse"></div>
-      </div>
-
+    <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
 
-      <main className="container mx-auto py-24 px-4 relative z-10">
+      <main className="container mx-auto py-24 px-4">
         <DashboardContent 
           aniversarianteHoje={aniversarianteHoje}
           atendimentos={atendimentos}
         />
 
-        <DashboardTitle />
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-bold text-blue-700 mb-4">
+            Sistema de Atendimentos
+          </h1>
+          <div className="w-24 h-1 bg-blue-500 mx-auto"></div>
+        </div>
 
         <div className="flex justify-between items-center mb-8">
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-800 via-purple-700 to-blue-800 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold text-gray-800">
               Visão Geral
             </h2>
-            <p className="text-slate-600 text-sm">Acompanhe o desempenho dos seus atendimentos</p>
+            <p className="text-gray-600">Acompanhe o desempenho dos seus atendimentos</p>
           </div>
-          <div className="glass rounded-2xl shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-500 transform hover:scale-105">
+          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-1">
             <ToggleGroup 
               type="single" 
               value={periodoVisualizacao} 
               onValueChange={handlePeriodoChange}
-              className="border-0 rounded-2xl overflow-hidden p-1"
+              className="border-0"
             >
               <ToggleGroupItem 
                 value="dia" 
-                className="data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-600 data-[state=on]:to-purple-600 data-[state=on]:text-white px-6 py-2 transition-all duration-300 hover:bg-blue-50 hover:scale-105 rounded-xl font-medium"
+                className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 py-2 transition-all duration-300"
               >
                 Dia
               </ToggleGroupItem>
               <ToggleGroupItem 
                 value="semana" 
-                className="data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-600 data-[state=on]:to-purple-600 data-[state=on]:text-white px-6 py-2 transition-all duration-300 hover:bg-blue-50 hover:scale-105 rounded-xl font-medium"
+                className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 py-2 transition-all duration-300"
               >
                 Semana
               </ToggleGroupItem>
               <ToggleGroupItem 
                 value="mes" 
-                className="data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-600 data-[state=on]:to-purple-600 data-[state=on]:text-white px-6 py-2 transition-all duration-300 hover:bg-blue-50 hover:scale-105 rounded-xl font-medium"
+                className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 py-2 transition-all duration-300"
               >
                 Mês
               </ToggleGroupItem>
               <ToggleGroupItem 
                 value="ano" 
-                className="data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-600 data-[state=on]:to-purple-600 data-[state=on]:text-white px-6 py-2 transition-all duration-300 hover:bg-blue-50 hover:scale-105 rounded-xl font-medium"
+                className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 py-2 transition-all duration-300"
               >
                 Ano
               </ToggleGroupItem>
@@ -295,65 +278,56 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          <ElegantDashboardCard 
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <DashboardCard 
             title="Total Atendimentos" 
             value={atendimentos.length.toString()} 
-            icon={<Users className="h-8 w-8" />}
+            icon={<Users className="h-6 w-6" />}
             delay="0.1s"
-            gradient="from-blue-500 to-cyan-500"
           />
-          <ElegantDashboardCard 
+          <DashboardCard 
             title="Esta Semana" 
             value={stats.atendimentosSemana.toString()}
-            icon={<CalendarDays className="h-8 w-8" />}
+            icon={<CalendarDays className="h-6 w-6" />}
             delay="0.2s" 
-            gradient="from-purple-500 to-pink-500"
           />
-          <ElegantDashboardCard 
+          <DashboardCard 
             title={`Recebido (${getPeriodoLabel()})`}
             value={`R$ ${stats.totalRecebido.toFixed(2)}`} 
-            icon={<TrendingUp className="h-8 w-8" />}
+            icon={<TrendingUp className="h-6 w-6" />}
             delay="0.3s"
-            gradient="from-emerald-500 to-teal-500"
           />
-          <ElegantDashboardCard 
+          <DashboardCard 
             title="Tratamentos" 
             value={stats.totalLembretes.toString()} 
-            icon={<BellRing className="h-8 w-8" />}
+            icon={<BellRing className="h-6 w-6" />}
             delay="0.4s"
-            gradient="from-orange-500 to-red-500"
           />
         </div>
 
         <div className="mb-8 flex justify-between items-center">
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-800 via-purple-700 to-blue-800 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold text-gray-800">
               Atendimentos
             </h2>
-            <p className="text-slate-600 text-sm">Lista completa de todos os atendimentos realizados</p>
+            <p className="text-gray-600">Lista completa de todos os atendimentos realizados</p>
           </div>
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
-            <div className="relative">
-              <Input 
-                type="text" 
-                placeholder="Buscar por nome..." 
-                className="pr-12 pl-4 py-3 bg-white/90 border-0 focus:border-0 focus:ring-2 focus:ring-blue-500/50 transition-all duration-300 w-80 hover:shadow-lg transform hover:scale-105 rounded-2xl backdrop-blur-sm input-elegant"
-                value={searchTerm}
-                onChange={handleSearchChange}
-              />
-              <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-all duration-300 group-hover:scale-110" />
-            </div>
+          <div className="relative">
+            <Input 
+              type="text" 
+              placeholder="Buscar por nome..." 
+              className="pr-10 pl-4 py-2 bg-white border border-gray-300 w-80"
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           </div>
         </div>
 
-        <div className="transform hover:scale-[1.01] transition-all duration-700 hover:-translate-y-2 hover:shadow-2xl">
-          <AtendimentosTable 
-            atendimentos={filteredAtendimentos}
-            onDeleteAtendimento={handleDeleteAtendimento}
-          />
-        </div>
+        <AtendimentosTable 
+          atendimentos={filteredAtendimentos}
+          onDeleteAtendimento={handleDeleteAtendimento}
+        />
       </main>
     </div>
   );

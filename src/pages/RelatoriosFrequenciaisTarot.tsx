@@ -1,199 +1,281 @@
+
 import React, { useState, useEffect } from 'react';
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import useUserDataService from "@/services/userDataService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Download, TrendingUp, Users, DollarSign, Calendar } from "lucide-react";
-import useUserDataService from "@/services/userDataService";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FileDown, Filter, Search, Calendar, Users, TrendingUp, DollarSign } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+interface TarotAnalysis {
+  id: string;
+  nomeCliente: string;
+  dataInicio: string;
+  valor: string;
+  finalizado: boolean;
+  tipoConsulta?: string;
+  observacoes?: string;
+}
+
 const RelatoriosFrequenciaisTarot = () => {
   const { getTarotAnalyses } = useUserDataService();
-  const [analises, setAnalises] = useState<any[]>([]);
+  const [analises, setAnalises] = useState<TarotAnalysis[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
 
   useEffect(() => {
     const data = getTarotAnalyses();
     setAnalises(data);
-  }, []);
+  }, [getTarotAnalyses]);
 
-  const calcularEstatisticas = () => {
-    const total = analises.length;
-    const finalizadas = analises.filter(a => a.finalizado).length;
-    const valorTotal = analises.reduce((sum, a) => sum + (parseFloat(a.valor) || 0), 0);
-    const clientesUnicos = [...new Set(analises.map(a => a.nomeCliente))].length;
-    
-    // Análises por mês
-    const analysesPorMes = analises.reduce((acc, analise) => {
-      const mes = new Date(analise.dataInicio).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long' });
-      acc[mes] = (acc[mes] || 0) + 1;
-      return acc;
-    }, {});
-    
-    // Top clientes
-    const clienteStats = analises.reduce((acc, analise) => {
-      const cliente = analise.nomeCliente;
-      if (!acc[cliente]) {
-        acc[cliente] = { total: 0, valor: 0 };
-      }
-      acc[cliente].total++;
-      acc[cliente].valor += parseFloat(analise.valor || 0);
-      return acc;
-    }, {});
-    
-    const topClientes = Object.entries(clienteStats)
-      .sort(([,a], [,b]) => (b as any).total - (a as any).total)
-      .slice(0, 5);
-    
-    return {
-      total,
-      finalizadas,
-      valorTotal,
-      clientesUnicos,
-      analysesPorMes,
-      topClientes
-    };
+  const filteredAnalises = analises.filter(analise => {
+    const matchesSearch = analise.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDate = !dateFilter || analise.dataInicio.includes(dateFilter);
+    return matchesSearch && matchesDate;
+  });
+
+  const stats = {
+    total: filteredAnalises.length,
+    finalizadas: filteredAnalises.filter(a => a.finalizado).length,
+    emAndamento: filteredAnalises.filter(a => !a.finalizado).length,
+    valorTotal: filteredAnalises.reduce((sum, a) => sum + (parseFloat(a.valor) || 0), 0)
   };
 
-  const gerarRelatorioFrequencial = () => {
+  const generateFinancialReport = () => {
     const doc = new jsPDF();
-    const stats = calcularEstatisticas();
     
-    // Título
+    // Header
     doc.setFontSize(20);
     doc.setTextColor(102, 126, 234);
-    doc.text('Relatório Frequencial - Tarot', 14, 22);
+    doc.text('Relatório Financeiro - Tarot', 14, 22);
     
-    // Data
+    // Date
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Período: ${new Date().toLocaleDateString('pt-BR')}`, 14, 35);
+    doc.text(`Período: ${dateFilter || 'Todos'} | Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 35);
     
-    // Estatísticas gerais
-    doc.text('Estatísticas Gerais:', 14, 50);
+    // Statistics
+    doc.setFontSize(14);
+    doc.text('Resumo Financeiro:', 14, 50);
+    doc.setFontSize(12);
     doc.text(`Total de análises: ${stats.total}`, 20, 60);
-    doc.text(`Análises finalizadas: ${stats.finalizadas}`, 20, 70);
-    doc.text(`Clientes únicos: ${stats.clientesUnicos}`, 20, 80);
-    doc.text(`Faturamento total: R$ ${stats.valorTotal.toFixed(2)}`, 20, 90);
+    doc.text(`Finalizadas: ${stats.finalizadas}`, 20, 70);
+    doc.text(`Em andamento: ${stats.emAndamento}`, 20, 80);
+    doc.text(`Receita total: R$ ${stats.valorTotal.toFixed(2)}`, 20, 90);
     
-    // Top clientes
-    doc.text('Top 5 Clientes:', 14, 110);
-    stats.topClientes.forEach(([cliente, dados]: [string, any], index) => {
-      doc.text(`${index + 1}. ${cliente} - ${dados.total} análises (R$ ${dados.valor.toFixed(2)})`, 20, 120 + (index * 10));
+    // Detailed table
+    const tableData = filteredAnalises.map(analise => [
+      new Date(analise.dataInicio).toLocaleDateString('pt-BR'),
+      analise.nomeCliente,
+      analise.tipoConsulta || 'Consulta Tarot',
+      `R$ ${parseFloat(analise.valor || '0').toFixed(2)}`,
+      analise.finalizado ? 'Finalizada' : 'Em andamento'
+    ]);
+
+    autoTable(doc, {
+      head: [['Data', 'Cliente', 'Tipo', 'Valor', 'Status']],
+      body: tableData,
+      startY: 105,
+      styles: { 
+        fontSize: 9,
+        cellPadding: 3,
+      },
+      headStyles: { 
+        fillColor: [102, 126, 234],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      }
     });
     
-    // Tabela de análises por mês
-    const monthData = Object.entries(stats.analysesPorMes).map(([mes, total]) => [mes, total.toString()]);
-    
-    if (monthData.length > 0) {
-      autoTable(doc, {
-        head: [['Mês', 'Quantidade de Análises']],
-        body: monthData,
-        startY: 180,
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [102, 126, 234] }
-      });
-    }
-    
-    doc.save(`relatorio-frequencial-tarot-${new Date().toISOString().split('T')[0]}.pdf`);
+    // Save
+    const fileName = `relatorio-financeiro-tarot-${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
   };
 
-  const stats = calcularEstatisticas();
+  const generateClientBreakdown = () => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(102, 126, 234);
+    doc.text('Análise por Cliente - Tarot', 14, 22);
+    
+    // Date
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 35);
+    
+    // Client stats
+    const clientStats = filteredAnalises.reduce((acc, analise) => {
+      if (!acc[analise.nomeCliente]) {
+        acc[analise.nomeCliente] = { total: 0, valor: 0, finalizadas: 0 };
+      }
+      acc[analise.nomeCliente].total++;
+      acc[analise.nomeCliente].valor += parseFloat(analise.valor || '0');
+      if (analise.finalizado) acc[analise.nomeCliente].finalizadas++;
+      return acc;
+    }, {} as Record<string, any>);
+    
+    const clientTableData = Object.entries(clientStats).map(([cliente, stats]) => [
+      cliente,
+      stats.total.toString(),
+      stats.finalizadas.toString(),
+      (stats.total - stats.finalizadas).toString(),
+      `R$ ${stats.valor.toFixed(2)}`
+    ]);
+
+    autoTable(doc, {
+      head: [['Cliente', 'Total Consultas', 'Finalizadas', 'Em Andamento', 'Valor Total']],
+      body: clientTableData,
+      startY: 50,
+      styles: { 
+        fontSize: 10,
+        cellPadding: 3,
+      },
+      headStyles: { 
+        fillColor: [102, 126, 234],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      }
+    });
+    
+    const fileName = `analise-clientes-tarot-${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+  };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-purple-800">Relatórios Frequenciais - Tarot</h1>
-        <Button onClick={gerarRelatorioFrequencial} className="bg-purple-600 hover:bg-purple-700">
-          <Download className="h-4 w-4 mr-2" />
-          Baixar Relatório PDF
-        </Button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50/30 to-purple-50">
+      <DashboardHeader />
+      
+      <div className="container mx-auto px-4 py-6 mt-20">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Relatórios Financeiros - Tarot</h1>
+          <p className="text-gray-600">Análise financeira detalhada das consultas de tarot</p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center">
-              <TrendingUp className="h-8 w-8 text-purple-600 mr-3" />
-              <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-sm text-gray-600">Total de Análises</p>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600 mb-1">Total Consultas</p>
+                  <p className="text-2xl font-bold text-blue-800">{stats.total}</p>
+                </div>
+                <Users className="h-8 w-8 text-blue-600" />
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-blue-600 mr-3" />
-              <div>
-                <p className="text-2xl font-bold">{stats.clientesUnicos}</p>
-                <p className="text-sm text-gray-600">Clientes Únicos</p>
+          <Card className="bg-green-50 border-green-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600 mb-1">Finalizadas</p>
+                  <p className="text-2xl font-bold text-green-800">{stats.finalizadas}</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-green-600" />
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center">
-              <Calendar className="h-8 w-8 text-green-600 mr-3" />
-              <div>
-                <p className="text-2xl font-bold">{stats.finalizadas}</p>
-                <p className="text-sm text-gray-600">Finalizadas</p>
+          <Card className="bg-orange-50 border-orange-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-orange-600 mb-1">Em Andamento</p>
+                  <p className="text-2xl font-bold text-orange-800">{stats.emAndamento}</p>
+                </div>
+                <Calendar className="h-8 w-8 text-orange-600" />
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center">
-              <DollarSign className="h-8 w-8 text-yellow-600 mr-3" />
-              <div>
-                <p className="text-2xl font-bold">R$ {stats.valorTotal.toFixed(2)}</p>
-                <p className="text-sm text-gray-600">Faturamento Total</p>
+          <Card className="bg-purple-50 border-purple-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-600 mb-1">Receita Total</p>
+                  <p className="text-2xl font-bold text-purple-800">R$ {stats.valorTotal.toFixed(2)}</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-purple-600" />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+        {/* Filters */}
+        <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Top 5 Clientes</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtros
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {stats.topClientes.map(([cliente, dados]: [string, any], index) => (
-                <div key={cliente} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">{index + 1}º</Badge>
-                    <span className="font-medium">{cliente}</span>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{dados.total} análises</p>
-                    <p className="text-sm text-gray-600">R$ {dados.valor.toFixed(2)}</p>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="search">Buscar Cliente</Label>
+                <div className="relative">
+                  <Input
+                    id="search"
+                    placeholder="Nome do cliente..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pr-10"
+                  />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 </div>
-              ))}
+              </div>
+              <div>
+                <Label htmlFor="date">Filtro por Data (Ano-Mês)</Label>
+                <Input
+                  id="date"
+                  type="text"
+                  placeholder="2024-01"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Report Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Análises por Mês</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <FileDown className="h-5 w-5" />
+              Gerar Relatórios
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {Object.entries(stats.analysesPorMes).map(([mes, total]) => (
-                <div key={mes} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">{mes}</span>
-                  <Badge>{total} análises</Badge>
-                </div>
-              ))}
+            <div className="flex flex-wrap gap-4">
+              <Button 
+                onClick={generateFinancialReport}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <FileDown className="h-4 w-4 mr-2" />
+                Relatório Financeiro
+              </Button>
+              
+              <Button 
+                onClick={generateClientBreakdown}
+                variant="outline"
+                className="border-purple-600 text-purple-600 hover:bg-purple-50"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Análise por Cliente
+              </Button>
             </div>
           </CardContent>
         </Card>
