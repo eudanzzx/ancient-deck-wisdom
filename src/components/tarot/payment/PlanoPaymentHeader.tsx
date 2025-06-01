@@ -2,7 +2,7 @@
 import React from "react";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard } from "lucide-react";
+import { CreditCard, Calendar } from "lucide-react";
 
 interface PlanoPaymentHeaderProps {
   paidCount: number;
@@ -36,6 +36,10 @@ const PlanoPaymentHeader: React.FC<PlanoPaymentHeaderProps> = ({
         <span className="font-medium text-emerald-600">
           R$ {paidValue.toFixed(2)} / R$ {totalValue.toFixed(2)}
         </span>
+        <div className="flex items-center gap-1 text-orange-600 font-medium">
+          <Calendar className="h-4 w-4" />
+          <span>Vencimento: Dia 30</span>
+        </div>
       </div>
     </CardHeader>
   );

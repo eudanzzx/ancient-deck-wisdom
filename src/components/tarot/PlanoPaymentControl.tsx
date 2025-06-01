@@ -36,6 +36,7 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
 
   useEffect(() => {
     initializePlanoMonths();
+    checkNotifications();
   }, [analysisId, planoData, startDate]);
 
   const initializePlanoMonths = () => {
@@ -46,8 +47,15 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
     const months: PlanoMonth[] = [];
     
     for (let i = 1; i <= totalMonths; i++) {
+      // Sempre vencer no dia 30 do mês
       const dueDate = new Date(baseDate);
       dueDate.setMonth(dueDate.getMonth() + i);
+      dueDate.setDate(30);
+      
+      // Ajustar para meses com menos de 30 dias
+      if (dueDate.getDate() !== 30) {
+        dueDate.setDate(0); // Último dia do mês anterior
+      }
       
       const planoForMonth = planos.find(plano => 
         plano.id.startsWith(`${analysisId}-month-${i}`)
@@ -63,6 +71,37 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
     }
     
     setPlanoMonths(months);
+  };
+
+  const checkNotifications = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Verificar se hoje é dia 29 (um dia antes do vencimento)
+    if (today.getDate() === 29) {
+      planoMonths.forEach(month => {
+        if (!month.isPaid) {
+          const dueDate = new Date(month.dueDate);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          
+          // Se amanhã for o vencimento
+          if (dueDate.toDateString() === tomorrow.toDateString()) {
+            toast.info(
+              `⏰ Lembrete: ${clientName} tem um pagamento para fazer amanhã!`,
+              {
+                duration: 10000,
+                description: `Mês ${month.month} - Valor: R$ ${parseFloat(planoData.valorMensal).toFixed(2)} - Vence em ${dueDate.toLocaleDateString('pt-BR')}`,
+                action: {
+                  label: "Ver detalhes",
+                  onClick: () => console.log("Detalhes do pagamento:", month)
+                }
+              }
+            );
+          }
+        }
+      });
+    }
   };
 
   const handlePaymentToggle = (monthIndex: number) => {

@@ -4,6 +4,7 @@ import DashboardBirthdayNotifications from "@/components/DashboardBirthdayNotifi
 import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import TratamentoCountdown from "@/components/TratamentoCountdown";
+import PlanoPaymentReminders from "@/components/PlanoPaymentReminders";
 
 interface DashboardContentProps {
   aniversarianteHoje: {nome: string, dataNascimento: string} | null;
@@ -16,6 +17,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
 }) => {
   return (
     <>
+      <PlanoPaymentReminders />
       <DashboardBirthdayNotifications />
       <TarotPlanoNotifications />
       

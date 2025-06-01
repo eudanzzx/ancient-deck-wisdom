@@ -17,7 +17,7 @@ interface PlanoMonthsVisualizerProps {
       valorMensal: string;
     } | null;
     dataAtendimento: string;
-    data?: string; // Data de criação do atendimento
+    data?: string;
   };
 }
 
@@ -32,31 +32,23 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
   const { getPlanos, savePlanos } = useUserDataService();
   const [planoMonths, setPlanoMonths] = useState<PlanoMonth[]>([]);
 
-  console.log('PlanoMonthsVisualizer - atendimento:', atendimento);
-  console.log('PlanoMonthsVisualizer - planoAtivo:', atendimento.planoAtivo);
-  console.log('PlanoMonthsVisualizer - planoData:', atendimento.planoData);
-
   useEffect(() => {
     if (atendimento.planoAtivo && atendimento.planoData) {
-      console.log('PlanoMonthsVisualizer - Initializing plano months');
       initializePlanoMonths();
+      checkNotifications();
     }
   }, [atendimento]);
 
   const initializePlanoMonths = () => {
     if (!atendimento.planoData) {
-      console.log('PlanoMonthsVisualizer - Missing planoData');
       return;
     }
 
-    // Use data de criação como fallback se dataAtendimento estiver vazio
     let startDateString = atendimento.dataAtendimento;
     if (!startDateString || startDateString.trim() === '') {
       startDateString = atendimento.data || new Date().toISOString();
-      console.log('PlanoMonthsVisualizer - Using fallback date:', startDateString);
     }
 
-    // Validate the date before using it
     const startDate = new Date(startDateString);
     if (isNaN(startDate.getTime())) {
       console.error('Invalid date provided:', startDateString);
@@ -71,17 +63,20 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       return;
     }
 
-    console.log('PlanoMonthsVisualizer - Creating months for:', totalMonths, 'starting from:', startDate);
-
     const planos = getPlanos();
-    
     const months: PlanoMonth[] = [];
     
     for (let i = 1; i <= totalMonths; i++) {
+      // Sempre vencer no dia 30 do mês
       const dueDate = new Date(startDate);
       dueDate.setMonth(dueDate.getMonth() + i);
+      dueDate.setDate(30);
       
-      // Verificar se este mês já foi pago
+      // Ajustar para meses com menos de 30 dias
+      if (dueDate.getDate() !== 30) {
+        dueDate.setDate(0); // Último dia do mês anterior
+      }
+      
       const planoForMonth = planos.find(plano => 
         plano.clientName === atendimento.nome && 
         plano.month === i && 
@@ -90,14 +85,44 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       
       months.push({
         month: i,
-        isPaid: planoForMonth ? !planoForMonth.active : false, // Se o plano existe e não está ativo, significa que foi pago
+        isPaid: planoForMonth ? !planoForMonth.active : false,
         dueDate: dueDate.toISOString().split('T')[0],
         planoId: planoForMonth?.id
       });
     }
     
-    console.log('PlanoMonthsVisualizer - Created months:', months);
     setPlanoMonths(months);
+  };
+
+  const checkNotifications = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Verificar se hoje é dia 29 (um dia antes do vencimento)
+    if (today.getDate() === 29) {
+      planoMonths.forEach(month => {
+        if (!month.isPaid) {
+          const dueDate = new Date(month.dueDate);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          
+          // Se amanhã for o vencimento
+          if (dueDate.toDateString() === tomorrow.toDateString()) {
+            toast.info(
+              `⏰ Lembrete: ${atendimento.nome} tem um pagamento para fazer amanhã!`,
+              {
+                duration: 10000,
+                description: `Mês ${month.month} - Valor: R$ ${parseFloat(atendimento.planoData?.valorMensal || '0').toFixed(2)} - Vence em ${dueDate.toLocaleDateString('pt-BR')}`,
+                action: {
+                  label: "Ver detalhes",
+                  onClick: () => console.log("Detalhes do pagamento:", month)
+                }
+              }
+            );
+          }
+        }
+      });
+    }
   };
 
   const handlePaymentToggle = (monthIndex: number) => {
@@ -107,15 +132,13 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     const newIsPaid = !month.isPaid;
     
     if (month.planoId) {
-      // Atualizar o status do plano existente
       const updatedPlanos = planos.map(plano => 
         plano.id === month.planoId 
-          ? { ...plano, active: !newIsPaid } // Se vai ser marcado como pago, plano não fica ativo
+          ? { ...plano, active: !newIsPaid }
           : plano
       );
       savePlanos(updatedPlanos);
     } else if (newIsPaid) {
-      // Criar novo registro de plano quando marcar como pago
       const newPlano = {
         id: `${Date.now()}-${monthIndex}`,
         clientName: atendimento.nome,
@@ -125,25 +148,22 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
         month: month.month,
         totalMonths: parseInt(atendimento.planoData?.meses || '0'),
         created: new Date().toISOString(),
-        active: false // Não ativo porque foi pago
+        active: false
       };
       
       const updatedPlanos = [...planos, newPlano];
       savePlanos(updatedPlanos);
       
-      // Atualizar o planoId no estado local
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].planoId = newPlano.id;
       updatedMonths[monthIndex].isPaid = true;
       setPlanoMonths(updatedMonths);
     } else {
-      // Atualizar apenas o estado local se está desmarcando um mês que não tinha planoId
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].isPaid = false;
       setPlanoMonths(updatedMonths);
     }
     
-    // Se não criou novo plano, atualizar estado local
     if (month.planoId || !newIsPaid) {
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].isPaid = newIsPaid;
@@ -169,10 +189,7 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     }
   };
 
-  console.log('PlanoMonthsVisualizer - Rendering with planoMonths:', planoMonths);
-
   if (!atendimento.planoAtivo || !atendimento.planoData) {
-    console.log('PlanoMonthsVisualizer - Not rendering - planoAtivo or planoData is false/null');
     return null;
   }
 
@@ -186,6 +203,7 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
         <div className="flex items-center gap-4 text-sm text-slate-600">
           <span>Total: {atendimento.planoData.meses} meses</span>
           <span>Valor mensal: R$ {parseFloat(atendimento.planoData.valorMensal).toFixed(2)}</span>
+          <span className="text-orange-600 font-medium">Vencimento: Todo dia 30</span>
         </div>
       </CardHeader>
       <CardContent className="p-6">
@@ -298,6 +316,10 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-gradient-to-r from-slate-300 to-slate-400 rounded-full shadow-sm"></div>
                   <span className="text-sm font-medium text-slate-700">Pendente</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-orange-600" />
+                  <span className="text-sm font-medium text-orange-600">Vencimento: Dia 30</span>
                 </div>
               </div>
               
