@@ -16,7 +16,6 @@ import { ArrowLeft, Save, Plus, Trash2, BellRing } from "lucide-react";
 import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
-import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
 import useUserDataService from "@/services/userDataService";
 import ClientForm from "@/components/tarot/ClientForm";
 import AnalysisCards from "@/components/tarot/AnalysisCards";
@@ -303,16 +302,6 @@ const AnaliseFrequencial = () => {
     return nomeCliente && dataNascimento;
   }, [nomeCliente, dataNascimento]);
 
-  // Memoize the mock atendimento for PlanoMonthsVisualizer
-  const mockAtendimento = useMemo(() => ({
-    id: Date.now().toString(),
-    nome: nomeCliente,
-    planoAtivo,
-    planoData: planoAtivo ? planoData : null,
-    dataAtendimento: dataInicio,
-    data: new Date().toISOString(),
-  }), [nomeCliente, planoAtivo, planoData, dataInicio]);
-
   return (
     <div className="min-h-screen bg-[#F1F7FF] py-6 px-4">
       <div className="container mx-auto max-w-4xl">
@@ -418,11 +407,6 @@ const AnaliseFrequencial = () => {
             </Button>
           </CardFooter>
         </Card>
-
-        {/* Visualizador de Meses do Plano */}
-        {planoAtivo && nomeCliente && planoData.meses && planoData.valorMensal && dataInicio && (
-          <PlanoMonthsVisualizer atendimento={mockAtendimento} />
-        )}
       </div>
     </div>
   );
