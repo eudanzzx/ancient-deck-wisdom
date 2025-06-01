@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 interface Atendimento {
@@ -47,6 +46,13 @@ interface TarotAnalysis {
   detalhesAdicionais?: string;
   dataAnalise: string;
   status?: 'ativo' | 'concluido';
+  finalizado?: boolean;
+  valor?: string;
+  tipoServico?: string;
+  cartasEscolhidas?: string[];
+  significados?: string[];
+  observacoes?: string;
+  dataAtualizacao?: string;
 }
 
 interface Plano {

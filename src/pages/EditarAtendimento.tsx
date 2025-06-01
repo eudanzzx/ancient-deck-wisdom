@@ -194,12 +194,12 @@ const EditarAtendimento = () => {
     }
 
     try {
-      // Prepare complete form data
+      // Prepare complete form data with proper typing
       const formData = {
         nome: nome.trim(),
         dataNascimento,
         tipoServico,
-        statusPagamento,
+        statusPagamento: statusPagamento as 'pago' | 'pendente' | 'parcelado',
         dataAtendimento,
         valor,
         destino,

@@ -24,8 +24,8 @@ const RelatorioGeralTarot = () => {
       })
       .reduce((sum, analise) => sum + parseFloat(analise.preco || "150"), 0);
 
-    const analisesFinalizadas = analises.filter(a => a.finalizado).length;
-    const analisesPendentes = analises.filter(a => !a.finalizado).length;
+    const analisesFinalizadas = analises.filter(a => a.finalizado === true).length;
+    const analisesPendentes = analises.filter(a => a.finalizado !== true).length;
     const ticketMedio = receitaTotal / analises.length || 0;
 
     return {

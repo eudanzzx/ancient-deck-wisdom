@@ -5,7 +5,7 @@ export interface AtendimentoFormData {
   dataAtendimento: string;
   tipoServico: string;
   valor: string;
-  statusPagamento: string;
+  statusPagamento: 'pago' | 'pendente' | 'parcelado';
   dataNascimento: string;
   signo: string;
   destino: string;
