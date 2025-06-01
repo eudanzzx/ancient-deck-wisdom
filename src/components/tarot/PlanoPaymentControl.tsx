@@ -3,9 +3,9 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
-import PlanoPaymentHeader from "./payment/PlanoPaymentHeader";
-import PlanoMonthCard from "./payment/PlanoMonthCard";
-import PlanoPaymentSummary from "./payment/PlanoPaymentSummary";
+import PlanoVisualizerHeader from "./visualizer/PlanoVisualizerHeader";
+import PlanoVisualizerMonthCard from "./visualizer/PlanoVisualizerMonthCard";
+import PlanoVisualizerSummary from "./visualizer/PlanoVisualizerSummary";
 
 interface PlanoPaymentControlProps {
   analysisId: string;
@@ -151,37 +151,29 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
     
     toast.success(
       newIsPaid 
-        ? `Mês ${month.month} marcado como pago` 
-        : `Mês ${month.month} marcado como pendente`
+        ? `💫 Mês ${month.month} marcado como pago` 
+        : `📋 Mês ${month.month} marcado como pendente`
     );
   };
 
-  const paidCount = planoMonths.filter(m => m.isPaid).length;
-  const totalValue = planoMonths.length * parseFloat(planoData.valorMensal);
-  const paidValue = paidCount * parseFloat(planoData.valorMensal);
-
   return (
-    <Card className="mt-4 border-[#6B21A8]/20 shadow-lg">
-      <PlanoPaymentHeader 
-        paidCount={paidCount}
-        totalMonths={planoMonths.length}
-        planoData={planoData}
-      />
+    <Card className="mt-4 border-purple-200/30 shadow-xl bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30 backdrop-blur-sm overflow-hidden">
+      <PlanoVisualizerHeader planoData={planoData} />
       
-      <CardContent className="p-6">
+      <CardContent className="p-8">
         {planoMonths.length === 0 ? (
-          <div className="text-center text-slate-500 py-8">
-            <div className="animate-pulse">
-              <div className="h-4 bg-slate-200 rounded w-48 mx-auto mb-2"></div>
-              <div className="h-3 bg-slate-200 rounded w-32 mx-auto"></div>
+          <div className="text-center text-slate-500 py-12">
+            <div className="animate-pulse space-y-4">
+              <div className="h-6 bg-gradient-to-r from-purple-200 via-slate-200 to-purple-200 rounded-xl w-64 mx-auto"></div>
+              <div className="h-4 bg-gradient-to-r from-slate-200 via-purple-200 to-slate-200 rounded-lg w-40 mx-auto"></div>
             </div>
-            <p className="mt-4">Carregando meses do plano...</p>
+            <p className="mt-6 text-slate-600 font-medium">✨ Carregando meses do plano...</p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
               {planoMonths.map((month, index) => (
-                <PlanoMonthCard
+                <PlanoVisualizerMonthCard
                   key={month.month}
                   month={month}
                   index={index}
@@ -190,11 +182,9 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
               ))}
             </div>
             
-            <PlanoPaymentSummary 
-              paidCount={paidCount}
-              totalMonths={planoMonths.length}
-              paidValue={paidValue}
-              totalValue={totalValue}
+            <PlanoVisualizerSummary 
+              planoMonths={planoMonths}
+              planoData={planoData}
             />
           </>
         )}
