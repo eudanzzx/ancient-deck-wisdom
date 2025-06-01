@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Calendar, CreditCard } from "lucide-react";
+import { Calendar, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 
@@ -80,7 +80,7 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     setPlanoMonths(months);
   };
 
-  const togglePayment = (monthIndex: number) => {
+  const handlePaymentChange = (monthIndex: number, checked: boolean) => {
     const month = planoMonths[monthIndex];
     const planos = getPlanos();
     
@@ -88,22 +88,22 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       // Atualizar o status do plano existente
       const updatedPlanos = planos.map(plano => 
         plano.id === month.planoId 
-          ? { ...plano, active: month.isPaid } // Se estava pago, volta a ser ativo
+          ? { ...plano, active: !checked } // Se foi marcado como pago, não está mais ativo
           : plano
       );
       savePlanos(updatedPlanos);
-      
-      // Atualizar o estado local
-      const updatedMonths = [...planoMonths];
-      updatedMonths[monthIndex].isPaid = !month.isPaid;
-      setPlanoMonths(updatedMonths);
-      
-      toast.success(
-        month.isPaid 
-          ? `Mês ${month.month} marcado como pendente` 
-          : `Mês ${month.month} marcado como pago`
-      );
     }
+    
+    // Atualizar o estado local
+    const updatedMonths = [...planoMonths];
+    updatedMonths[monthIndex].isPaid = checked;
+    setPlanoMonths(updatedMonths);
+    
+    toast.success(
+      checked 
+        ? `Mês ${month.month} marcado como pago` 
+        : `Mês ${month.month} marcado como pendente`
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -135,31 +135,28 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-6 md:grid-cols-12 gap-2">
+        <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-12 gap-4">
           {planoMonths.map((month, index) => (
             <div
               key={month.month}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center space-y-2"
             >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => togglePayment(index)}
-                className={`w-12 h-12 p-0 border-2 ${
-                  month.isPaid
-                    ? 'bg-green-100 border-green-500 text-green-700 hover:bg-green-200'
-                    : 'bg-red-100 border-red-500 text-red-700 hover:bg-red-200'
-                }`}
-              >
-                {month.isPaid ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <X className="h-4 w-4" />
-                )}
-              </Button>
-              <span className="text-xs mt-1 text-center">
-                Mês {month.month}
-              </span>
+              <div className={`
+                w-16 h-16 border-2 rounded-lg flex flex-col items-center justify-center p-2 transition-all duration-200
+                ${month.isPaid 
+                  ? 'bg-green-100 border-green-500' 
+                  : 'bg-red-100 border-red-500'
+                }
+              `}>
+                <div className="text-xs font-medium mb-1">
+                  Mês {month.month}
+                </div>
+                <Checkbox
+                  checked={month.isPaid}
+                  onCheckedChange={(checked) => handlePaymentChange(index, checked as boolean)}
+                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                />
+              </div>
               <span className="text-xs text-slate-500 text-center">
                 {formatDate(month.dueDate)}
               </span>
@@ -167,7 +164,7 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
           ))}
         </div>
         
-        <div className="flex items-center justify-between mt-4 pt-4 border-t">
+        <div className="flex items-center justify-between mt-6 pt-4 border-t">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-500 rounded"></div>
