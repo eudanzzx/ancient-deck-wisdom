@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, CreditCard } from "lucide-react";
+import { ChevronDown, CreditCard } from "lucide-react";
 import PlanoPaymentControl from "./PlanoPaymentControl";
 import useUserDataService from "@/services/userDataService";
 
@@ -52,9 +52,11 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         variant="outline"
         size="sm"
-        className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200"
+        className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200 flex items-center gap-2"
       >
         <CreditCard className="h-4 w-4" />
+        <span className="font-medium">{paidMonths}/{totalMonths}</span>
+        <ChevronDown className="h-3 w-3" />
       </Button>
 
       {isOpen && (
