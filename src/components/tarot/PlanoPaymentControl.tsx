@@ -3,12 +3,8 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, X, CreditCard, CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { Check, X, CreditCard, CalendarIcon, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import useUserDataService from "@/services/userDataService";
 
 interface PlanoPaymentControlProps {
@@ -53,7 +49,6 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
       const dueDate = new Date(baseDate);
       dueDate.setMonth(dueDate.getMonth() + i);
       
-      // Verificar se este mês já foi pago
       const planoForMonth = planos.find(plano => 
         plano.id.startsWith(`${analysisId}-month-${i}`)
       );
@@ -77,15 +72,13 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
     const newIsPaid = !month.isPaid;
     
     if (month.planoId) {
-      // Atualizar o status do plano existente
       const updatedPlanos = planos.map(plano => 
         plano.id === month.planoId 
-          ? { ...plano, active: !newIsPaid } // Se vai ser marcado como pago, plano não fica ativo
+          ? { ...plano, active: !newIsPaid }
           : plano
       );
       savePlanos(updatedPlanos);
     } else if (newIsPaid) {
-      // Criar novo registro de plano quando marcar como pago
       const newPlano = {
         id: `${analysisId}-month-${month.month}`,
         clientName: clientName,
@@ -95,25 +88,22 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
         month: month.month,
         totalMonths: parseInt(planoData.meses),
         created: new Date().toISOString(),
-        active: false // Não ativo porque foi pago
+        active: false
       };
       
       const updatedPlanos = [...planos, newPlano];
       savePlanos(updatedPlanos);
       
-      // Atualizar o planoId no estado local
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].planoId = newPlano.id;
       updatedMonths[monthIndex].isPaid = true;
       setPlanoMonths(updatedMonths);
     } else {
-      // Atualizar apenas o estado local se está desmarcando um mês que não tinha planoId
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].isPaid = false;
       setPlanoMonths(updatedMonths);
     }
     
-    // Se não criou novo plano, atualizar estado local
     if (month.planoId || !newIsPaid) {
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].isPaid = newIsPaid;
@@ -144,66 +134,103 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
   const paidValue = paidCount * parseFloat(planoData.valorMensal);
 
   return (
-    <Card className="mt-4 border-[#6B21A8]/20 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-[#6B21A8]/5 to-[#6B21A8]/10">
-        <CardTitle className="flex items-center gap-2 text-[#6B21A8]">
-          <CreditCard className="h-5 w-5" />
-          Controle de Pagamentos do Plano
-          <Badge variant="secondary" className="bg-[#6B21A8]/10 text-[#6B21A8] ml-2">
-            {paidCount}/{planoMonths.length}
-          </Badge>
-        </CardTitle>
-        <div className="flex items-center gap-4 text-sm text-slate-600">
-          <span>Total: {planoData.meses} meses</span>
-          <span>Valor mensal: R$ {parseFloat(planoData.valorMensal).toFixed(2)}</span>
-          <span className="font-medium text-emerald-600">
-            R$ {paidValue.toFixed(2)} / R$ {totalValue.toFixed(2)}
-          </span>
+    <Card className="bg-gradient-to-br from-white via-purple-50/30 to-violet-50/50 border border-[#6B21A8]/20 shadow-xl rounded-2xl overflow-hidden backdrop-blur-sm">
+      {/* Header with gradient background */}
+      <CardHeader className="bg-gradient-to-r from-[#6B21A8]/10 via-purple-100/50 to-violet-100/30 border-b border-[#6B21A8]/10 relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#6B21A8]/5 to-transparent opacity-50"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200/20 to-transparent rounded-full blur-2xl"></div>
+        
+        <div className="relative z-10">
+          <CardTitle className="flex items-center gap-3 text-[#6B21A8] mb-3">
+            <div className="p-2 bg-[#6B21A8]/10 rounded-xl">
+              <CreditCard className="h-5 w-5" />
+            </div>
+            <span className="font-bold text-lg">Controle de Pagamentos</span>
+            <Badge variant="secondary" className="bg-[#6B21A8]/10 text-[#6B21A8] border-[#6B21A8]/20 font-medium px-3 py-1">
+              {paidCount}/{planoMonths.length}
+            </Badge>
+          </CardTitle>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="flex items-center gap-2 bg-white/60 rounded-lg p-3 border border-white/40">
+              <CalendarIcon className="h-4 w-4 text-[#6B21A8]" />
+              <div>
+                <span className="text-slate-500">Total:</span>
+                <span className="font-semibold text-slate-700 ml-1">{planoData.meses} meses</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-white/60 rounded-lg p-3 border border-white/40">
+              <Sparkles className="h-4 w-4 text-emerald-600" />
+              <div>
+                <span className="text-slate-500">Mensal:</span>
+                <span className="font-semibold text-emerald-600 ml-1">R$ {parseFloat(planoData.valorMensal).toFixed(2)}</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg p-3 border border-emerald-200">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <div>
+                <span className="text-slate-600 font-medium">
+                  R$ {paidValue.toFixed(2)} / R$ {totalValue.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </CardHeader>
       
       <CardContent className="p-6">
         {planoMonths.length === 0 ? (
-          <div className="text-center text-slate-500 py-8">
-            <div className="animate-pulse">
-              <div className="h-4 bg-slate-200 rounded w-48 mx-auto mb-2"></div>
-              <div className="h-3 bg-slate-200 rounded w-32 mx-auto"></div>
+          <div className="text-center text-slate-500 py-12">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-48 mx-auto"></div>
+              <div className="h-3 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-32 mx-auto"></div>
             </div>
-            <p className="mt-4">Carregando meses do plano...</p>
+            <p className="mt-6 text-slate-600 font-medium">Carregando meses do plano...</p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {planoMonths.map((month, index) => (
                 <Button
                   key={month.month}
                   onClick={() => handlePaymentToggle(index)}
                   variant="outline"
                   className={`
-                    relative h-auto min-h-[120px] p-4 flex flex-col items-center justify-center gap-3 
-                    transition-all duration-300 hover:scale-105 hover:shadow-xl group
-                    border-2 rounded-xl overflow-hidden
+                    relative h-auto min-h-[140px] p-4 flex flex-col items-center justify-center gap-3 
+                    transition-all duration-500 hover:scale-110 hover:shadow-2xl group
+                    border-2 rounded-2xl overflow-hidden backdrop-blur-sm
                     ${month.isPaid 
-                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-emerald-400 shadow-emerald-200/50' 
-                      : 'bg-gradient-to-br from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 border-slate-300 text-slate-700 shadow-slate-200/50 hover:border-[#6B21A8]/50'
+                      ? 'bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 hover:from-emerald-500 hover:via-emerald-600 hover:to-emerald-700 text-white border-emerald-300 shadow-emerald-200/50 shadow-xl' 
+                      : 'bg-gradient-to-br from-white via-slate-50 to-purple-50/30 hover:from-slate-50 hover:via-purple-50 hover:to-violet-100/50 border-slate-300 text-slate-700 shadow-slate-200/50 hover:border-[#6B21A8]/50 hover:shadow-xl'
                     }
                   `}
                 >
-                  {/* Background decoration */}
+                  {/* Decorative background */}
                   <div className={`
-                    absolute inset-0 opacity-10 transition-opacity duration-300
+                    absolute inset-0 transition-opacity duration-500
                     ${month.isPaid 
-                      ? 'bg-gradient-to-br from-white/20 to-transparent' 
-                      : 'bg-gradient-to-br from-[#6B21A8]/10 to-transparent group-hover:opacity-20'
+                      ? 'bg-gradient-to-br from-white/20 via-transparent to-emerald-300/20' 
+                      : 'bg-gradient-to-br from-[#6B21A8]/5 via-transparent to-purple-100/20 group-hover:opacity-100'
                     }
                   `} />
                   
+                  {/* Floating sparkles for paid months */}
+                  {month.isPaid && (
+                    <div className="absolute inset-0 overflow-hidden">
+                      <Sparkles className="absolute top-2 right-2 h-3 w-3 text-white/60 animate-pulse" />
+                      <div className="absolute bottom-2 left-2 w-1 h-1 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }}></div>
+                    </div>
+                  )}
+                  
                   {/* Status icon */}
                   <div className={`
-                    absolute top-3 right-3 p-1.5 rounded-full transition-all duration-300
+                    absolute top-3 right-3 p-2 rounded-full transition-all duration-500
                     ${month.isPaid 
-                      ? 'bg-white/20 text-white' 
-                      : 'bg-slate-200 text-slate-500 group-hover:bg-[#6B21A8]/20 group-hover:text-[#6B21A8]'
+                      ? 'bg-white/20 text-white backdrop-blur-sm' 
+                      : 'bg-slate-100 text-slate-500 group-hover:bg-[#6B21A8]/20 group-hover:text-[#6B21A8]'
                     }
                   `}>
                     {month.isPaid ? (
@@ -216,13 +243,13 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
                   {/* Month number */}
                   <div className="relative z-10 text-center">
                     <div className={`
-                      text-2xl font-bold mb-1 transition-colors duration-300
+                      text-2xl font-bold mb-1 transition-all duration-500
                       ${month.isPaid ? 'text-white' : 'text-slate-700 group-hover:text-[#6B21A8]'}
                     `}>
                       {month.month}º
                     </div>
                     <div className={`
-                      text-xs font-medium uppercase tracking-wider
+                      text-xs font-semibold uppercase tracking-wider
                       ${month.isPaid ? 'text-white/90' : 'text-slate-500 group-hover:text-[#6B21A8]/80'}
                     `}>
                       Mês
@@ -232,13 +259,13 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
                   {/* Due date */}
                   <div className="relative z-10 text-center">
                     <div className={`
-                      text-xs opacity-75 mb-1 transition-colors duration-300
+                      text-xs opacity-75 mb-1 transition-colors duration-500
                       ${month.isPaid ? 'text-white/80' : 'text-slate-500'}
                     `}>
                       Vencimento
                     </div>
                     <div className={`
-                      text-sm font-medium transition-colors duration-300
+                      text-sm font-medium transition-colors duration-500
                       ${month.isPaid ? 'text-white' : 'text-slate-600 group-hover:text-[#6B21A8]'}
                     `}>
                       {formatDate(month.dueDate)}
@@ -249,9 +276,9 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
                   <Badge 
                     variant="outline"
                     className={`
-                      relative z-10 text-xs font-medium border transition-all duration-300
+                      relative z-10 text-xs font-medium border transition-all duration-500
                       ${month.isPaid 
-                        ? 'bg-white/20 text-white border-white/30 hover:bg-white/30' 
+                        ? 'bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm' 
                         : 'bg-red-50 text-red-700 border-red-200 group-hover:bg-red-100 group-hover:border-red-300'
                       }
                     `}
@@ -262,31 +289,33 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
               ))}
             </div>
             
-            {/* Summary section */}
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-sm"></div>
-                  <span className="text-sm font-medium text-slate-700">Pago</span>
+            {/* Enhanced summary section */}
+            <div className="mt-8 pt-6 border-t border-gradient-to-r from-transparent via-[#6B21A8]/20 to-transparent">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-lg shadow-emerald-200"></div>
+                    <span className="text-sm font-semibold text-slate-700">Pago</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 bg-gradient-to-r from-slate-400 to-slate-500 rounded-full shadow-lg shadow-slate-200"></div>
+                    <span className="text-sm font-semibold text-slate-700">Pendente</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-gradient-to-r from-slate-300 to-slate-400 rounded-full shadow-sm"></div>
-                  <span className="text-sm font-medium text-slate-700">Pendente</span>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <Badge 
-                  variant="secondary" 
-                  className="bg-[#6B21A8]/10 text-[#6B21A8] border border-[#6B21A8]/20 font-medium px-3 py-1"
-                >
-                  {paidCount}/{planoMonths.length} pagos
-                </Badge>
-                <div className="text-sm text-slate-600">
-                  <span className="font-medium">
-                    R$ {paidValue.toFixed(2)}
-                  </span>
-                  <span className="text-slate-500"> / R$ {totalValue.toFixed(2)}</span>
+                
+                <div className="flex items-center gap-4">
+                  <Badge 
+                    variant="secondary" 
+                    className="bg-gradient-to-r from-[#6B21A8]/10 to-purple-100/50 text-[#6B21A8] border border-[#6B21A8]/20 font-bold px-4 py-2 shadow-lg"
+                  >
+                    {paidCount}/{planoMonths.length} pagos
+                  </Badge>
+                  <div className="text-sm bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-2 rounded-xl border border-emerald-200">
+                    <span className="font-bold text-emerald-700">
+                      R$ {paidValue.toFixed(2)}
+                    </span>
+                    <span className="text-slate-500"> / R$ {totalValue.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             </div>
