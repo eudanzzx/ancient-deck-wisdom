@@ -46,13 +46,25 @@ interface TarotAnalysis {
   detalhesAdicionais?: string;
   dataAnalise: string;
   status?: 'ativo' | 'concluido';
-  finalizado?: boolean;
+  finalizado: boolean;
   valor?: string;
   tipoServico?: string;
   cartasEscolhidas?: string[];
   significados?: string[];
   observacoes?: string;
   dataAtualizacao?: string;
+  // Additional fields for compatibility
+  orientacoes?: string;
+  pontosPotenciais?: string;
+  alertas?: string;
+  analiseAntes?: string;
+  analiseDepois?: string;
+  lembretes?: Array<{
+    id: number;
+    texto: string;
+    dias: number;
+  }>;
+  atencaoFlag?: boolean;
 }
 
 interface Plano {

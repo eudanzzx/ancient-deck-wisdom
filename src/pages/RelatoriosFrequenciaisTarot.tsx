@@ -21,7 +21,19 @@ interface TarotAnalise {
 
 const RelatoriosFrequenciaisTarot = () => {
   const { getAllTarotAnalyses } = useUserDataService();
-  const [analises] = useState<TarotAnalise[]>(getAllTarotAnalyses());
+  const rawAnalises = getAllTarotAnalyses();
+  
+  // Convert to the expected interface format
+  const [analises] = useState<TarotAnalise[]>(
+    rawAnalises.map(analise => ({
+      id: analise.id,
+      nomeCliente: analise.nomeCliente,
+      dataInicio: analise.dataInicio,
+      preco: analise.preco,
+      finalizado: analise.finalizado ?? false
+    }))
+  );
+  
   const [periodoVisualizacao, setPeriodoVisualizacao] = useState("6meses");
 
   const stats = useMemo(() => {

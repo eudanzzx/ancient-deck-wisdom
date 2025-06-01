@@ -62,8 +62,22 @@ const RelatoriosFrequencial = () => {
   }, []);
 
   const loadAnalises = () => {
-    const data = getAllTarotAnalyses();
-    setAnalises(data);
+    const rawData = getAllTarotAnalyses();
+    // Convert to the expected interface format
+    const convertedData: AnaliseFrequencial[] = rawData.map(analise => ({
+      id: analise.id,
+      nomeCliente: analise.nomeCliente,
+      dataInicio: analise.dataInicio,
+      preco: analise.preco,
+      finalizado: analise.finalizado ?? false,
+      dataNascimento: analise.dataNascimento,
+      signo: analise.signo,
+      analiseAntes: analise.analiseAntes,
+      analiseDepois: analise.analiseDepois,
+      lembretes: analise.lembretes,
+      atencaoFlag: analise.atencaoFlag
+    }));
+    setAnalises(convertedData);
   };
 
   useEffect(() => {

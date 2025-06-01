@@ -106,7 +106,7 @@ const AnaliseFrequencial = () => {
     console.log('AnaliseFrequencial - Verificando aniversário para:', { nomeCliente, dataNascimento });
     
     if (nomeCliente && dataNascimento) {
-      const isBirthday = checkClientBirthday(nomeCliente, dataNascimento);
+      const isBirthday = checkClientBirthday(dataNascimento); // Fixed: only pass birthDate
       console.log('AnaliseFrequencial - É aniversário:', isBirthday);
       
       // Força uma nova verificação para garantir que o componente seja atualizado
