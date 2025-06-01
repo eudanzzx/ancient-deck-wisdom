@@ -332,11 +332,9 @@ const AnaliseFrequencial = () => {
       setPlanoData({ meses: "", valorMensal: "" });
       setLembretes([{ id: 1, texto: "", dias: 7 }]);
       
-      // Aguardar um pouco antes de navegar para garantir que o estado foi atualizado
-      setTimeout(() => {
-        console.log('handleSalvarAnalise - Navegando para listagem');
-        navigate("/listagem-tarot");
-      }, 500);
+      // Navegar imediatamente sem delay
+      console.log('handleSalvarAnalise - Navegando para listagem');
+      navigate("/listagem-tarot");
 
     } catch (error) {
       console.error('handleSalvarAnalise - Erro ao salvar:', error);

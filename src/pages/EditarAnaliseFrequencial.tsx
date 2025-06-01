@@ -348,9 +348,6 @@ const EditarAnaliseFrequencial = () => {
       toast.success("Análise frequencial salva com sucesso!");
     }
     
-    // Notificar usuário
-    toast.success("Análise frequencial salva com sucesso!");
-    
     // Configurar lembretes automáticos
     const lembretesStorage = JSON.parse(localStorage.getItem("lembretes") || "[]");
     
@@ -370,7 +367,7 @@ const EditarAnaliseFrequencial = () => {
     
     localStorage.setItem("lembretes", JSON.stringify(lembretesStorage));
     
-    // Voltar para a página de listagem
+    // Voltar para a página de listagem imediatamente
     navigate("/listagem-tarot");
   }, [id, nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, lembretes, navigate, getTarotAnalyses, saveTarotAnalyses, createPlanoNotifications, getPlanos, savePlanos]);
 
