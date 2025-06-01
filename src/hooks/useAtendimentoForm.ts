@@ -28,7 +28,6 @@ const useAtendimentoForm = () => {
   const [signo, setSigno] = useState("");
   const [atencao, setAtencao] = useState(false);
   const [planoAtivo, setPlanoAtivo] = useState(false);
-  const [showPaymentTracker, setShowPaymentTracker] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     nome: "",
     dataNascimento: "",
@@ -165,8 +164,6 @@ const useAtendimentoForm = () => {
     atencao,
     planoAtivo,
     planoData,
-    showPaymentTracker,
-    setShowPaymentTracker,
     handleInputChange,
     handleSelectChange,
     handlePlanoDataChange,
