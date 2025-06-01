@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, X, CreditCard, CalendarIcon } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Check, X, CreditCard, CalendarIcon, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
   const [planoMonths, setPlanoMonths] = useState<PlanoMonth[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [paymentDate, setPaymentDate] = useState<Date | undefined>(undefined);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     initializePlanoMonths();
@@ -157,131 +159,147 @@ const PlanoPaymentControl: React.FC<PlanoPaymentControlProps> = ({
   const paidValue = paidCount * parseFloat(planoData.valorMensal);
 
   return (
-    <Card className="mt-4 border-[#6B21A8]/20 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-[#6B21A8]/5 to-[#6B21A8]/10">
-        <CardTitle className="flex items-center gap-2 text-[#6B21A8]">
-          <CreditCard className="h-5 w-5" />
-          Controle de Pagamentos - {clientName}
-        </CardTitle>
-        <div className="flex items-center gap-4 text-sm text-slate-600">
-          <span>Total: {planoData.meses} meses</span>
-          <span>Valor mensal: R$ {parseFloat(planoData.valorMensal).toFixed(2)}</span>
-          <Badge variant="secondary" className="bg-[#6B21A8]/10 text-[#6B21A8]">
-            {paidCount}/{planoMonths.length} pagos
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Lista de meses */}
-          <div>
-            <h4 className="text-sm font-medium text-slate-700 mb-3">Selecione o mês para marcar pagamento:</h4>
-            <div className="grid grid-cols-3 gap-2">
-              {planoMonths.map((month) => (
-                <Button
-                  key={month.month}
-                  variant={selectedMonth === month.month ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleSelectMonth(month.month)}
-                  className={cn(
-                    "relative h-16 flex flex-col items-center justify-center",
-                    month.isPaid && "bg-emerald-100 border-emerald-300 text-emerald-700",
-                    selectedMonth === month.month && "bg-[#6B21A8] text-white"
-                  )}
-                >
-                  {month.isPaid && (
-                    <Check className="absolute top-1 right-1 h-3 w-3 text-emerald-600" />
-                  )}
-                  <span className="text-sm font-medium">Mês {month.month}</span>
-                  {month.isPaid && month.paymentDate && (
-                    <span className="text-xs opacity-75">
-                      {format(new Date(month.paymentDate), 'dd/MM')}
-                    </span>
-                  )}
-                </Button>
-              ))}
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card className="mt-4 border-[#6B21A8]/20 shadow-lg">
+        <CollapsibleTrigger asChild>
+          <CardHeader className="bg-gradient-to-r from-[#6B21A8]/5 to-[#6B21A8]/10 cursor-pointer hover:from-[#6B21A8]/10 hover:to-[#6B21A8]/15 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-[#6B21A8]">
+                <CreditCard className="h-5 w-5" />
+                Controle de Pagamentos - {clientName}
+                <Badge variant="secondary" className="bg-[#6B21A8]/10 text-[#6B21A8] ml-2">
+                  {paidCount}/{planoMonths.length}
+                </Badge>
+              </CardTitle>
+              <ChevronDown className={cn(
+                "h-5 w-5 text-[#6B21A8] transition-transform duration-200",
+                isOpen && "rotate-180"
+              )} />
             </div>
-          </div>
-
-          {/* Seletor de data e ações */}
-          <div className="space-y-4">
-            {selectedMonth && (
-              <>
-                <div>
-                  <h4 className="text-sm font-medium text-slate-700 mb-2">
-                    Data do pagamento - Mês {selectedMonth}:
-                  </h4>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !paymentDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {paymentDate ? format(paymentDate, "dd/MM/yyyy") : "Selecione a data"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-50" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={paymentDate}
-                        onSelect={setPaymentDate}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleMarkPayment}
-                    disabled={!paymentDate}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    Marcar como Pago
-                  </Button>
-                  
-                  {planoMonths[selectedMonth - 1]?.isPaid && (
+            <div className="flex items-center gap-4 text-sm text-slate-600">
+              <span>Total: {planoData.meses} meses</span>
+              <span>Valor mensal: R$ {parseFloat(planoData.valorMensal).toFixed(2)}</span>
+              <span className="font-medium text-emerald-600">
+                R$ {paidValue.toFixed(2)} / R$ {totalValue.toFixed(2)}
+              </span>
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Lista de meses */}
+              <div>
+                <h4 className="text-sm font-medium text-slate-700 mb-3">Selecione o mês para marcar pagamento:</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {planoMonths.map((month) => (
                     <Button
-                      onClick={() => handleUnmarkPayment(selectedMonth)}
-                      variant="outline"
-                      className="border-red-300 text-red-600 hover:bg-red-50"
+                      key={month.month}
+                      variant={selectedMonth === month.month ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleSelectMonth(month.month)}
+                      className={cn(
+                        "relative h-16 flex flex-col items-center justify-center",
+                        month.isPaid && "bg-emerald-100 border-emerald-300 text-emerald-700",
+                        selectedMonth === month.month && "bg-[#6B21A8] text-white"
+                      )}
                     >
-                      <X className="h-4 w-4 mr-1" />
-                      Desmarcar
+                      {month.isPaid && (
+                        <Check className="absolute top-1 right-1 h-3 w-3 text-emerald-600" />
+                      )}
+                      <span className="text-sm font-medium">Mês {month.month}</span>
+                      {month.isPaid && month.paymentDate && (
+                        <span className="text-xs opacity-75">
+                          {format(new Date(month.paymentDate), 'dd/MM')}
+                        </span>
+                      )}
                     </Button>
-                  )}
+                  ))}
                 </div>
-              </>
-            )}
-          </div>
-        </div>
+              </div>
 
-        {/* Resumo */}
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-emerald-500 rounded"></div>
-              <span className="text-sm text-slate-600">Pago</span>
+              {/* Seletor de data e ações */}
+              <div className="space-y-4">
+                {selectedMonth && (
+                  <>
+                    <div>
+                      <h4 className="text-sm font-medium text-slate-700 mb-2">
+                        Data do pagamento - Mês {selectedMonth}:
+                      </h4>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !paymentDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {paymentDate ? format(paymentDate, "dd/MM/yyyy") : "Selecione a data"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 z-50" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={paymentDate}
+                            onSelect={setPaymentDate}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleMarkPayment}
+                        disabled={!paymentDate}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Marcar como Pago
+                      </Button>
+                      
+                      {planoMonths[selectedMonth - 1]?.isPaid && (
+                        <Button
+                          onClick={() => handleUnmarkPayment(selectedMonth)}
+                          variant="outline"
+                          className="border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Desmarcar
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-slate-300 rounded"></div>
-              <span className="text-sm text-slate-600">Pendente</span>
+
+            {/* Resumo */}
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-emerald-500 rounded"></div>
+                  <span className="text-sm text-slate-600">Pago</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-slate-300 rounded"></div>
+                  <span className="text-sm text-slate-600">Pendente</span>
+                </div>
+              </div>
+              
+              <div className="text-sm text-slate-600">
+                <span className="font-medium">R$ {paidValue.toFixed(2)}</span>
+                <span className="text-slate-500"> / R$ {totalValue.toFixed(2)}</span>
+              </div>
             </div>
-          </div>
-          
-          <div className="text-sm text-slate-600">
-            <span className="font-medium">R$ {paidValue.toFixed(2)}</span>
-            <span className="text-slate-500"> / R$ {totalValue.toFixed(2)}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 };
 
