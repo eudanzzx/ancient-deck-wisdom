@@ -1,215 +1,161 @@
+import { useState, useEffect } from "react";
 
-import { useAuth } from "@/contexts/AuthContext";
+interface Atendimento {
+  id: string;
+  nome: string;
+  dataAtendimento: string;
+  tipoServico: string;
+  valor: string;
+  statusPagamento?: 'pago' | 'pendente' | 'parcelado';
+  dataNascimento?: string;
+  signo?: string;
+  destino?: string;
+  ano?: string;
+  detalhes?: string;
+  tratamento?: string;
+  indicacao?: string;
+  atencaoFlag?: boolean;
+  atencaoNota?: string;
+  planoAtivo?: boolean;
+  planoData?: {
+    meses: string;
+    valorMensal: string;
+  } | null;
+}
 
-// Service to handle user-specific data
+interface TarotAnalysis {
+  id: string;
+  nomeCliente: string;
+  dataNascimento: string;
+  signo: string;
+  atencao: boolean;
+  dataInicio: string;
+  preco: string;
+  pergunta: string;
+  resposta: string;
+  escolha1?: string;
+  resposta1?: string;
+  escolha2?: string;
+  resposta2?: string;
+  escolha3?: string;
+  resposta3?: string;
+  escolha4?: string;
+  resposta4?: string;
+  escolha5?: string;
+  resposta5?: string;
+  detalhesAdicionais?: string;
+  dataAnalise: string;
+  status?: 'ativo' | 'concluido';
+}
+
+interface Plano {
+  id: string;
+  clientName: string;
+  type: 'plano';
+  amount: number;
+  dueDate: string;
+  month: number;
+  totalMonths: number;
+  created: string;
+  active: boolean;
+}
+
 const useUserDataService = () => {
-  const { currentUser } = useAuth();
-  
-  const getUserId = () => {
-    const userId = currentUser?.id || 'guest';
-    console.log('UserDataService - getUserId retornando:', userId);
-    return userId;
-  };
-  
-  // Save atendimentos with user ID
-  const saveAtendimentos = (atendimentos: any[]) => {
-    const userId = getUserId();
-    console.log('UserDataService - Salvando atendimentos para usuário:', userId);
-    console.log('UserDataService - Quantidade de atendimentos a salvar:', atendimentos.length);
-    
-    // Get all user data
-    const allUserData = JSON.parse(localStorage.getItem('userData') || '{}');
-    
-    // Update this user's data
-    allUserData[userId] = {
-      ...allUserData[userId],
-      atendimentos,
-    };
-    
-    // Save back to localStorage
-    localStorage.setItem('userData', JSON.stringify(allUserData));
-    console.log('UserDataService - Dados salvos com sucesso');
-  };
-  
-  // Get atendimentos for current user
-  const getAtendimentos = () => {
-    const userId = getUserId();
-    const allUserData = JSON.parse(localStorage.getItem('userData') || '{}');
-    const atendimentos = (allUserData[userId]?.atendimentos || []);
-    
-    console.log('UserDataService - Carregando atendimentos para usuário:', userId);
-    console.log('UserDataService - Atendimentos encontrados:', atendimentos.length);
-    console.log('UserDataService - Dados completos:', atendimentos);
-    
-    return atendimentos;
-  };
-  
-  // Save tarot analyses with user ID
-  const saveTarotAnalyses = (analyses: any[]) => {
-    const userId = getUserId();
-    
-    // Get all user data
-    const allUserData = JSON.parse(localStorage.getItem('userData') || '{}');
-    
-    // Update this user's data
-    allUserData[userId] = {
-      ...allUserData[userId],
-      tarotAnalyses: analyses,
-    };
-    
-    // Save back to localStorage
-    localStorage.setItem('userData', JSON.stringify(allUserData));
-  };
-  
-  // Get tarot analyses for current user
-  const getTarotAnalyses = () => {
-    const userId = getUserId();
-    const allUserData = JSON.parse(localStorage.getItem('userData') || '{}');
-    return (allUserData[userId]?.tarotAnalyses || []);
-  };
+  const [initialized, setInitialized] = useState(false);
 
-  // Get all analyses from localStorage (for reports)
-  const getAllTarotAnalyses = () => {
-    return JSON.parse(localStorage.getItem('analises') || '[]');
-  };
-  
-  // Save all analyses to localStorage (for reports)
-  const saveAllTarotAnalyses = (analyses: any[]) => {
-    localStorage.setItem('analises', JSON.stringify(analyses));
-  };
+  useEffect(() => {
+    setInitialized(true);
+  }, []);
 
-  // Delete tarot analysis and remove birthday notifications
-  const deleteTarotAnalysis = (id: string) => {
-    // Get the analysis to be deleted first to check for birthday
-    const allAnalyses = getAllTarotAnalyses();
-    const analysisToDelete = allAnalyses.find((analysis: any) => analysis.id === id);
-    
-    // Delete from global localStorage (for reports)
-    const updatedAnalyses = allAnalyses.filter((analysis: any) => analysis.id !== id);
-    saveAllTarotAnalyses(updatedAnalyses);
-
-    // Delete from user-specific data
-    const userAnalyses = getTarotAnalyses();
-    const updatedUserAnalyses = userAnalyses.filter((analysis: any) => analysis.id !== id);
-    saveTarotAnalyses(updatedUserAnalyses);
-
-    // If the deleted analysis had a birthday today, trigger a refresh of birthday notifications
-    if (analysisToDelete && analysisToDelete.dataNascimento) {
-      const today = new Date();
-      const todayDay = today.getDate();
-      const todayMonth = today.getMonth() + 1;
-      
-      try {
-        const [year, month, day] = analysisToDelete.dataNascimento.split('-').map(Number);
-        const isBirthdayToday = day === todayDay && month === todayMonth;
-        
-        if (isBirthdayToday) {
-          console.log('UserDataService - Removendo notificação de aniversário para:', analysisToDelete.nomeCliente);
-          
-          // Trigger a custom event to notify components about the birthday notification removal
-          const event = new CustomEvent('birthdayNotificationRemoved', {
-            detail: { 
-              clientName: analysisToDelete.nomeCliente,
-              analysisType: 'tarot'
-            }
-          });
-          window.dispatchEvent(event);
-        }
-      } catch (error) {
-        console.error('UserDataService - Erro ao processar data de aniversário:', error);
-      }
+  // Atendimentos functions
+  const getAtendimentos = (): Atendimento[] => {
+    if (!initialized) return [];
+    try {
+      const data = localStorage.getItem("atendimentos");
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Erro ao carregar atendimentos:", error);
+      return [];
     }
   };
 
-  // Check for birthdays today
+  const saveAtendimentos = (atendimentos: Atendimento[]): void => {
+    try {
+      localStorage.setItem("atendimentos", JSON.stringify(atendimentos));
+    } catch (error) {
+      console.error("Erro ao salvar atendimentos:", error);
+    }
+  };
+
+  // Tarot Analysis functions
+  const getTarotAnalyses = (): TarotAnalysis[] => {
+    if (!initialized) return [];
+    try {
+      const data = localStorage.getItem("analises");
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Erro ao carregar análises:", error);
+      return [];
+    }
+  };
+
+  const saveTarotAnalyses = (analyses: TarotAnalysis[]): void => {
+    try {
+      localStorage.setItem("analises", JSON.stringify(analyses));
+    } catch (error) {
+      console.error("Erro ao salvar análises:", error);
+    }
+  };
+
+  // Planos functions
+  const getPlanos = (): Plano[] => {
+    if (!initialized) return [];
+    try {
+      const data = localStorage.getItem("planos");
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Erro ao carregar planos:", error);
+      return [];
+    }
+  };
+
+  const savePlanos = (planos: Plano[]): void => {
+    try {
+      localStorage.setItem("planos", JSON.stringify(planos));
+    } catch (error) {
+      console.error("Erro ao salvar planos:", error);
+    }
+  };
+
+  // Birthday checking functions
   const checkBirthdays = () => {
     const atendimentos = getAtendimentos();
     const today = new Date();
-    const todayDay = today.getDate();
-    const todayMonth = today.getMonth() + 1; // getMonth() retorna 0-11, precisamos 1-12
     
-    console.log('UserDataService - Verificando aniversários para data:', `${todayDay}/${todayMonth}`);
-    console.log('UserDataService - Total de atendimentos:', atendimentos.length);
-    
-    const birthdaysToday = atendimentos.filter(atendimento => {
-      if (atendimento.dataNascimento) {
-        try {
-          // Parse da data de nascimento no formato YYYY-MM-DD
-          const [year, month, day] = atendimento.dataNascimento.split('-').map(Number);
-          
-          const isSameDay = day === todayDay;
-          const isSameMonth = month === todayMonth;
-          
-          console.log(`UserDataService - Cliente: ${atendimento.nome}, Data: ${atendimento.dataNascimento}, Parsed: ${day}/${month}, Hoje: ${todayDay}/${todayMonth}, É aniversário: ${isSameDay && isSameMonth}`);
-          
-          return isSameDay && isSameMonth;
-        } catch (error) {
-          console.error(`UserDataService - Erro ao processar data de nascimento de ${atendimento.nome}:`, error);
-          return false;
-        }
-      }
-      return false;
+    return atendimentos.filter(atendimento => {
+      if (!atendimento.dataNascimento) return false;
+      
+      const birthDate = new Date(atendimento.dataNascimento);
+      return (
+        birthDate.getDate() === today.getDate() &&
+        birthDate.getMonth() === today.getMonth()
+      );
     });
-
-    console.log('UserDataService - Aniversários encontrados:', birthdaysToday.map(b => b.nome));
-    return birthdaysToday;
   };
 
-  // Check if specific client has birthday today
-  const checkClientBirthday = (clientName: string, birthDate?: string) => {
-    if (!birthDate) return false;
-    
-    try {
-      const today = new Date();
-      const todayDay = today.getDate();
-      const todayMonth = today.getMonth() + 1; // getMonth() retorna 0-11, precisamos 1-12
-      
-      // Parse da data de nascimento no formato YYYY-MM-DD
-      const [year, month, day] = birthDate.split('-').map(Number);
-      
-      const isSameDay = day === todayDay;
-      const isSameMonth = month === todayMonth;
-      
-      return isSameDay && isSameMonth;
-    } catch (error) {
-      console.error(`UserDataService - Erro ao verificar aniversário de ${clientName}:`, error);
-      return false;
-    }
-  };
-
-  // Get clients with their consultation count
-  const getClientsWithConsultations = () => {
-    const atendimentos = getAtendimentos();
-    const clientsMap = new Map();
-
-    atendimentos.forEach(atendimento => {
-      const clientName = atendimento.nome;
-      if (clientsMap.has(clientName)) {
-        clientsMap.get(clientName).count++;
-        clientsMap.get(clientName).consultations.push(atendimento);
-      } else {
-        clientsMap.set(clientName, {
-          name: clientName,
-          count: 1,
-          consultations: [atendimento]
-        });
-      }
-    });
-
-    return Array.from(clientsMap.values());
-  };
-  
   return {
-    saveAtendimentos,
+    // Atendimentos
     getAtendimentos,
-    saveTarotAnalyses,
+    saveAtendimentos,
+    // Tarot Analyses
     getTarotAnalyses,
-    getAllTarotAnalyses,
-    saveAllTarotAnalyses,
-    deleteTarotAnalysis,
+    saveTarotAnalyses,
+    // Planos
+    getPlanos,
+    savePlanos,
+    // Utilities
     checkBirthdays,
-    checkClientBirthday,
-    getClientsWithConsultations
+    initialized
   };
 };
 

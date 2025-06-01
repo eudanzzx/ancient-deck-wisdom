@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, AlertTriangle, Cake } from "lucide-react";
+import { ArrowLeft, Save, AlertTriangle, Cake, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 import BirthdayNotifications from "@/components/BirthdayNotifications";
@@ -28,10 +28,11 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 
 const NovoAtendimento = () => {
   const navigate = useNavigate();
-  const { getAtendimentos, saveAtendimentos, checkBirthdays } = useUserDataService();
+  const { getAtendimentos, saveAtendimentos, checkBirthdays, savePlanos, getPlanos } = useUserDataService();
   const [dataNascimento, setDataNascimento] = useState("");
   const [signo, setSigno] = useState("");
   const [atencao, setAtencao] = useState(false);
+  const [planoAtivo, setPlanoAtivo] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
     dataNascimento: "",
@@ -46,6 +47,10 @@ const NovoAtendimento = () => {
     tratamento: "",
     indicacao: "",
   });
+  const [planoData, setPlanoData] = useState({
+    meses: "",
+    valorMensal: "",
+  });
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -58,6 +63,13 @@ const NovoAtendimento = () => {
   const handleSelectChange = (field, value) => {
     setFormData({
       ...formData,
+      [field]: value,
+    });
+  };
+
+  const handlePlanoDataChange = (field, value) => {
+    setPlanoData({
+      ...planoData,
       [field]: value,
     });
   };
@@ -151,6 +163,30 @@ const NovoAtendimento = () => {
     }
   };
 
+  const createPlanoNotifications = (nomeCliente, meses, valorMensal, dataInicio) => {
+    const notifications = [];
+    const startDate = new Date(dataInicio);
+    
+    for (let i = 1; i <= parseInt(meses); i++) {
+      const notificationDate = new Date(startDate);
+      notificationDate.setMonth(notificationDate.getMonth() + i);
+      
+      notifications.push({
+        id: `plano-${Date.now()}-${i}`,
+        clientName: nomeCliente,
+        type: 'plano',
+        amount: parseFloat(valorMensal),
+        dueDate: notificationDate.toISOString().split('T')[0],
+        month: i,
+        totalMonths: parseInt(meses),
+        created: new Date().toISOString(),
+        active: true
+      });
+    }
+    
+    return notifications;
+  };
+
   const handleSaveAtendimento = () => {
     const existingAtendimentos = getAtendimentos();
     
@@ -160,12 +196,32 @@ const NovoAtendimento = () => {
       signo,
       atencaoFlag: atencao,
       data: new Date().toISOString(),
+      planoAtivo,
+      planoData: planoAtivo ? planoData : null,
     };
     
     existingAtendimentos.push(novoAtendimento);
     saveAtendimentos(existingAtendimentos);
     
-    toast.success("Atendimento salvo com sucesso!");
+    // Se tem plano ativo, criar as notificações
+    if (planoAtivo && planoData.meses && planoData.valorMensal && formData.dataAtendimento) {
+      const notifications = createPlanoNotifications(
+        formData.nome,
+        planoData.meses,
+        planoData.valorMensal,
+        formData.dataAtendimento
+      );
+      
+      // Salvar as notificações de plano
+      const existingPlanos = getPlanos() || [];
+      const updatedPlanos = [...existingPlanos, ...notifications];
+      savePlanos(updatedPlanos);
+      
+      toast.success(`Atendimento salvo! Plano de ${planoData.meses} meses criado com sucesso.`);
+    } else {
+      toast.success("Atendimento salvo com sucesso!");
+    }
+    
     navigate("/");
   };
   
@@ -345,6 +401,50 @@ const NovoAtendimento = () => {
                   value={formData.atencaoNota}
                   onChange={handleInputChange}
                 />
+              </div>
+
+              <div className="space-y-2 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="plano" className="text-slate-700 font-medium flex items-center">
+                    <CreditCard className={`mr-2 h-4 w-4 ${planoAtivo ? "text-[#0EA5E9]" : "text-slate-400"}`} />
+                    PLANO
+                  </Label>
+                  <Switch 
+                    checked={planoAtivo} 
+                    onCheckedChange={setPlanoAtivo} 
+                    className="data-[state=checked]:bg-[#0EA5E9]"
+                  />
+                </div>
+                
+                {planoAtivo && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="space-y-1">
+                      <Label className="text-sm text-slate-600">Meses</Label>
+                      <Select onValueChange={(value) => handlePlanoDataChange("meses", value)}>
+                        <SelectTrigger className="bg-[#0EA5E9]/10 border-[#0EA5E9]/30 focus:border-[#0EA5E9]">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i + 1} value={(i + 1).toString()}>
+                              {i + 1} {i === 0 ? 'mês' : 'meses'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-slate-600">Valor Mensal (R$)</Label>
+                      <Input 
+                        type="number" 
+                        placeholder="0.00" 
+                        value={planoData.valorMensal}
+                        onChange={(e) => handlePlanoDataChange("valorMensal", e.target.value)}
+                        className="bg-[#0EA5E9]/10 border-[#0EA5E9]/30 focus:border-[#0EA5E9] focus:ring-[#0EA5E9]/20"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
