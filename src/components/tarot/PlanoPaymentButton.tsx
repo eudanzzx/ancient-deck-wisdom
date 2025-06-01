@@ -56,18 +56,16 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
       >
         <CreditCard className="h-4 w-4" />
         <span className="font-medium">{paidMonths}/{totalMonths}</span>
-        <ChevronDown className="h-3 w-3" />
+        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 
       {isOpen && (
-        <div className="mt-2">
-          <PlanoPaymentControl
-            analysisId={analysisId}
-            clientName={clientName}
-            planoData={planoData}
-            startDate={startDate}
-          />
-        </div>
+        <PlanoPaymentControl
+          analysisId={analysisId}
+          clientName={clientName}
+          planoData={planoData}
+          startDate={startDate}
+        />
       )}
     </div>
   );
