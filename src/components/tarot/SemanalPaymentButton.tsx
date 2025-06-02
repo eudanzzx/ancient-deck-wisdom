@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import SemanalPaymentControl from "./SemanalPaymentControl";
 import useUserDataService from "@/services/userDataService";
 
@@ -47,20 +48,27 @@ const SemanalPaymentButton: React.FC<SemanalPaymentButtonProps> = ({
         onClick={handleClick}
         variant="outline"
         size="sm"
-        className="border-[#0EA5E9]/30 text-[#0EA5E9] hover:bg-[#0EA5E9]/10 hover:border-[#0EA5E9] transition-colors duration-200 flex items-center gap-2"
+        className="border-[#0EA5E9]/30 text-[#0EA5E9] hover:bg-[#0EA5E9]/10 hover:border-[#0EA5E9] transition-all duration-300 flex items-center gap-2 hover:shadow-lg hover:scale-105 hover:-translate-y-1"
       >
-        <Calendar className="h-4 w-4" />
-        <span className="font-medium">{paidWeeks}/{totalWeeks}</span>
+        <Calendar className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+        <Badge 
+          variant="secondary" 
+          className="bg-[#0EA5E9]/10 text-[#0EA5E9] border-[#0EA5E9]/20 text-xs px-2 py-0.5"
+        >
+          {paidWeeks}/{totalWeeks}
+        </Badge>
         <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 
       {isOpen && (
-        <SemanalPaymentControl
-          analysisId={analysisId}
-          clientName={clientName}
-          semanalData={semanalData}
-          startDate={startDate}
-        />
+        <div className="transform transition-all duration-300 animate-fade-in">
+          <SemanalPaymentControl
+            analysisId={analysisId}
+            clientName={clientName}
+            semanalData={semanalData}
+            startDate={startDate}
+          />
+        </div>
       )}
     </div>
   );
