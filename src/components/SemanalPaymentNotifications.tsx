@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,24 +30,29 @@ const SemanalPaymentNotifications = () => {
 
   const getNextFriday = (fromDate: Date): Date => {
     const nextFriday = new Date(fromDate);
-    nextFriday.setHours(0, 0, 0, 0); // Reset time to start of day
+    nextFriday.setHours(0, 0, 0, 0);
     
     const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
-    // Calcular quantos dias faltam até sexta-feira (dia 5)
     let daysToAdd;
     if (currentDay === 5) {
-      // Se hoje é sexta, próxima sexta é em 7 dias
+      // Se hoje é sexta-feira, próxima sexta é em 7 dias
       daysToAdd = 7;
     } else if (currentDay < 5) {
-      // Se é antes de sexta na semana atual
+      // Se é antes de sexta na semana atual (domingo a quinta)
       daysToAdd = 5 - currentDay;
     } else {
-      // Se é sábado (6) ou domingo (0), próxima sexta
-      daysToAdd = currentDay === 6 ? 6 : 5;
+      // Se é sábado (6), próxima sexta é em 6 dias
+      daysToAdd = 6;
     }
     
     nextFriday.setDate(nextFriday.getDate() + daysToAdd);
+    
+    // Verificar se realmente é sexta-feira (5)
+    if (nextFriday.getDay() !== 5) {
+      console.error('Erro no cálculo da sexta-feira:', nextFriday.getDay(), 'deveria ser 5');
+    }
+    
     return nextFriday;
   };
 

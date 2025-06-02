@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,24 +36,29 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
 
   const getNextFriday = (fromDate: Date): Date => {
     const nextFriday = new Date(fromDate);
-    nextFriday.setHours(0, 0, 0, 0); // Reset time to start of day
+    nextFriday.setHours(0, 0, 0, 0);
     
     const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
-    // Calcular quantos dias faltam até sexta-feira (dia 5)
     let daysToAdd;
     if (currentDay === 5) {
-      // Se a data é sexta, próxima sexta é em 7 dias
+      // Se a data é sexta-feira, próxima sexta é em 7 dias
       daysToAdd = 7;
     } else if (currentDay < 5) {
-      // Se é antes de sexta na semana atual
+      // Se é antes de sexta na semana atual (domingo a quinta)
       daysToAdd = 5 - currentDay;
     } else {
-      // Se é sábado (6) ou domingo (0), próxima sexta
-      daysToAdd = currentDay === 6 ? 6 : 5;
+      // Se é sábado (6), próxima sexta é em 6 dias
+      daysToAdd = 6;
     }
     
     nextFriday.setDate(nextFriday.getDate() + daysToAdd);
+    
+    // Verificar se realmente é sexta-feira (5)
+    if (nextFriday.getDay() !== 5) {
+      console.error('Erro no cálculo da sexta-feira:', nextFriday.getDay(), 'deveria ser 5');
+    }
+    
     return nextFriday;
   };
 
@@ -65,21 +69,21 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
   const initializeSemanalWeeks = () => {
     const totalWeeks = parseInt(semanalData.semanas);
     const baseDate = new Date(startDate);
-    baseDate.setHours(0, 0, 0, 0); // Reset time for consistent calculation
+    baseDate.setHours(0, 0, 0, 0);
     const planos = getPlanos();
     
     const weeks: SemanalWeek[] = [];
     
     for (let i = 1; i <= totalWeeks; i++) {
-      // Primeira sexta-feira após a data de início
       let dueDate;
       if (i === 1) {
+        // Primeira sexta-feira após a data de início
         dueDate = getNextFriday(baseDate);
       } else {
-        // Para semanas subsequentes, adicionar 7 dias para cada semana adicional
-        const previousWeekDate = getNextFriday(baseDate);
-        previousWeekDate.setDate(previousWeekDate.getDate() + ((i - 1) * 7));
-        dueDate = previousWeekDate;
+        // Para semanas subsequentes, adicionar 7 dias a partir da primeira sexta
+        const firstFriday = getNextFriday(baseDate);
+        dueDate = new Date(firstFriday);
+        dueDate.setDate(firstFriday.getDate() + ((i - 1) * 7));
       }
       
       const semanalForWeek = planos.find((plano): plano is PlanoSemanal => 

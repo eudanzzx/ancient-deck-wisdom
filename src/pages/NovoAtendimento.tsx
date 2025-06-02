@@ -38,24 +38,29 @@ const NovoAtendimento = () => {
 
   const getNextFriday = (fromDate: Date): Date => {
     const nextFriday = new Date(fromDate);
-    nextFriday.setHours(0, 0, 0, 0); // Reset time to start of day
+    nextFriday.setHours(0, 0, 0, 0);
     
     const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
-    // Calcular quantos dias faltam até sexta-feira (dia 5)
     let daysToAdd;
     if (currentDay === 5) {
-      // Se a data é sexta, próxima sexta é em 7 dias
+      // Se a data é sexta-feira, próxima sexta é em 7 dias
       daysToAdd = 7;
     } else if (currentDay < 5) {
-      // Se é antes de sexta na semana atual
+      // Se é antes de sexta na semana atual (domingo a quinta)
       daysToAdd = 5 - currentDay;
     } else {
-      // Se é sábado (6) ou domingo (0), próxima sexta
-      daysToAdd = currentDay === 6 ? 6 : 5;
+      // Se é sábado (6), próxima sexta é em 6 dias
+      daysToAdd = 6;
     }
     
     nextFriday.setDate(nextFriday.getDate() + daysToAdd);
+    
+    // Verificar se realmente é sexta-feira (5)
+    if (nextFriday.getDay() !== 5) {
+      console.error('Erro no cálculo da sexta-feira:', nextFriday.getDay(), 'deveria ser 5');
+    }
+    
     return nextFriday;
   };
 
@@ -86,18 +91,18 @@ const NovoAtendimento = () => {
   const createSemanalNotifications = (nomeCliente: string, semanas: string, valorSemanal: string, dataInicio: string) => {
     const notifications: PlanoSemanal[] = [];
     const startDate = new Date(dataInicio);
-    startDate.setHours(0, 0, 0, 0); // Reset time for consistent calculation
+    startDate.setHours(0, 0, 0, 0);
     
     for (let i = 1; i <= parseInt(semanas); i++) {
-      // Primeira sexta-feira após a data de início
       let dueDate;
       if (i === 1) {
+        // Primeira sexta-feira após a data de início
         dueDate = getNextFriday(startDate);
       } else {
-        // Para semanas subsequentes, adicionar 7 dias para cada semana adicional
-        const previousWeekDate = getNextFriday(startDate);
-        previousWeekDate.setDate(previousWeekDate.getDate() + ((i - 1) * 7));
-        dueDate = previousWeekDate;
+        // Para semanas subsequentes, adicionar 7 dias a partir da primeira sexta
+        const firstFriday = getNextFriday(startDate);
+        dueDate = new Date(firstFriday);
+        dueDate.setDate(firstFriday.getDate() + ((i - 1) * 7));
       }
       
       notifications.push({
