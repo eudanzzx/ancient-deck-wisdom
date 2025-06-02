@@ -250,17 +250,6 @@ const ListagemTarot = () => {
                     </div>
                   )}
 
-                  {/* Atenção Nota */}
-                  {(analysis.atencaoNota) && (
-                    <div className="mt-4 p-3 bg-red-50/50 rounded-lg border border-red-200">
-                      <h4 className="font-medium text-red-800 mb-2 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        Nota de Atenção:
-                      </h4>
-                      <p className="text-sm text-gray-700">{analysis.atencaoNota}</p>
-                    </div>
-                  )}
-
                   {/* Informações Adicionais */}
                   <div className="mt-4 pt-3 border-t border-gray-200">
                     <div className="flex flex-wrap gap-4 text-xs text-gray-500">
