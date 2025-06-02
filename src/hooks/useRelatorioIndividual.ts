@@ -75,7 +75,7 @@ export const useRelatorioIndividual = () => {
       const precoValue = curr.preco || curr.valor || "0";
       const precoNumber = parseFloat(precoValue.toString());
       const validNumber = isNaN(precoNumber) ? 0 : precoNumber;
-      const accNumber = typeof acc === 'number' ? acc : 0;
+      const accNumber = typeof acc === 'number' ? acc : parseFloat(acc.toString()) || 0;
       return accNumber + validNumber;
     }, 0);
     return total.toFixed(2);

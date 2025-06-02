@@ -37,6 +37,8 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
 
   const getNextFriday = (fromDate: Date): Date => {
     const nextFriday = new Date(fromDate);
+    nextFriday.setHours(0, 0, 0, 0); // Reset time to start of day
+    
     const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
     // Calcular quantos dias faltam até sexta-feira (dia 5)
@@ -63,6 +65,7 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
   const initializeSemanalWeeks = () => {
     const totalWeeks = parseInt(semanalData.semanas);
     const baseDate = new Date(startDate);
+    baseDate.setHours(0, 0, 0, 0); // Reset time for consistent calculation
     const planos = getPlanos();
     
     const weeks: SemanalWeek[] = [];

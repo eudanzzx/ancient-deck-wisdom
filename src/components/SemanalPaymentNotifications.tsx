@@ -31,6 +31,8 @@ const SemanalPaymentNotifications = () => {
 
   const getNextFriday = (fromDate: Date): Date => {
     const nextFriday = new Date(fromDate);
+    nextFriday.setHours(0, 0, 0, 0); // Reset time to start of day
+    
     const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
     // Calcular quantos dias faltam até sexta-feira (dia 5)
@@ -53,6 +55,7 @@ const SemanalPaymentNotifications = () => {
   const checkPaymentNotifications = () => {
     const planos = getPlanos() || [];
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
     const upcoming: UpcomingPayment[] = [];
 
     planos.forEach((plano) => {

@@ -38,6 +38,8 @@ const NovoAtendimento = () => {
 
   const getNextFriday = (fromDate: Date): Date => {
     const nextFriday = new Date(fromDate);
+    nextFriday.setHours(0, 0, 0, 0); // Reset time to start of day
+    
     const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
     // Calcular quantos dias faltam até sexta-feira (dia 5)
@@ -84,6 +86,7 @@ const NovoAtendimento = () => {
   const createSemanalNotifications = (nomeCliente: string, semanas: string, valorSemanal: string, dataInicio: string) => {
     const notifications: PlanoSemanal[] = [];
     const startDate = new Date(dataInicio);
+    startDate.setHours(0, 0, 0, 0); // Reset time for consistent calculation
     
     for (let i = 1; i <= parseInt(semanas); i++) {
       // Primeira sexta-feira após a data de início
