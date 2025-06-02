@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,12 +16,19 @@ const ListagemTarot = () => {
   const navigate = useNavigate();
   const { getTarotAnalyses, saveTarotAnalyses } = useUserDataService();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todos");
   
   const analyses = getTarotAnalyses();
   
-  const filteredAnalyses = analyses.filter(analysis =>
-    analysis.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAnalyses = analyses.filter(analysis => {
+    const matchesSearch = analysis.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (statusFilter === "todos") return matchesSearch;
+    if (statusFilter === "finalizados") return matchesSearch && analysis.finalizado;
+    if (statusFilter === "pendentes") return matchesSearch && !analysis.finalizado;
+    
+    return matchesSearch;
+  });
 
   const handleDelete = (id: string) => {
     const updatedAnalyses = analyses.filter(analysis => analysis.id !== id);
@@ -85,6 +91,42 @@ const ListagemTarot = () => {
           </Button>
         </div>
 
+        {/* Filtros de Status */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          <Button
+            variant={statusFilter === "todos" ? "default" : "outline"}
+            onClick={() => setStatusFilter("todos")}
+            className={statusFilter === "todos" 
+              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+              : "border-purple-200 text-purple-600 hover:bg-purple-50"
+            }
+          >
+            Todos ({analyses.length})
+          </Button>
+          <Button
+            variant={statusFilter === "finalizados" ? "default" : "outline"}
+            onClick={() => setStatusFilter("finalizados")}
+            className={statusFilter === "finalizados" 
+              ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white" 
+              : "border-green-200 text-green-600 hover:bg-green-50"
+            }
+          >
+            <CheckCircle className="h-4 w-4 mr-1" />
+            Finalizados ({analyses.filter(a => a.finalizado).length})
+          </Button>
+          <Button
+            variant={statusFilter === "pendentes" ? "default" : "outline"}
+            onClick={() => setStatusFilter("pendentes")}
+            className={statusFilter === "pendentes" 
+              ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white" 
+              : "border-orange-200 text-orange-600 hover:bg-orange-50"
+            }
+          >
+            <AlertCircle className="h-4 w-4 mr-1" />
+            Pendentes ({analyses.filter(a => !a.finalizado).length})
+          </Button>
+        </div>
+
         <div className="mb-6 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -100,15 +142,15 @@ const ListagemTarot = () => {
             <CardContent className="text-center py-12">
               <Sparkles className="h-12 w-12 text-purple-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-700 mb-2">
-                {searchTerm ? "Nenhuma análise encontrada" : "Nenhuma análise cadastrada"}
+                {searchTerm || statusFilter !== "todos" ? "Nenhuma análise encontrada" : "Nenhuma análise cadastrada"}
               </h3>
               <p className="text-gray-500 mb-4">
-                {searchTerm 
-                  ? "Tente ajustar os termos da busca" 
+                {searchTerm || statusFilter !== "todos" 
+                  ? "Tente ajustar os filtros ou termos da busca" 
                   : "Comece criando sua primeira análise de tarot"
                 }
               </p>
-              {!searchTerm && (
+              {!searchTerm && statusFilter === "todos" && (
                 <Button 
                   onClick={() => navigate("/analise-frequencial")}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
