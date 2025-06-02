@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useUserDataService from "@/services/userDataService";
 import DashboardBirthdayNotifications from "@/components/DashboardBirthdayNotifications";
@@ -8,6 +7,8 @@ import PeriodSelector from "@/components/dashboard/PeriodSelector";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import AtendimentosTable from "@/components/dashboard/AtendimentosTable";
 import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
+import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
+import SemanalPaymentButton from "@/components/tarot/SemanalPaymentButton";
 import { CalendarDays, Users, Activity, BellRing, Search, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,16 @@ interface Atendimento {
   indicacao?: string;
   atencaoFlag?: boolean;
   atencaoNota?: string;
+  planoAtivo?: boolean;
+  planoData?: {
+    meses: string;
+    valorMensal: string;
+  } | null;
+  semanalAtivo?: boolean;
+  semanalData?: {
+    semanas: string;
+    valorSemanal: string;
+  };
 }
 
 // Componente otimizado com React.memo e animações aprimoradas
@@ -53,8 +64,9 @@ const DashboardCard = React.memo(({ title, value, icon, delay = "0s" }: { title:
 DashboardCard.displayName = "DashboardCard";
 
 const Index = () => {
-  const { getAtendimentos, saveAtendimentos } = useUserDataService();
+  const { getAtendimentos, saveAtendimentos, getTarotAnalyses } = useUserDataService();
   const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
+  const [analises, setAnalises] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [periodoVisualizacao, setPeriodoVisualizacao] = useState("semana");
   const [aniversarianteHoje, setAniversarianteHoje] = useState<{nome: string, dataNascimento: string} | null>(null);
@@ -160,11 +172,13 @@ const Index = () => {
     const regularAtendimentos = getAtendimentos().filter((atendimento: Atendimento) => 
       atendimento.tipoServico !== "tarot-frequencial"
     );
+    const analisesData = getTarotAnalyses();
     
     console.log('Index - Regular atendimentos loaded:', regularAtendimentos.length);
     setAtendimentos(regularAtendimentos);
+    setAnalises(analisesData);
     checkBirthdaysToday(regularAtendimentos);
-  }, [getAtendimentos, checkBirthdaysToday]);
+  }, [getAtendimentos, getTarotAnalyses, checkBirthdaysToday]);
 
   const getPeriodoLabel = useCallback(() => {
     switch(periodoVisualizacao) {
@@ -317,6 +331,130 @@ const Index = () => {
             atendimentos={filteredAtendimentos}
             onDeleteAtendimento={handleDeleteAtendimento}
           />
+        </div>
+
+        {/* Controles de Pagamento para Atendimentos/Análises com Planos */}
+        {atendimentos.map((atendimento: any) => {
+          if (atendimento.planoAtivo && atendimento.planoData) {
+            return (
+              <PlanoPaymentControl
+                key={`plano-${atendimento.id}`}
+                analysisId={atendimento.id}
+                clientName={atendimento.nome}
+                planoData={atendimento.planoData}
+                startDate={atendimento.dataAtendimento || atendimento.data}
+              />
+            );
+          }
+          return null;
+        })}
+
+        {analises.map((analise: any) => {
+          if (analise.planoAtivo && analise.planoData) {
+            return (
+              <PlanoPaymentControl
+                key={`plano-analise-${analise.id}`}
+                analysisId={analise.id}
+                clientName={analise.nomeCliente}
+                planoData={analise.planoData}
+                startDate={analise.dataInicio || analise.dataAtendimento || analise.data}
+              />
+            );
+          }
+          return null;
+        })}
+
+        {/* Botões de Controle de Pagamento Semanal */}
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-blue-800 mb-4">Controles de Pagamento Semanal</h2>
+          
+          {/* Controles semanais dos atendimentos */}
+          {atendimentos.map((atendimento: any) => {
+            const semanalData = atendimento.semanalData || 
+                               atendimento.semanal || 
+                               atendimento.pagamentoSemanal ||
+                               (atendimento.semanas && atendimento.valorSemanal ? {
+                                 semanas: atendimento.semanas,
+                                 valorSemanal: atendimento.valorSemanal
+                               } : null);
+
+            const hasValidSemanalData = !!(semanalData && 
+              (semanalData.semanas || semanalData.numeroSemanas) && 
+              (semanalData.valorSemanal || semanalData.valor));
+
+            const shouldShow = !!(
+              hasValidSemanalData ||
+              atendimento.semanalAtivo ||
+              atendimento.statusPagamento === 'parcelado'
+            );
+
+            if (shouldShow && hasValidSemanalData) {
+              const normalizedSemanalData = {
+                semanas: semanalData.semanas || semanalData.numeroSemanas || '4',
+                valorSemanal: semanalData.valorSemanal || semanalData.valor || '100'
+              };
+
+              return (
+                <SemanalPaymentButton
+                  key={`semanal-atendimento-${atendimento.id}`}
+                  analysisId={atendimento.id}
+                  clientName={atendimento.nome}
+                  semanalData={normalizedSemanalData}
+                  startDate={atendimento.dataAtendimento || atendimento.data}
+                />
+              );
+            }
+            return null;
+          })}
+
+          {/* Controles semanais das análises */}
+          {analises.map((analise: any) => {
+            const semanalData = analise.semanalData || 
+                               analise.semanal || 
+                               analise.pagamentoSemanal ||
+                               (analise.semanas && analise.valorSemanal ? {
+                                 semanas: analise.semanas,
+                                 valorSemanal: analise.valorSemanal
+                               } : null);
+
+            const hasValidSemanalData = !!(semanalData && 
+              (semanalData.semanas || semanalData.numeroSemanas) && 
+              (semanalData.valorSemanal || semanalData.valor));
+
+            const shouldShow = !!(
+              hasValidSemanalData ||
+              analise.semanalAtivo ||
+              analise.statusPagamento === 'parcelado'
+            );
+
+            if (shouldShow && hasValidSemanalData) {
+              const normalizedSemanalData = {
+                semanas: semanalData.semanas || semanalData.numeroSemanas || '4',
+                valorSemanal: semanalData.valorSemanal || semanalData.valor || '100'
+              };
+
+              return (
+                <SemanalPaymentButton
+                  key={`semanal-analise-${analise.id}`}
+                  analysisId={analise.id}
+                  clientName={analise.nomeCliente}
+                  semanalData={normalizedSemanalData}
+                  startDate={analise.dataInicio || analise.dataAtendimento || analise.data}
+                />
+              );
+            }
+            return null;
+          })}
+
+          {/* Exibir mensagem se não houver controles semanais */}
+          {(atendimentos.length === 0 && analises.length === 0) && (
+            <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-lg border border-blue-200/30">
+              <p className="text-blue-600">Nenhum atendimento ou análise com pagamento semanal encontrado.</p>
+              <p className="text-sm text-blue-500 mt-2">
+                Para adicionar pagamentos semanais, configure o pagamento parcelado ao criar um atendimento ou análise.
+              </p>
+            </div>
+          )}
         </div>
       </main>
     </div>
