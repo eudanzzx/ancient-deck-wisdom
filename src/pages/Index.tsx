@@ -68,7 +68,7 @@ const DashboardCard = React.memo(({
 DashboardCard.displayName = "DashboardCard";
 
 const Index = () => {
-  const { getAtendimentos, saveAtendimentos } = useUserDataService();
+  const userDataService = useUserDataService();
   const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [periodoVisualizacao, setPeriodoVisualizacao] = useState("semana");
@@ -145,12 +145,12 @@ const Index = () => {
     };
   }, [atendimentos, periodoVisualizacao]);
 
-  const checkBirthdaysToday = useCallback((atendimentos: Atendimento[]) => {
+  const checkBirthdaysToday = useCallback((atendimentosList: Atendimento[]) => {
     const today = new Date();
     const todayDay = today.getDate();
     const todayMonth = today.getMonth() + 1;
     
-    const birthdayClient = atendimentos.find(atendimento => {
+    const birthdayClient = atendimentosList.find(atendimento => {
       if (!atendimento.dataNascimento) return false;
       
       try {
@@ -172,14 +172,14 @@ const Index = () => {
 
   useEffect(() => {
     console.log('Index - Loading atendimentos...');
-    const regularAtendimentos = getAtendimentos().filter((atendimento: Atendimento) => 
+    const regularAtendimentos = userDataService.getAtendimentos().filter((atendimento: Atendimento) => 
       atendimento.tipoServico !== "tarot-frequencial"
     );
     
     console.log('Index - Regular atendimentos loaded:', regularAtendimentos.length);
     setAtendimentos(regularAtendimentos);
     checkBirthdaysToday(regularAtendimentos);
-  }, [getAtendimentos, checkBirthdaysToday]);
+  }, [userDataService.initialized, checkBirthdaysToday]); // Only depend on initialized flag and memoized function
 
   const getPeriodoLabel = useCallback(() => {
     switch(periodoVisualizacao) {
@@ -198,18 +198,18 @@ const Index = () => {
 
   const handleDeleteAtendimento = useCallback((id: string) => {
     console.log('Index - Deleting atendimento:', id);
-    const allAtendimentos = getAtendimentos();
+    const allAtendimentos = userDataService.getAtendimentos();
     const updatedAtendimentos = allAtendimentos.filter(
       (atendimento: Atendimento) => atendimento.id !== id
     );
     
-    saveAtendimentos(updatedAtendimentos);
+    userDataService.saveAtendimentos(updatedAtendimentos);
     
     const regularAtendimentos = updatedAtendimentos.filter((atendimento: Atendimento) => 
       atendimento.tipoServico !== "tarot-frequencial"
     );
     setAtendimentos(regularAtendimentos);
-  }, [getAtendimentos, saveAtendimentos]);
+  }, [userDataService]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
