@@ -1,15 +1,19 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useUserDataService from "@/services/userDataService";
+import DashboardBirthdayNotifications from "@/components/DashboardBirthdayNotifications";
+import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import PeriodSelector from "@/components/dashboard/PeriodSelector";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import AtendimentosTable from "@/components/dashboard/AtendimentosTable";
-import DashboardContent from "@/components/dashboard/DashboardContent";
-import { CalendarDays, Users, Activity, BellRing, Search, TrendingUp } from "lucide-react";
+import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
+import { CalendarDays, Users, Activity, BellRing, Search, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import TratamentoCountdown from "@/components/TratamentoCountdown";
+import Logo from "@/components/Logo";
 
 interface Atendimento {
   id: string;
@@ -29,36 +33,17 @@ interface Atendimento {
   atencaoNota?: string;
 }
 
-// Simple dashboard card component
-const DashboardCard = React.memo(({ 
-  title, 
-  value, 
-  icon, 
-  delay = "0s"
-}: { 
-  title: string; 
-  value: string; 
-  icon: React.ReactNode; 
-  delay?: string;
-}) => (
-  <Card 
-    className="bg-white border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300" 
-    style={{ animationDelay: delay }}
-  >
-    <CardContent className="p-6">
-      <div className="flex justify-between items-start">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-600 mb-1">
-            {title}
-          </p>
-          <p className="text-3xl font-bold text-blue-700">
-            {value}
-          </p>
+// Componente otimizado com React.memo e animações aprimoradas
+const DashboardCard = React.memo(({ title, value, icon, delay = "0s" }: { title: string; value: string; icon: React.ReactNode; delay?: string }) => (
+  <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-500 group hover:bg-white hover:-translate-y-2 hover:scale-105" style={{ animationDelay: delay }}>
+    <CardContent className="pt-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300">{title}</p>
+          <p className="text-3xl font-bold text-slate-800 group-hover:text-blue-700 transition-colors duration-300">{value}</p>
         </div>
-        <div className="rounded-lg p-3 bg-blue-100">
-          <div className="text-blue-600">
-            {icon}
-          </div>
+        <div className="rounded-xl p-3 bg-blue-600/10 group-hover:bg-blue-600/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12">
+          {icon}
         </div>
       </div>
     </CardContent>
@@ -68,7 +53,7 @@ const DashboardCard = React.memo(({
 DashboardCard.displayName = "DashboardCard";
 
 const Index = () => {
-  const userDataService = useUserDataService();
+  const { getAtendimentos, saveAtendimentos } = useUserDataService();
   const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [periodoVisualizacao, setPeriodoVisualizacao] = useState("semana");
@@ -145,12 +130,12 @@ const Index = () => {
     };
   }, [atendimentos, periodoVisualizacao]);
 
-  const checkBirthdaysToday = useCallback((atendimentosList: Atendimento[]) => {
+  const checkBirthdaysToday = useCallback((atendimentos: Atendimento[]) => {
     const today = new Date();
     const todayDay = today.getDate();
     const todayMonth = today.getMonth() + 1;
     
-    const birthdayClient = atendimentosList.find(atendimento => {
+    const birthdayClient = atendimentos.find(atendimento => {
       if (!atendimento.dataNascimento) return false;
       
       try {
@@ -172,14 +157,14 @@ const Index = () => {
 
   useEffect(() => {
     console.log('Index - Loading atendimentos...');
-    const regularAtendimentos = userDataService.getAtendimentos().filter((atendimento: Atendimento) => 
+    const regularAtendimentos = getAtendimentos().filter((atendimento: Atendimento) => 
       atendimento.tipoServico !== "tarot-frequencial"
     );
     
     console.log('Index - Regular atendimentos loaded:', regularAtendimentos.length);
     setAtendimentos(regularAtendimentos);
     checkBirthdaysToday(regularAtendimentos);
-  }, [userDataService.initialized, checkBirthdaysToday]); // Only depend on initialized flag and memoized function
+  }, [getAtendimentos, checkBirthdaysToday]);
 
   const getPeriodoLabel = useCallback(() => {
     switch(periodoVisualizacao) {
@@ -198,18 +183,18 @@ const Index = () => {
 
   const handleDeleteAtendimento = useCallback((id: string) => {
     console.log('Index - Deleting atendimento:', id);
-    const allAtendimentos = userDataService.getAtendimentos();
+    const allAtendimentos = getAtendimentos();
     const updatedAtendimentos = allAtendimentos.filter(
       (atendimento: Atendimento) => atendimento.id !== id
     );
     
-    userDataService.saveAtendimentos(updatedAtendimentos);
+    saveAtendimentos(updatedAtendimentos);
     
     const regularAtendimentos = updatedAtendimentos.filter((atendimento: Atendimento) => 
       atendimento.tipoServico !== "tarot-frequencial"
     );
     setAtendimentos(regularAtendimentos);
-  }, [userDataService]);
+  }, [getAtendimentos, saveAtendimentos]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -220,114 +205,119 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/30 to-sky-200/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-300/20 to-sky-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+
       <DashboardHeader />
 
-      <main className="container mx-auto py-24 px-4">
-        <DashboardContent 
-          aniversarianteHoje={aniversarianteHoje}
-          atendimentos={atendimentos}
-        />
+      <main className="container mx-auto py-24 px-4 relative z-10">
+        <DashboardBirthdayNotifications />
+        
+        {/* Tarot Plan Notifications */}
+        <TarotPlanoNotifications />
+        
+        {aniversarianteHoje && (
+          <ClientBirthdayAlert 
+            clientName={aniversarianteHoje.nome}
+            birthDate={aniversarianteHoje.dataNascimento}
+            context="tarot"
+          />
+        )}
 
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl font-bold text-blue-700 mb-4">
-            Sistema de Atendimentos
-          </h1>
-          <div className="w-24 h-1 bg-blue-500 mx-auto"></div>
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="transform hover:scale-110 transition-transform duration-300 cursor-pointer">
+              <Logo height={50} width={50} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-blue-800 bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent">
+                Dashboard
+              </h1>
+              <p className="text-blue-600 mt-1 opacity-80">Gerencie seus atendimentos</p>
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-2 text-blue-600/60 hover:text-blue-600 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-1">
+            <Sparkles className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
+            <span className="text-sm font-medium">Sistema Inteligente</span>
+          </div>
         </div>
 
-        <div className="flex justify-between items-center mb-8">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-800">
-              Visão Geral
-            </h2>
-            <p className="text-gray-600">Acompanhe o desempenho dos seus atendimentos</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-1">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-blue-800">Visão Geral</h2>
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30 hover:shadow-xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
             <ToggleGroup 
               type="single" 
               value={periodoVisualizacao} 
               onValueChange={handlePeriodoChange}
-              className="border-0"
+              className="border rounded-xl overflow-hidden"
             >
-              <ToggleGroupItem 
-                value="dia" 
-                className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 py-2 transition-all duration-300"
-              >
+              <ToggleGroupItem value="dia" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50 hover:scale-105">
                 Dia
               </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="semana" 
-                className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 py-2 transition-all duration-300"
-              >
+              <ToggleGroupItem value="semana" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50 hover:scale-105">
                 Semana
               </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="mes" 
-                className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 py-2 transition-all duration-300"
-              >
+              <ToggleGroupItem value="mes" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50 hover:scale-105">
                 Mês
               </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="ano" 
-                className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 py-2 transition-all duration-300"
-              >
+              <ToggleGroupItem value="ano" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50 hover:scale-105">
                 Ano
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="transform hover:scale-[1.02] transition-all duration-500 hover:-translate-y-1">
+          <TratamentoCountdown analises={atendimentos} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <DashboardCard 
             title="Total Atendimentos" 
             value={atendimentos.length.toString()} 
-            icon={<Users className="h-6 w-6" />}
-            delay="0.1s"
+            icon={<Users className="h-8 w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
           />
           <DashboardCard 
             title="Esta Semana" 
             value={stats.atendimentosSemana.toString()}
-            icon={<CalendarDays className="h-6 w-6" />}
-            delay="0.2s" 
+            icon={<CalendarDays className="h-8 w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
           />
           <DashboardCard 
             title={`Recebido (${getPeriodoLabel()})`}
             value={`R$ ${stats.totalRecebido.toFixed(2)}`} 
-            icon={<TrendingUp className="h-6 w-6" />}
-            delay="0.3s"
+            icon={<Activity className="h-8 w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
           />
           <DashboardCard 
             title="Tratamentos" 
             value={stats.totalLembretes.toString()} 
-            icon={<BellRing className="h-6 w-6" />}
-            delay="0.4s"
+            icon={<BellRing className="h-8 w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
           />
         </div>
 
-        <div className="mb-8 flex justify-between items-center">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-800">
-              Atendimentos
-            </h2>
-            <p className="text-gray-600">Lista completa de todos os atendimentos realizados</p>
-          </div>
-          <div className="relative">
+        <div className="mb-6 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-blue-800">Atendimentos</h2>
+          <div className="relative group">
             <Input 
               type="text" 
               placeholder="Buscar por nome..." 
-              className="pr-10 pl-4 py-2 bg-white border border-gray-300 w-80"
+              className="pr-10 bg-white/90 border-white/30 focus:border-blue-600 focus:ring-blue-600/20 transition-all duration-300 w-64 hover:shadow-lg transform hover:scale-105 hover:-translate-y-1"
               value={searchTerm}
               onChange={handleSearchChange}
             />
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" />
           </div>
         </div>
 
-        <AtendimentosTable 
-          atendimentos={filteredAtendimentos}
-          onDeleteAtendimento={handleDeleteAtendimento}
-        />
+        <div className="transform hover:scale-[1.01] transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
+          <AtendimentosTable 
+            atendimentos={filteredAtendimentos}
+            onDeleteAtendimento={handleDeleteAtendimento}
+          />
+        </div>
       </main>
     </div>
   );

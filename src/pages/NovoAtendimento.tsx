@@ -23,16 +23,12 @@ const NovoAtendimento = () => {
     atencao,
     planoAtivo,
     planoData,
-    planoSemanalAtivo,
-    planoSemanalData,
     handleInputChange,
     handleSelectChange,
     handlePlanoDataChange,
-    handlePlanoSemanalDataChange,
     handleDataNascimentoChange,
     setAtencao,
     setPlanoAtivo,
-    setPlanoSemanalAtivo,
   } = useAtendimentoForm();
 
   const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
@@ -46,35 +42,11 @@ const NovoAtendimento = () => {
       notifications.push({
         id: `plano-${Date.now()}-${i}`,
         clientName: nomeCliente,
-        type: 'plano' as const,
+        type: 'plano',
         amount: parseFloat(valorMensal),
         dueDate: notificationDate.toISOString().split('T')[0],
         month: i,
         totalMonths: parseInt(meses),
-        created: new Date().toISOString(),
-        active: true
-      });
-    }
-    
-    return notifications;
-  };
-
-  const createPlanoSemanalNotifications = (nomeCliente: string, semanas: string, valorSemanal: string, dataInicio: string) => {
-    const notifications = [];
-    const startDate = new Date(dataInicio);
-    
-    for (let i = 1; i <= parseInt(semanas); i++) {
-      const notificationDate = new Date(startDate);
-      notificationDate.setDate(notificationDate.getDate() + (i * 7));
-      
-      notifications.push({
-        id: `plano-semanal-${Date.now()}-${i}`,
-        clientName: nomeCliente,
-        type: 'planoSemanal' as const,
-        amount: parseFloat(valorSemanal),
-        dueDate: notificationDate.toISOString().split('T')[0],
-        month: i, // Using month field to store week number for compatibility
-        totalMonths: parseInt(semanas), // Using totalMonths to store total weeks for compatibility
         created: new Date().toISOString(),
         active: true
       });
@@ -115,20 +87,6 @@ const NovoAtendimento = () => {
       savePlanos(updatedPlanos);
       
       toast.success(`Atendimento salvo! Plano de ${planoData.meses} meses criado com sucesso.`);
-    } else if (planoSemanalAtivo && planoSemanalData.semanas && planoSemanalData.valorSemanal && formData.dataAtendimento) {
-      const notifications = createPlanoSemanalNotifications(
-        formData.nome,
-        planoSemanalData.semanas,
-        planoSemanalData.valorSemanal,
-        formData.dataAtendimento
-      );
-      
-      // Salvar as notificações de plano semanal
-      const existingPlanos = getPlanos() || [];
-      const updatedPlanos = [...existingPlanos, ...notifications];
-      savePlanos(updatedPlanos);
-      
-      toast.success(`Atendimento salvo! Plano semanal de ${planoSemanalData.semanas} semanas criado com sucesso.`);
     } else {
       toast.success("Atendimento salvo com sucesso!");
     }
@@ -170,16 +128,12 @@ const NovoAtendimento = () => {
           atencao={atencao}
           planoAtivo={planoAtivo}
           planoData={planoData}
-          planoSemanalAtivo={planoSemanalAtivo}
-          planoSemanalData={planoSemanalData}
           onInputChange={handleInputChange}
           onSelectChange={handleSelectChange}
           onDataNascimentoChange={handleDataNascimentoChange}
           onAtencaoChange={setAtencao}
           onPlanoAtivoChange={setPlanoAtivo}
           onPlanoDataChange={handlePlanoDataChange}
-          onPlanoSemanalAtivoChange={setPlanoSemanalAtivo}
-          onPlanoSemanalDataChange={handlePlanoSemanalDataChange}
         />
 
         <CardFooter className="flex justify-end gap-3 border-t border-white/10 px-0 py-4">

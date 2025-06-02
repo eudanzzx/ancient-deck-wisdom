@@ -45,7 +45,7 @@ const PlanoSelector: React.FC<PlanoSelectorProps> = ({
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                {[...Array(24)].map((_, i) => (
+                {[...Array(12)].map((_, i) => (
                   <SelectItem key={i + 1} value={(i + 1).toString()}>
                     {i + 1} {i === 0 ? 'mês' : 'meses'}
                   </SelectItem>

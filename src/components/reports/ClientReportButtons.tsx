@@ -1,170 +1,150 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
-import jsPDF from 'jspdf';
+import { Button } from '@/components/ui/button';
+import { User } from 'lucide-react';
+import { toast } from 'sonner';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface ClientReportButtonsProps {
-  clientName: string;
-  analises: any[];
-  allAnalises?: any[];
+  clients: Array<{ name: string; count: number }>;
+  atendimentos: any[];
+  variant?: 'home' | 'tarot';
 }
 
-const ClientReportButtons: React.FC<ClientReportButtonsProps> = ({
-  clientName,
-  analises,
-  allAnalises = []
+const ClientReportButtons: React.FC<ClientReportButtonsProps> = ({ 
+  clients, 
+  atendimentos,
+  variant = 'home'
 }) => {
-  const generateDetailedReport = () => {
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(102, 126, 234);
-    doc.text('Relatório Detalhado - Tarot', 14, 22);
-    
-    // Client info
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Cliente: ${clientName || 'Todos os Clientes'}`, 14, 35);
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 45);
-    
-    // Statistics
-    const finalizadas = analises.filter(a => a.finalizado).length;
-    const emAndamento = analises.length - finalizadas;
-    const valorTotal = analises.reduce((sum, a) => sum + (parseFloat(a.valor) || 0), 0);
-    
-    doc.setFontSize(12);
-    doc.text('Resumo:', 14, 60);
-    doc.text(`Total de análises: ${analises.length}`, 20, 70);
-    doc.text(`Finalizadas: ${finalizadas}`, 20, 80);
-    doc.text(`Em andamento: ${emAndamento}`, 20, 90);
-    doc.text(`Valor total: R$ ${valorTotal.toFixed(2)}`, 20, 100);
-    
-    // Detailed table
-    const tableData = analises.map(analise => [
-      new Date(analise.dataInicio || analise.dataAtendimento).toLocaleDateString('pt-BR'),
-      analise.tipoConsulta || analise.tipoServico || 'Não informado',
-      `R$ ${parseFloat(analise.valor || analise.preco || 0).toFixed(2)}`,
-      analise.finalizado ? 'Finalizada' : 'Em andamento',
-      analise.observacoes || 'Sem observações'
-    ]);
-
-    autoTable(doc, {
-      head: [['Data', 'Tipo', 'Valor', 'Status', 'Observações']],
-      body: tableData,
-      startY: 110,
-      styles: { 
-        fontSize: 8,
-        cellPadding: 3,
-      },
-      headStyles: { 
-        fillColor: [102, 126, 234],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245]
+  const downloadDetailedClientReport = (clientName: string) => {
+    try {
+      const clientConsultations = atendimentos.filter(a => 
+        variant === 'tarot' ? a.nomeCliente === clientName : a.nome === clientName
+      );
+      
+      if (clientConsultations.length === 0) {
+        toast.error("Nenhum atendimento encontrado para este cliente");
+        return;
       }
-    });
-    
-    // Save
-    const fileName = `relatorio-detalhado-${clientName ? clientName.replace(/\s+/g, '-') : 'geral'}-${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(fileName);
+      
+      const doc = new jsPDF();
+      
+      // Header elegante e minimalista
+      doc.setFontSize(20);
+      doc.setTextColor(variant === 'tarot' ? 103 : 37, variant === 'tarot' ? 49 : 99, variant === 'tarot' ? 147 : 235);
+      doc.text(`Relatório - ${clientName}`, 105, 25, { align: 'center' });
+      
+      // Linha decorativa
+      doc.setDrawColor(variant === 'tarot' ? 103 : 37, variant === 'tarot' ? 49 : 99, variant === 'tarot' ? 147 : 235);
+      doc.setLineWidth(0.5);
+      doc.line(30, 35, 180, 35);
+      
+      // Resumo em boxes elegantes
+      const totalValue = clientConsultations.reduce((acc, curr) => {
+        const valor = parseFloat(curr.valor || curr.preco || "0");
+        return acc + valor;
+      }, 0);
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      
+      // Box com informações resumidas
+      doc.rect(40, 45, 120, 30, 'S');
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('RESUMO', 100, 55, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Atendimentos: ${clientConsultations.length}`, 50, 65);
+      doc.text(`Total: R$ ${totalValue.toFixed(2)}`, 120, 65);
+
+      // Tabela simplificada e elegante
+      const tableData = clientConsultations.map(consultation => {
+        const dataAtendimento = consultation.dataAtendimento || consultation.dataInicio;
+        return [
+          dataAtendimento ? new Date(dataAtendimento).toLocaleDateString('pt-BR') : 'N/A',
+          consultation.tipoServico?.replace('-', ' ') || 'Análise',
+          `R$ ${parseFloat(consultation.valor || consultation.preco || "0").toFixed(2)}`
+        ];
+      });
+
+      autoTable(doc, {
+        head: [['Data', 'Serviço', 'Valor']],
+        body: tableData,
+        startY: 90,
+        theme: 'grid',
+        styles: {
+          fontSize: 10,
+          cellPadding: 8,
+          textColor: [40, 40, 40],
+          lineColor: [220, 220, 220],
+          lineWidth: 0.5,
+        },
+        headStyles: {
+          fillColor: variant === 'tarot' ? [103, 49, 147] : [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontSize: 11,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [250, 250, 250],
+        },
+        margin: { left: 30, right: 30 },
+      });
+
+      // Footer minimalista
+      addFooter(doc);
+      
+      const filePrefix = variant === 'tarot' ? 'Relatorio_Tarot' : 'Relatorio_Cliente';
+      doc.save(`${filePrefix}_${clientName.replace(/ /g, '_')}.pdf`);
+      
+      toast.success(`Relatório de ${clientName} gerado com sucesso!`);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar relatório");
+    }
   };
 
-  const generateGeneralReport = () => {
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(102, 126, 234);
-    doc.text('Relatório Geral - Tarot', 14, 22);
-    
-    // Date
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 35);
-    
-    // General statistics
-    const totalAnalises = allAnalises.length;
-    const finalizadas = allAnalises.filter(a => a.finalizado).length;
-    const emAndamento = totalAnalises - finalizadas;
-    const valorTotal = allAnalises.reduce((sum, a) => sum + (parseFloat(a.valor || a.preco) || 0), 0);
-    const clientes = [...new Set(allAnalises.map(a => a.nomeCliente || a.nome))].length;
-    
-    doc.text('Estatísticas Gerais:', 14, 50);
-    doc.text(`Total de análises: ${totalAnalises}`, 20, 60);
-    doc.text(`Clientes únicos: ${clientes}`, 20, 70);
-    doc.text(`Análises finalizadas: ${finalizadas}`, 20, 80);
-    doc.text(`Análises em andamento: ${emAndamento}`, 20, 90);
-    doc.text(`Valor total faturado: R$ ${valorTotal.toFixed(2)}`, 20, 100);
-    
-    // Client breakdown
-    const clientStats = allAnalises.reduce((acc, analise) => {
-      const cliente = analise.nomeCliente || analise.nome;
-      if (!acc[cliente]) {
-        acc[cliente] = { total: 0, valor: 0, finalizadas: 0 };
-      }
-      acc[cliente].total++;
-      acc[cliente].valor += parseFloat(analise.valor || analise.preco || 0);
-      if (analise.finalizado) acc[cliente].finalizadas++;
-      return acc;
-    }, {});
-    
-    const clientTableData = Object.entries(clientStats).map(([cliente, stats]: [string, any]) => [
-      cliente,
-      stats.total.toString(),
-      stats.finalizadas.toString(),
-      (stats.total - stats.finalizadas).toString(),
-      `R$ ${stats.valor.toFixed(2)}`
-    ]);
-
-    autoTable(doc, {
-      head: [['Cliente', 'Total', 'Finalizadas', 'Em Andamento', 'Valor Total']],
-      body: clientTableData,
-      startY: 115,
-      styles: { 
-        fontSize: 10,
-        cellPadding: 3,
-      },
-      headStyles: { 
-        fillColor: [102, 126, 234],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245]
-      }
-    });
-    
-    // Save
-    const fileName = `relatorio-geral-tarot-${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(fileName);
+  const addFooter = (doc) => {
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(
+        `Libertá - Página ${i} de ${totalPages}`,
+        105,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+    }
   };
+
+  if (clients.length === 0) return null;
+
+  const buttonStyle = variant === 'tarot' ? 
+    'border-[#673193] text-[#673193] hover:bg-purple-50' : 
+    'border-[#2196F3] text-[#2196F3] hover:bg-blue-50';
 
   return (
-    <div className="flex gap-2">
-      <Button 
-        onClick={generateDetailedReport}
-        className="bg-purple-600 hover:bg-purple-700"
-        size="sm"
-      >
-        <Download className="h-4 w-4 mr-2" />
-        Relatório Individual
-      </Button>
-      
-      {allAnalises.length > 0 && (
-        <Button 
-          onClick={generateGeneralReport}
-          variant="outline"
-          size="sm"
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          Relatório Geral
-        </Button>
-      )}
+    <div className="mt-4">
+      <h3 className="text-sm font-medium text-gray-700 mb-2">Relatórios por Cliente:</h3>
+      <div className="flex flex-wrap gap-2">
+        {clients.map((client) => (
+          <Button
+            key={client.name}
+            onClick={() => downloadDetailedClientReport(client.name)}
+            variant="outline"
+            size="sm"
+            className={`text-xs ${buttonStyle}`}
+          >
+            <User className="h-3 w-3 mr-1" />
+            {client.name} ({client.count})
+          </Button>
+        ))}
+      </div>
     </div>
   );
 };

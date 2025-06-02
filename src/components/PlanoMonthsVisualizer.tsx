@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar, CreditCard, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
-import PlanoVisualizerHeader from "@/components/tarot/visualizer/PlanoVisualizerHeader";
-import PlanoVisualizerMonthCard from "@/components/tarot/visualizer/PlanoVisualizerMonthCard";
-import PlanoVisualizerSummary from "@/components/tarot/visualizer/PlanoVisualizerSummary";
 
 interface PlanoMonthsVisualizerProps {
   atendimento: {
@@ -17,7 +17,7 @@ interface PlanoMonthsVisualizerProps {
       valorMensal: string;
     } | null;
     dataAtendimento: string;
-    data?: string;
+    data?: string; // Data de criação do atendimento
   };
 }
 
@@ -32,23 +32,31 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
   const { getPlanos, savePlanos } = useUserDataService();
   const [planoMonths, setPlanoMonths] = useState<PlanoMonth[]>([]);
 
+  console.log('PlanoMonthsVisualizer - atendimento:', atendimento);
+  console.log('PlanoMonthsVisualizer - planoAtivo:', atendimento.planoAtivo);
+  console.log('PlanoMonthsVisualizer - planoData:', atendimento.planoData);
+
   useEffect(() => {
     if (atendimento.planoAtivo && atendimento.planoData) {
+      console.log('PlanoMonthsVisualizer - Initializing plano months');
       initializePlanoMonths();
-      checkNotifications();
     }
   }, [atendimento]);
 
   const initializePlanoMonths = () => {
     if (!atendimento.planoData) {
+      console.log('PlanoMonthsVisualizer - Missing planoData');
       return;
     }
 
+    // Use data de criação como fallback se dataAtendimento estiver vazio
     let startDateString = atendimento.dataAtendimento;
     if (!startDateString || startDateString.trim() === '') {
       startDateString = atendimento.data || new Date().toISOString();
+      console.log('PlanoMonthsVisualizer - Using fallback date:', startDateString);
     }
 
+    // Validate the date before using it
     const startDate = new Date(startDateString);
     if (isNaN(startDate.getTime())) {
       console.error('Invalid date provided:', startDateString);
@@ -63,20 +71,17 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       return;
     }
 
+    console.log('PlanoMonthsVisualizer - Creating months for:', totalMonths, 'starting from:', startDate);
+
     const planos = getPlanos();
+    
     const months: PlanoMonth[] = [];
     
     for (let i = 1; i <= totalMonths; i++) {
-      // Sempre vencer no dia 30 do mês
       const dueDate = new Date(startDate);
       dueDate.setMonth(dueDate.getMonth() + i);
-      dueDate.setDate(30);
       
-      // Ajustar para meses com menos de 30 dias
-      if (dueDate.getDate() !== 30) {
-        dueDate.setDate(0); // Último dia do mês anterior
-      }
-      
+      // Verificar se este mês já foi pago
       const planoForMonth = planos.find(plano => 
         plano.clientName === atendimento.nome && 
         plano.month === i && 
@@ -85,44 +90,14 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       
       months.push({
         month: i,
-        isPaid: planoForMonth ? !planoForMonth.active : false,
+        isPaid: planoForMonth ? !planoForMonth.active : false, // Se o plano existe e não está ativo, significa que foi pago
         dueDate: dueDate.toISOString().split('T')[0],
         planoId: planoForMonth?.id
       });
     }
     
+    console.log('PlanoMonthsVisualizer - Created months:', months);
     setPlanoMonths(months);
-  };
-
-  const checkNotifications = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Verificar se hoje é dia 29 (um dia antes do vencimento)
-    if (today.getDate() === 29) {
-      planoMonths.forEach(month => {
-        if (!month.isPaid) {
-          const dueDate = new Date(month.dueDate);
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          
-          // Se amanhã for o vencimento
-          if (dueDate.toDateString() === tomorrow.toDateString()) {
-            toast.info(
-              `⏰ Lembrete: ${atendimento.nome} tem um pagamento para fazer amanhã!`,
-              {
-                duration: 10000,
-                description: `Mês ${month.month} - Valor: R$ ${parseFloat(atendimento.planoData?.valorMensal || '0').toFixed(2)} - Vence em ${dueDate.toLocaleDateString('pt-BR')}`,
-                action: {
-                  label: "Ver detalhes",
-                  onClick: () => console.log("Detalhes do pagamento:", month)
-                }
-              }
-            );
-          }
-        }
-      });
-    }
   };
 
   const handlePaymentToggle = (monthIndex: number) => {
@@ -132,13 +107,15 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     const newIsPaid = !month.isPaid;
     
     if (month.planoId) {
+      // Atualizar o status do plano existente
       const updatedPlanos = planos.map(plano => 
         plano.id === month.planoId 
-          ? { ...plano, active: !newIsPaid }
+          ? { ...plano, active: !newIsPaid } // Se vai ser marcado como pago, plano não fica ativo
           : plano
       );
       savePlanos(updatedPlanos);
     } else if (newIsPaid) {
+      // Criar novo registro de plano quando marcar como pago
       const newPlano = {
         id: `${Date.now()}-${monthIndex}`,
         clientName: atendimento.nome,
@@ -148,22 +125,25 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
         month: month.month,
         totalMonths: parseInt(atendimento.planoData?.meses || '0'),
         created: new Date().toISOString(),
-        active: false
+        active: false // Não ativo porque foi pago
       };
       
       const updatedPlanos = [...planos, newPlano];
       savePlanos(updatedPlanos);
       
+      // Atualizar o planoId no estado local
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].planoId = newPlano.id;
       updatedMonths[monthIndex].isPaid = true;
       setPlanoMonths(updatedMonths);
     } else {
+      // Atualizar apenas o estado local se está desmarcando um mês que não tinha planoId
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].isPaid = false;
       setPlanoMonths(updatedMonths);
     }
     
+    // Se não criou novo plano, atualizar estado local
     if (month.planoId || !newIsPaid) {
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].isPaid = newIsPaid;
@@ -177,13 +157,37 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     );
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Data inválida';
+      }
+      return date.toLocaleDateString('pt-BR');
+    } catch (error) {
+      return 'Data inválida';
+    }
+  };
+
+  console.log('PlanoMonthsVisualizer - Rendering with planoMonths:', planoMonths);
+
   if (!atendimento.planoAtivo || !atendimento.planoData) {
+    console.log('PlanoMonthsVisualizer - Not rendering - planoAtivo or planoData is false/null');
     return null;
   }
 
   return (
     <Card className="mt-4 border-[#0EA5E9]/20 shadow-lg">
-      <PlanoVisualizerHeader planoData={atendimento.planoData} />
+      <CardHeader className="bg-gradient-to-r from-[#0EA5E9]/5 to-[#0EA5E9]/10">
+        <CardTitle className="flex items-center gap-2 text-[#0EA5E9]">
+          <CreditCard className="h-5 w-5" />
+          Controle de Pagamentos do Plano
+        </CardTitle>
+        <div className="flex items-center gap-4 text-sm text-slate-600">
+          <span>Total: {atendimento.planoData.meses} meses</span>
+          <span>Valor mensal: R$ {parseFloat(atendimento.planoData.valorMensal).toFixed(2)}</span>
+        </div>
+      </CardHeader>
       <CardContent className="p-6">
         {planoMonths.length === 0 ? (
           <div className="text-center text-slate-500 py-8">
@@ -197,19 +201,121 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
               {planoMonths.map((month, index) => (
-                <PlanoVisualizerMonthCard
+                <Button
                   key={month.month}
-                  month={month}
-                  index={index}
-                  onToggle={handlePaymentToggle}
-                />
+                  onClick={() => handlePaymentToggle(index)}
+                  variant="outline"
+                  className={`
+                    relative h-auto min-h-[120px] p-4 flex flex-col items-center justify-center gap-3 
+                    transition-all duration-300 hover:scale-105 hover:shadow-xl group
+                    border-2 rounded-xl overflow-hidden
+                    ${month.isPaid 
+                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-emerald-400 shadow-emerald-200/50' 
+                      : 'bg-gradient-to-br from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 border-slate-300 text-slate-700 shadow-slate-200/50 hover:border-[#0EA5E9]/50'
+                    }
+                  `}
+                >
+                  {/* Background decoration */}
+                  <div className={`
+                    absolute inset-0 opacity-10 transition-opacity duration-300
+                    ${month.isPaid 
+                      ? 'bg-gradient-to-br from-white/20 to-transparent' 
+                      : 'bg-gradient-to-br from-[#0EA5E9]/10 to-transparent group-hover:opacity-20'
+                    }
+                  `} />
+                  
+                  {/* Status icon */}
+                  <div className={`
+                    absolute top-3 right-3 p-1.5 rounded-full transition-all duration-300
+                    ${month.isPaid 
+                      ? 'bg-white/20 text-white' 
+                      : 'bg-slate-200 text-slate-500 group-hover:bg-[#0EA5E9]/20 group-hover:text-[#0EA5E9]'
+                    }
+                  `}>
+                    {month.isPaid ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <X className="h-4 w-4" />
+                    )}
+                  </div>
+                  
+                  {/* Month number */}
+                  <div className="relative z-10 text-center">
+                    <div className={`
+                      text-2xl font-bold mb-1 transition-colors duration-300
+                      ${month.isPaid ? 'text-white' : 'text-slate-700 group-hover:text-[#0EA5E9]'}
+                    `}>
+                      {month.month}º
+                    </div>
+                    <div className={`
+                      text-xs font-medium uppercase tracking-wider
+                      ${month.isPaid ? 'text-white/90' : 'text-slate-500 group-hover:text-[#0EA5E9]/80'}
+                    `}>
+                      Mês
+                    </div>
+                  </div>
+                  
+                  {/* Due date */}
+                  <div className="relative z-10 text-center">
+                    <div className={`
+                      text-xs opacity-75 mb-1 transition-colors duration-300
+                      ${month.isPaid ? 'text-white/80' : 'text-slate-500'}
+                    `}>
+                      Vencimento
+                    </div>
+                    <div className={`
+                      text-sm font-medium transition-colors duration-300
+                      ${month.isPaid ? 'text-white' : 'text-slate-600 group-hover:text-[#0EA5E9]'}
+                    `}>
+                      {formatDate(month.dueDate)}
+                    </div>
+                  </div>
+                  
+                  {/* Status badge */}
+                  <Badge 
+                    variant="outline"
+                    className={`
+                      relative z-10 text-xs font-medium border transition-all duration-300
+                      ${month.isPaid 
+                        ? 'bg-white/20 text-white border-white/30 hover:bg-white/30' 
+                        : 'bg-red-50 text-red-700 border-red-200 group-hover:bg-red-100 group-hover:border-red-300'
+                      }
+                    `}
+                  >
+                    {month.isPaid ? 'Pago' : 'Pendente'}
+                  </Badge>
+                </Button>
               ))}
             </div>
             
-            <PlanoVisualizerSummary 
-              planoMonths={planoMonths}
-              planoData={atendimento.planoData}
-            />
+            {/* Summary section */}
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-sm"></div>
+                  <span className="text-sm font-medium text-slate-700">Pago</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gradient-to-r from-slate-300 to-slate-400 rounded-full shadow-sm"></div>
+                  <span className="text-sm font-medium text-slate-700">Pendente</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Badge 
+                  variant="secondary" 
+                  className="bg-[#0EA5E9]/10 text-[#0EA5E9] border border-[#0EA5E9]/20 font-medium px-3 py-1"
+                >
+                  {planoMonths.filter(m => m.isPaid).length}/{planoMonths.length} pagos
+                </Badge>
+                <div className="text-sm text-slate-600">
+                  <span className="font-medium">
+                    R$ {(planoMonths.filter(m => m.isPaid).length * parseFloat(atendimento.planoData?.valorMensal || '0')).toFixed(2)}
+                  </span>
+                  <span className="text-slate-500"> / R$ {(planoMonths.length * parseFloat(atendimento.planoData?.valorMensal || '0')).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
           </>
         )}
       </CardContent>

@@ -23,17 +23,11 @@ interface PlanoData {
   valorMensal: string;
 }
 
-interface PlanoSemanalData {
-  semanas: string;
-  valorSemanal: string;
-}
-
 const useAtendimentoForm = () => {
   const [dataNascimento, setDataNascimento] = useState("");
   const [signo, setSigno] = useState("");
   const [atencao, setAtencao] = useState(false);
   const [planoAtivo, setPlanoAtivo] = useState(false);
-  const [planoSemanalAtivo, setPlanoSemanalAtivo] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     nome: "",
     dataNascimento: "",
@@ -51,10 +45,6 @@ const useAtendimentoForm = () => {
   const [planoData, setPlanoData] = useState<PlanoData>({
     meses: "",
     valorMensal: "",
-  });
-  const [planoSemanalData, setPlanoSemanalData] = useState<PlanoSemanalData>({
-    semanas: "",
-    valorSemanal: "",
   });
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -74,13 +64,6 @@ const useAtendimentoForm = () => {
 
   const handlePlanoDataChange = useCallback((field: string, value: string) => {
     setPlanoData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  }, []);
-
-  const handlePlanoSemanalDataChange = useCallback((field: string, value: string) => {
-    setPlanoSemanalData(prev => ({
       ...prev,
       [field]: value,
     }));
@@ -181,16 +164,12 @@ const useAtendimentoForm = () => {
     atencao,
     planoAtivo,
     planoData,
-    planoSemanalAtivo,
-    planoSemanalData,
     handleInputChange,
     handleSelectChange,
     handlePlanoDataChange,
-    handlePlanoSemanalDataChange,
     handleDataNascimentoChange,
     setAtencao,
     setPlanoAtivo,
-    setPlanoSemanalAtivo,
   };
 };
 

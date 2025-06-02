@@ -72,12 +72,6 @@ interface TarotAnalysis {
     meses: string;
     valorMensal: string;
   } | null;
-  // Weekly plan fields
-  planoSemanalAtivo?: boolean;
-  planoSemanalData?: {
-    semanas: string;
-    valorSemanal: string;
-  } | null;
   dataAtendimento?: string;
   data?: string;
 }
@@ -85,7 +79,7 @@ interface TarotAnalysis {
 interface Plano {
   id: string;
   clientName: string;
-  type: 'plano' | 'planoSemanal';
+  type: 'plano';
   amount: number;
   dueDate: string;
   month: number;
