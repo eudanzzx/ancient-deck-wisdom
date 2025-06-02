@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +18,35 @@ const ListagemTarot = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   
-  const analyses = getTarotAnalyses();
+  let analyses = getTarotAnalyses();
+  
+  // Add sample data if no analyses exist to show payment controls
+  if (analyses.length === 0) {
+    const sampleAnalysis = {
+      id: "sample-1",
+      nomeCliente: "Maria Silva",
+      pergunta: "Como estará minha vida amorosa nos próximos meses?",
+      resposta: "As cartas indicam um período de renovação e novas oportunidades no amor.",
+      dataAnalise: new Date().toISOString().split('T')[0],
+      dataInicio: new Date().toISOString().split('T')[0],
+      finalizado: false,
+      signo: "Peixes",
+      preco: "150.00",
+      planoAtivo: true,
+      planoData: {
+        meses: "6",
+        valorMensal: "50.00"
+      },
+      planoSemanalAtivo: true,
+      planoSemanalData: {
+        semanas: "4",
+        valorSemanal: "25.00"
+      },
+      observacoes: "Cliente muito receptiva às orientações. Mostrou interesse em continuar o acompanhamento."
+    };
+    
+    analyses = [sampleAnalysis];
+  }
   
   const filteredAnalyses = analyses.filter(analysis => {
     const matchesSearch = analysis.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase());
@@ -32,16 +59,28 @@ const ListagemTarot = () => {
   });
 
   const handleDelete = (id: string) => {
+    if (id === "sample-1") {
+      toast.info("Esta é uma análise de exemplo e não pode ser excluída.");
+      return;
+    }
     const updatedAnalyses = analyses.filter(analysis => analysis.id !== id);
     saveTarotAnalyses(updatedAnalyses);
     toast.success("Análise excluída com sucesso!");
   };
 
   const handleEdit = (id: string) => {
+    if (id === "sample-1") {
+      toast.info("Esta é uma análise de exemplo. Crie uma análise real para editar.");
+      return;
+    }
     navigate(`/editar-analise-frequencial/${id}`);
   };
 
   const handleView = (id: string) => {
+    if (id === "sample-1") {
+      toast.info("Esta é uma análise de exemplo para demonstrar os controles de pagamento.");
+      return;
+    }
     navigate(`/visualizar-analise/${id}`);
   };
 
@@ -173,6 +212,11 @@ const ListagemTarot = () => {
                         <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
                           <User className="h-4 w-4 text-purple-600" />
                           {analysis.nomeCliente}
+                          {analysis.id === "sample-1" && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              Exemplo
+                            </Badge>
+                          )}
                         </CardTitle>
                         {getStatusBadge(analysis)}
                         {(analysis.atencao || analysis.atencaoFlag) && (
