@@ -76,18 +76,34 @@ const Dashboard = () => {
   console.log('Atendimentos no Dashboard:', atendimentos);
 
   // Debug específico para dados semanais
-  console.log('=== DEBUG SEMANAL ===');
+  console.log('=== DEBUG SEMANAL DETALHADO ===');
   atendimentos.forEach((atendimento: any, index: number) => {
-    console.log(`Atendimento ${index + 1}:`, {
+    console.log(`Atendimento ${index + 1} (${atendimento.nome}):`, {
       id: atendimento.id,
-      nome: atendimento.nome,
       statusPagamento: atendimento.statusPagamento,
       semanalAtivo: atendimento.semanalAtivo,
       semanalData: atendimento.semanalData,
-      hasValidSemanalData: atendimento.semanalData && (atendimento.semanalData.semanas || atendimento.semanalData.valorSemanal),
-      shouldShowSemanal: atendimento.statusPagamento === 'parcelado' && atendimento.semanalData && 
-        (atendimento.semanalAtivo || atendimento.semanalData.semanas)
+      allFields: Object.keys(atendimento)
     });
+    
+    // Verificar diferentes possíveis estruturas de dados semanais
+    const hasSemanalData = !!(
+      atendimento.semanalData || 
+      atendimento.semanal || 
+      atendimento.pagamentoSemanal ||
+      (atendimento.semanas && atendimento.valorSemanal)
+    );
+    
+    console.log(`-> Tem dados semanais: ${hasSemanalData}`);
+    if (hasSemanalData) {
+      console.log('-> Dados encontrados:', {
+        semanalData: atendimento.semanalData,
+        semanal: atendimento.semanal,
+        pagamentoSemanal: atendimento.pagamentoSemanal,
+        semanas: atendimento.semanas,
+        valorSemanal: atendimento.valorSemanal
+      });
+    }
   });
 
   return (
@@ -154,38 +170,76 @@ const Dashboard = () => {
         <div className="mt-6">
           <h2 className="text-lg font-semibold text-[#0EA5E9] mb-4">Controles de Pagamento Semanal</h2>
           {atendimentos.map((atendimento: any) => {
-            // Condições mais flexíveis para mostrar o controle semanal
-            const hasValidSemanalData = atendimento.semanalData && 
-              (atendimento.semanalData.semanas || atendimento.semanalData.valorSemanal);
+            // Verificar múltiplas possíveis estruturas de dados semanais
+            const semanalData = atendimento.semanalData || 
+                               atendimento.semanal || 
+                               atendimento.pagamentoSemanal ||
+                               (atendimento.semanas && atendimento.valorSemanal ? {
+                                 semanas: atendimento.semanas,
+                                 valorSemanal: atendimento.valorSemanal
+                               } : null);
+
+            const hasValidSemanalData = !!(semanalData && 
+              (semanalData.semanas || semanalData.numeroSemanas) && 
+              (semanalData.valorSemanal || semanalData.valor));
             
-            const shouldShow = (
-              atendimento.statusPagamento === 'parcelado' || 
-              atendimento.semanalAtivo || 
-              hasValidSemanalData
+            // Condições mais abrangentes para mostrar o controle semanal
+            const shouldShow = !!(
+              hasValidSemanalData ||
+              atendimento.semanalAtivo ||
+              atendimento.statusPagamento === 'parcelado'
             );
 
-            console.log(`Checando ${atendimento.nome}:`, {
+            console.log(`Verificando ${atendimento.nome}:`, {
               shouldShow,
-              statusPagamento: atendimento.statusPagamento,
-              semanalAtivo: atendimento.semanalAtivo,
               hasValidSemanalData,
-              semanalData: atendimento.semanalData
+              semanalData,
+              statusPagamento: atendimento.statusPagamento,
+              semanalAtivo: atendimento.semanalAtivo
             });
 
             if (shouldShow && hasValidSemanalData) {
-              console.log('Renderizando SemanalPaymentButton para:', atendimento.nome);
+              console.log('✅ Renderizando SemanalPaymentButton para:', atendimento.nome);
+              
+              // Normalizar os dados semanais
+              const normalizedSemanalData = {
+                semanas: semanalData.semanas || semanalData.numeroSemanas || '4',
+                valorSemanal: semanalData.valorSemanal || semanalData.valor || '100'
+              };
+
               return (
                 <SemanalPaymentButton
                   key={`semanal-${atendimento.id}`}
                   analysisId={atendimento.id}
                   clientName={atendimento.nome}
-                  semanalData={atendimento.semanalData}
+                  semanalData={normalizedSemanalData}
                   startDate={atendimento.dataAtendimento || atendimento.data}
                 />
               );
+            } else {
+              console.log('❌ NÃO renderizando para:', atendimento.nome, { shouldShow, hasValidSemanalData });
             }
             return null;
           })}
+          
+          {/* Exibir mensagem se não houver controles semanais */}
+          {atendimentos.length > 0 && !atendimentos.some((atendimento: any) => {
+            const semanalData = atendimento.semanalData || 
+                               atendimento.semanal || 
+                               atendimento.pagamentoSemanal ||
+                               (atendimento.semanas && atendimento.valorSemanal ? {
+                                 semanas: atendimento.semanas,
+                                 valorSemanal: atendimento.valorSemanal
+                               } : null);
+            return !!(semanalData && (semanalData.semanas || semanalData.numeroSemanas) && (semanalData.valorSemanal || semanalData.valor));
+          }) && (
+            <div className="text-center p-6 bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-slate-600">Nenhum atendimento com pagamento semanal encontrado.</p>
+              <p className="text-sm text-slate-500 mt-2">
+                Para adicionar pagamentos semanais, edite um atendimento e configure o pagamento parcelado.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
