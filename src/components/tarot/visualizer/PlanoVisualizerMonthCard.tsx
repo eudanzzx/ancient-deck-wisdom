@@ -77,7 +77,7 @@ const PlanoVisualizerMonthCard: React.FC<PlanoVisualizerMonthCardProps> = ({
         )}
       </div>
       
-      {/* Week number with enhanced typography */}
+      {/* Month number with enhanced typography */}
       <div className="relative z-10 text-center space-y-1">
         <div className={`
           text-2xl font-bold mb-1 transition-all duration-500 group-hover:scale-110
@@ -86,7 +86,7 @@ const PlanoVisualizerMonthCard: React.FC<PlanoVisualizerMonthCardProps> = ({
             : 'bg-gradient-to-r from-slate-700 via-purple-700 to-slate-700 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-blue-600 group-hover:to-purple-600'
           }
         `}>
-          {month.month}ª
+          {month.month}º
         </div>
         <div className={`
           text-xs font-bold uppercase tracking-widest
@@ -95,7 +95,7 @@ const PlanoVisualizerMonthCard: React.FC<PlanoVisualizerMonthCardProps> = ({
             : 'text-slate-500 group-hover:text-purple-600/80'
           }
         `}>
-          Semana
+          Mês
         </div>
       </div>
       
