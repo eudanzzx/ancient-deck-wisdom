@@ -20,7 +20,6 @@ import useUserDataService from "@/services/userDataService";
 import ClientForm from "@/components/tarot/ClientForm";
 import AnalysisCards from "@/components/tarot/AnalysisCards";
 import PlanoSelector from "@/components/tarot/PlanoSelector";
-import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
 
 // Memoized reminder component to prevent unnecessary re-renders
 const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
@@ -337,7 +336,7 @@ const AnaliseFrequencial = () => {
       setTimeout(() => {
         console.log('handleSalvarAnalise - Navegando para listagem');
         navigate("/listagem-tarot");
-      }, 500); // Aumentei o tempo para 500ms
+      }, 500);
 
     } catch (error) {
       console.error('handleSalvarAnalise - Erro ao salvar:', error);
@@ -463,16 +462,6 @@ const AnaliseFrequencial = () => {
             </Button>
           </CardFooter>
         </Card>
-
-        {/* Controle de Pagamentos do Plano */}
-        {planoAtivo && planoData.meses && planoData.valorMensal && nomeCliente && dataInicio && (
-          <PlanoPaymentControl
-            analysisId={Date.now().toString()}
-            clientName={nomeCliente}
-            planoData={planoData}
-            startDate={dataInicio}
-          />
-        )}
       </div>
     </div>
   );
