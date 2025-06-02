@@ -79,7 +79,7 @@ interface TarotAnalysis {
 interface Plano {
   id: string;
   clientName: string;
-  type: 'plano';
+  type: 'plano' | 'planoSemanal';
   amount: number;
   dueDate: string;
   month: number;
