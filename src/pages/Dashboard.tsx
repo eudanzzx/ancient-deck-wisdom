@@ -12,7 +12,7 @@ import TarotCounterNotifications from "@/components/TarotCounterNotifications";
 import TarotCounterPriorityNotifications from "@/components/TarotCounterPriorityNotifications";
 import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
 import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
-import SemanalPaymentControl from "@/components/forms/SemanalPaymentControl";
+import SemanalPaymentButton from "@/components/tarot/SemanalPaymentButton";
 import useUserDataService from "@/services/userDataService";
 
 const Dashboard = () => {
@@ -135,25 +135,16 @@ const Dashboard = () => {
           return null;
         })}
 
-        {/* Controles de Pagamento para Atendimentos com Recorrência Semanal */}
+        {/* Botões de Controle de Pagamento Semanal */}
         {atendimentos.map((atendimento: any) => {
-          // Debug log moved outside JSX
-          console.log('Verificando atendimento para semanal:', {
-            id: atendimento.id,
-            nome: atendimento.nome,
-            semanalAtivo: atendimento.semanalAtivo,
-            semanalData: atendimento.semanalData,
-            statusPagamento: atendimento.statusPagamento
-          });
-
           // Verifica se tem pagamento semanal ativo
           if (atendimento.statusPagamento === 'parcelado' && atendimento.semanalData && 
               (atendimento.semanalAtivo || atendimento.semanalData.semanas)) {
-            console.log('Renderizando SemanalPaymentControl para:', atendimento.nome);
+            console.log('Renderizando SemanalPaymentButton para:', atendimento.nome);
             return (
-              <SemanalPaymentControl
+              <SemanalPaymentButton
                 key={`semanal-${atendimento.id}`}
-                atendimentoId={atendimento.id}
+                analysisId={atendimento.id}
                 clientName={atendimento.nome}
                 semanalData={atendimento.semanalData}
                 startDate={atendimento.dataAtendimento || atendimento.data}
