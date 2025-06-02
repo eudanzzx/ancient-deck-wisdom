@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { AlertTriangle, CreditCard, Calendar } from "lucide-react";
 import SemanalSelector from "./SemanalSelector";
+import PlanoPaymentButton from "@/components/tarot/PlanoPaymentButton";
+import SemanalPaymentButton from "@/components/tarot/SemanalPaymentButton";
 
 interface AtendimentoFormProps {
   formData: any;
@@ -218,42 +220,101 @@ const AtendimentoForm: React.FC<AtendimentoFormProps> = ({
             </div>
             
             {planoAtivo && (
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <div className="space-y-1">
-                  <Label className="text-sm text-slate-600">Meses</Label>
-                  <Select onValueChange={(value) => onPlanoDataChange("meses", value)}>
-                    <SelectTrigger className="bg-[#0EA5E9]/10 border-[#0EA5E9]/30 focus:border-[#0EA5E9]">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[...Array(12)].map((_, i) => (
-                        <SelectItem key={i + 1} value={(i + 1).toString()}>
-                          {i + 1} {i === 0 ? 'mês' : 'meses'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-sm text-slate-600">Meses</Label>
+                    <Select onValueChange={(value) => onPlanoDataChange("meses", value)}>
+                      <SelectTrigger className="bg-[#0EA5E9]/10 border-[#0EA5E9]/30 focus:border-[#0EA5E9]">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[...Array(12)].map((_, i) => (
+                          <SelectItem key={i + 1} value={(i + 1).toString()}>
+                            {i + 1} {i === 0 ? 'mês' : 'meses'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-sm text-slate-600">Valor Mensal (R$)</Label>
+                    <Input 
+                      type="number" 
+                      placeholder="0.00" 
+                      value={planoData.valorMensal}
+                      onChange={(e) => onPlanoDataChange("valorMensal", e.target.value)}
+                      className="bg-[#0EA5E9]/10 border-[#0EA5E9]/30 focus:border-[#0EA5E9] focus:ring-[#0EA5E9]/20"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-sm text-slate-600">Valor Mensal (R$)</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="0.00" 
-                    value={planoData.valorMensal}
-                    onChange={(e) => onPlanoDataChange("valorMensal", e.target.value)}
-                    className="bg-[#0EA5E9]/10 border-[#0EA5E9]/30 focus:border-[#0EA5E9] focus:ring-[#0EA5E9]/20"
+                
+                {planoData.meses && planoData.valorMensal && formData.nome && formData.dataAtendimento && (
+                  <PlanoPaymentButton
+                    analysisId={`temp-${Date.now()}`}
+                    clientName={formData.nome}
+                    planoData={planoData}
+                    startDate={formData.dataAtendimento}
                   />
-                </div>
+                )}
               </div>
             )}
           </div>
 
-          <SemanalSelector
-            semanalAtivo={semanalAtivo}
-            semanalData={semanalData}
-            onSemanalAtivoChange={onSemanalAtivoChange}
-            onSemanalDataChange={onSemanalDataChange}
-          />
+          <div className="space-y-2 flex flex-col">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="semanal" className="text-slate-700 font-medium flex items-center">
+                <Calendar className={`mr-2 h-4 w-4 ${semanalAtivo ? "text-[#0EA5E9]" : "text-slate-400"}`} />
+                SEMANAL
+              </Label>
+              <Switch 
+                checked={semanalAtivo} 
+                onCheckedChange={onSemanalAtivoChange} 
+                className="data-[state=checked]:bg-[#0EA5E9]"
+              />
+            </div>
+            
+            {semanalAtivo && (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-sm text-slate-600">Semanas</Label>
+                    <Select onValueChange={(value) => onSemanalDataChange("semanas", value)}>
+                      <SelectTrigger className="bg-[#0EA5E9]/10 border-[#0EA5E9]/30 focus:border-[#0EA5E9]">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[...Array(24)].map((_, i) => (
+                          <SelectItem key={i + 1} value={(i + 1).toString()}>
+                            {i + 1} {i === 0 ? 'semana' : 'semanas'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-sm text-slate-600">Valor Semanal (R$)</Label>
+                    <Input 
+                      type="number" 
+                      placeholder="0.00" 
+                      value={semanalData.valorSemanal}
+                      onChange={(e) => onSemanalDataChange("valorSemanal", e.target.value)}
+                      className="bg-[#0EA5E9]/10 border-[#0EA5E9]/30 focus:border-[#0EA5E9] focus:ring-[#0EA5E9]/20"
+                    />
+                  </div>
+                </div>
+                
+                {semanalData.semanas && semanalData.valorSemanal && formData.nome && formData.dataAtendimento && (
+                  <SemanalPaymentButton
+                    analysisId={`temp-${Date.now()}`}
+                    clientName={formData.nome}
+                    semanalData={semanalData}
+                    startDate={formData.dataAtendimento}
+                  />
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-6 space-y-2">
