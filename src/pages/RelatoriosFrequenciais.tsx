@@ -1,123 +1,90 @@
+
 import React, { useState, useEffect } from "react";
 import useUserDataService from "@/services/userDataService";
 
-interface AnaliseFrequencial {
-  id: string;
-  nomeCliente: string;
-  dataInicio: string;
-  preco: string;
-  finalizado: boolean;
-  dataNascimento: string;
-  signo: string;
-  tipoServico: string;
-  analiseAntes: string;
-  analiseDepois: string;
-  lembretes: any[];
-  atencaoFlag: boolean;
-}
-
 const RelatoriosFrequenciais = () => {
-  const { getAllTarotAnalyses } = useUserDataService();
-  
-  const [analises, setAnalises] = useState<AnaliseFrequencial[]>([]);
-  const [atendimentosFinalizados, setAtendimentosFinalizados] = useState(0);
-  const [atendimentosEmAndamento, setAtendimentosEmAndamento] = useState(0);
-  const [atendimentosComAtencao, setAtendimentosComAtencao] = useState(0);
-  const [totalServicos, setTotalServicos] = useState(0);
+  const { getTarotAnalyses } = useUserDataService();
+  const [analyses, setAnalyses] = useState([]);
+  const [totalAnalyses, setTotalAnalyses] = useState(0);
+  const [completedAnalyses, setCompletedAnalyses] = useState(0);
+  const [pendingAnalyses, setPendingAnalyses] = useState(0);
+  const [attentionAnalyses, setAttentionAnalyses] = useState(0);
 
   useEffect(() => {
-    const analisesTarot = getAllTarotAnalyses();
-    const analisesFormatadas = analisesTarot.map(analise => ({
-      id: analise.id,
-      nomeCliente: analise.nomeCliente || analise.clientName || "",
-      dataInicio: analise.dataInicio || analise.analysisDate || "",
-      preco: analise.preco || analise.value || "",
-      finalizado: analise.finalizado ?? false,
-      dataNascimento: analise.dataNascimento || analise.clientBirthdate || "",
-      signo: analise.signo || analise.clientSign || "",
-      tipoServico: analise.tipoServico || analise.analysisType || "",
-      analiseAntes: analise.analiseAntes || "",
-      analiseDepois: analise.analiseDepois || "",
-      lembretes: typeof analise.lembretes === 'string' ? [] : (analise.lembretes || []),
-      atencaoFlag: analise.atencaoFlag || analise.attentionFlag || false
-    }));
-    
-    setAnalises(analisesFormatadas);
-
-    setAtendimentosFinalizados(analisesFormatadas.filter(a => a.finalizado).length);
-    setAtendimentosEmAndamento(analisesFormatadas.filter(a => !a.finalizado).length);
-    setTotalServicos(analisesFormatadas.length);
-    setAtendimentosComAtencao(analisesFormatadas.filter(a => a.atencaoFlag).length);
-  }, [getAllTarotAnalyses]);
+    const allAnalyses = getTarotAnalyses();
+    setAnalyses(allAnalyses);
+    setTotalAnalyses(allAnalyses.length);
+    setCompletedAnalyses(allAnalyses.filter(analysis => analysis.finalizado).length);
+    setPendingAnalyses(allAnalyses.filter(analysis => !analysis.finalizado).length);
+    setAttentionAnalyses(allAnalyses.filter(analysis => 
+      analysis.attentionFlag || analysis.atencaoFlag || analysis.atencao
+    ).length);
+  }, [getTarotAnalyses]);
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Relatórios Frequenciais</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white shadow rounded p-4">
-          <h2 className="text-lg font-semibold mb-2">Total de Atendimentos</h2>
-          <p className="text-3xl font-bold text-blue-500">{totalServicos}</p>
+      <h1 className="text-2xl font-bold mb-6">Relatórios Frequenciais</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-700">Total de Análises</h3>
+          <p className="text-3xl font-bold text-blue-600">{totalAnalyses}</p>
         </div>
-
-        <div className="bg-white shadow rounded p-4">
-          <h2 className="text-lg font-semibold mb-2">Atendimentos Finalizados</h2>
-          <p className="text-3xl font-bold text-green-500">{atendimentosFinalizados}</p>
+        
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-700">Concluídas</h3>
+          <p className="text-3xl font-bold text-green-600">{completedAnalyses}</p>
         </div>
-
-        <div className="bg-white shadow rounded p-4">
-          <h2 className="text-lg font-semibold mb-2">Atendimentos Em Andamento</h2>
-          <p className="text-3xl font-bold text-yellow-500">{atendimentosEmAndamento}</p>
+        
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-700">Pendentes</h3>
+          <p className="text-3xl font-bold text-yellow-600">{pendingAnalyses}</p>
         </div>
-
-        <div className="bg-white shadow rounded p-4">
-          <h2 className="text-lg font-semibold mb-2">Atendimentos Com Atenção</h2>
-          <p className="text-3xl font-bold text-red-500">{atendimentosComAtencao}</p>
+        
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-700">Requerem Atenção</h3>
+          <p className="text-3xl font-bold text-red-600">{attentionAnalyses}</p>
         </div>
       </div>
-
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Lista de Atendimentos</h2>
-        {analises.length > 0 ? (
-          <table className="min-w-full leading-normal">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Cliente
-                </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Data Início
-                </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Preço
-                </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {analises.map(analise => (
-                <tr key={analise.id}>
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                    {analise.nomeCliente}
-                  </td>
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                    {analise.dataInicio}
-                  </td>
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                    {analise.preco}
-                  </td>
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                    {analise.finalizado ? 'Finalizado' : 'Em Andamento'}
-                  </td>
+      
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Lista de Análises</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left">Cliente</th>
+                  <th className="px-4 py-2 text-left">Data</th>
+                  <th className="px-4 py-2 text-left">Status</th>
+                  <th className="px-4 py-2 text-left">Atenção</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>Nenhum atendimento encontrado.</p>
-        )}
+              </thead>
+              <tbody>
+                {analyses.map((analysis) => (
+                  <tr key={analysis.id} className="border-b">
+                    <td className="px-4 py-2">{analysis.clientName || analysis.nomeCliente || 'N/A'}</td>
+                    <td className="px-4 py-2">{analysis.analysisDate || analysis.dataInicio || 'N/A'}</td>
+                    <td className="px-4 py-2">
+                      <span className={`px-2 py-1 rounded text-sm ${
+                        analysis.finalizado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {analysis.finalizado ? 'Concluída' : 'Pendente'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">
+                      {(analysis.attentionFlag || analysis.atencaoFlag || analysis.atencao) && (
+                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-sm">
+                          Atenção
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

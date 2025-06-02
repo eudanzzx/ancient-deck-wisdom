@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 
@@ -55,6 +54,24 @@ const useAtendimentoForm = () => {
     semanas: "",
     valorSemanal: "",
   });
+
+  const getNextFriday = (startDate: Date, weekNumber: number): Date => {
+    const date = new Date(startDate);
+    // Adicionar o número de semanas
+    date.setDate(date.getDate() + (weekNumber * 7));
+    
+    // Encontrar a próxima sexta-feira (day 5 = Friday)
+    const dayOfWeek = date.getDay();
+    const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+    if (daysUntilFriday === 0 && dayOfWeek !== 5) {
+      // Se hoje não é sexta, vai para a próxima sexta
+      date.setDate(date.getDate() + 7);
+    } else {
+      date.setDate(date.getDate() + daysUntilFriday);
+    }
+    
+    return date;
+  };
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -190,6 +207,7 @@ const useAtendimentoForm = () => {
     setAtencao,
     setPlanoAtivo,
     setSemanalAtivo,
+    getNextFriday,
   };
 };
 

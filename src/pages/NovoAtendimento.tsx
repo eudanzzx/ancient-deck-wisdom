@@ -33,6 +33,7 @@ const NovoAtendimento = () => {
     setAtencao,
     setPlanoAtivo,
     setSemanalAtivo,
+    getNextFriday,
   } = useAtendimentoForm();
 
   const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
@@ -64,15 +65,15 @@ const NovoAtendimento = () => {
     const startDate = new Date(dataInicio);
     
     for (let i = 1; i <= parseInt(semanas); i++) {
-      const notificationDate = new Date(startDate);
-      notificationDate.setDate(notificationDate.getDate() + (i * 7));
+      // Usar a função para calcular a próxima sexta-feira
+      const fridayDate = getNextFriday(startDate, i - 1);
       
       notifications.push({
         id: `semanal-${Date.now()}-${i}`,
         clientName: nomeCliente,
         type: 'semanal',
         amount: parseFloat(valorSemanal),
-        dueDate: notificationDate.toISOString().split('T')[0],
+        dueDate: fridayDate.toISOString().split('T')[0],
         week: i,
         totalWeeks: parseInt(semanas),
         created: new Date().toISOString(),
