@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,21 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
   const { getPlanos, savePlanos } = useUserDataService();
   const [semanalWeeks, setSemanalWeeks] = useState<SemanalWeek[]>([]);
 
+  const getNextFriday = (date: Date): Date => {
+    const nextFriday = new Date(date);
+    const dayOfWeek = date.getDay();
+    const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+    
+    if (daysUntilFriday === 0 && date.getDay() === 5) {
+      // Se hoje é sexta, próxima sexta é em 7 dias
+      nextFriday.setDate(date.getDate() + 7);
+    } else {
+      nextFriday.setDate(date.getDate() + daysUntilFriday);
+    }
+    
+    return nextFriday;
+  };
+
   useEffect(() => {
     initializeSemanalWeeks();
   }, [analysisId, semanalData, startDate]);
@@ -46,8 +62,13 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
     const weeks: SemanalWeek[] = [];
     
     for (let i = 1; i <= totalWeeks; i++) {
-      const dueDate = new Date(baseDate);
-      dueDate.setDate(dueDate.getDate() + (i * 7));
+      // Primeira sexta-feira após a data de início
+      let dueDate = getNextFriday(baseDate);
+      
+      // Para semanas subsequentes, adicionar 7 dias para cada semana
+      if (i > 1) {
+        dueDate.setDate(dueDate.getDate() + ((i - 1) * 7));
+      }
       
       const semanalForWeek = planos.find((plano): plano is PlanoSemanal => 
         plano.id.startsWith(`${analysisId}-week-${i}`) && plano.type === 'semanal'
@@ -123,7 +144,12 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
       if (isNaN(date.getTime())) {
         return 'Data inválida';
       }
-      return date.toLocaleDateString('pt-BR');
+      return date.toLocaleDateString('pt-BR', {
+        weekday: 'short',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
     } catch (error) {
       return 'Data inválida';
     }
@@ -138,7 +164,7 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
       <CardHeader className="bg-gradient-to-r from-[#10B981]/5 to-[#10B981]/10">
         <CardTitle className="flex items-center gap-2 text-[#10B981]">
           <Calendar className="h-5 w-5" />
-          Controle de Pagamentos Semanal
+          Controle de Pagamentos Semanal - Vencimento toda Sexta-feira
           <Badge variant="secondary" className="bg-[#10B981]/10 text-[#10B981] ml-2">
             {paidCount}/{semanalWeeks.length}
           </Badge>
@@ -221,7 +247,7 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
                       text-xs opacity-75 mb-1 transition-colors duration-300
                       ${week.isPaid ? 'text-white/80' : 'text-slate-500'}
                     `}>
-                      Vencimento
+                      Sexta-feira
                     </div>
                     <div className={`
                       text-sm font-medium transition-colors duration-300

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import AtendimentoForm from "@/components/forms/AtendimentoForm";
 import useAtendimentoForm from "@/hooks/useAtendimentoForm";
+import SemanalPaymentNotifications from "@/components/SemanalPaymentNotifications";
 import { PlanoMensal, PlanoSemanal } from "@/types/payment";
 
 const NovoAtendimento = () => {
@@ -34,6 +36,21 @@ const NovoAtendimento = () => {
     setPlanoAtivo,
     setSemanalAtivo,
   } = useAtendimentoForm();
+
+  const getNextFriday = (startDate: Date): Date => {
+    const nextFriday = new Date(startDate);
+    const dayOfWeek = startDate.getDay();
+    const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+    
+    if (daysUntilFriday === 0 && startDate.getDay() === 5) {
+      // Se a data de início é uma sexta, próxima sexta é em 7 dias
+      nextFriday.setDate(startDate.getDate() + 7);
+    } else {
+      nextFriday.setDate(startDate.getDate() + daysUntilFriday);
+    }
+    
+    return nextFriday;
+  };
 
   const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
     const notifications: PlanoMensal[] = [];
@@ -64,15 +81,20 @@ const NovoAtendimento = () => {
     const startDate = new Date(dataInicio);
     
     for (let i = 1; i <= parseInt(semanas); i++) {
-      const notificationDate = new Date(startDate);
-      notificationDate.setDate(notificationDate.getDate() + (i * 7));
+      // Primeira sexta-feira após a data de início
+      let dueDate = getNextFriday(startDate);
+      
+      // Para semanas subsequentes, adicionar 7 dias para cada semana
+      if (i > 1) {
+        dueDate.setDate(dueDate.getDate() + ((i - 1) * 7));
+      }
       
       notifications.push({
         id: `semanal-${Date.now()}-${i}`,
         clientName: nomeCliente,
         type: 'semanal',
         amount: parseFloat(valorSemanal),
-        dueDate: notificationDate.toISOString().split('T')[0],
+        dueDate: dueDate.toISOString().split('T')[0],
         week: i,
         totalWeeks: parseInt(semanas),
         created: new Date().toISOString(),
@@ -132,7 +154,7 @@ const NovoAtendimento = () => {
       savePlanos(updatedPlanos);
       
       if (!planoAtivo) {
-        toast.success(`Atendimento salvo! Plano semanal de ${semanalData.semanas} semanas criado com sucesso.`);
+        toast.success(`Atendimento salvo! Plano semanal de ${semanalData.semanas} semanas criado com sucesso. Vencimentos toda sexta-feira.`);
       }
     }
     
@@ -148,6 +170,7 @@ const NovoAtendimento = () => {
     <div className="min-h-screen bg-[#F1F7FF]">
       <DashboardHeader />
       <BirthdayNotifications checkOnMount={false} />
+      <SemanalPaymentNotifications />
       
       <div className="container mx-auto px-4 py-6 mt-20">
         <div className="mb-6 flex items-center gap-3">
