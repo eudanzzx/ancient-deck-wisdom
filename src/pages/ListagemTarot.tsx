@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Eye, Search, Calendar, DollarSign, Clock, Sparkles, CheckCircle, AlertCircle, User, Star, Activity } from "lucide-react";
+import { Pencil, Trash2, Eye, Search, Calendar, DollarSign, Clock, Sparkles, CheckCircle, AlertCircle, User, Star, Activity, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 import Logo from "@/components/Logo";
 import UserMenu from "@/components/UserMenu";
 import PlanoPaymentButton from "@/components/tarot/PlanoPaymentButton";
+import TarotCounterPriorityNotifications from "@/components/TarotCounterPriorityNotifications";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -43,6 +44,31 @@ const ListagemTarot = () => {
 
   const handleView = (id: string) => {
     navigate(`/visualizar-analise/${id}`);
+  };
+
+  const handleToggleStatus = (id: string, setToFinalized: boolean) => {
+    const updatedAnalyses = analyses.map(analysis => {
+      if (analysis.id === id) {
+        const updatedAnalysis = {
+          ...analysis,
+          finalizado: setToFinalized,
+          dataAtualizacao: new Date().toISOString()
+        };
+        
+        // Disparar evento customizado quando análise for finalizada
+        if (setToFinalized) {
+          window.dispatchEvent(new CustomEvent('tarotAnalysisFinalized', {
+            detail: { analysisId: id }
+          }));
+        }
+        
+        return updatedAnalysis;
+      }
+      return analysis;
+    });
+    
+    saveTarotAnalyses(updatedAnalyses);
+    toast.success(setToFinalized ? "Análise marcada como finalizada!" : "Análise marcada como pendente!");
   };
 
   const formatCurrency = (value: string) => {
@@ -156,6 +182,9 @@ const ListagemTarot = () => {
             <Star className="h-5 w-5 text-purple-500" />
           </div>
         </div>
+
+        {/* Contadores Prioritários */}
+        <TarotCounterPriorityNotifications analises={analyses} />
 
         {/* Cards de Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -349,6 +378,27 @@ const ListagemTarot = () => {
                         </div>
                         
                         <div className="flex gap-2">
+                          {!analysis.finalizado ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleStatus(analysis.id, true)}
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              title="Marcar como finalizada"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleStatus(analysis.id, false)}
+                              className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                              title="Marcar como pendente"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
