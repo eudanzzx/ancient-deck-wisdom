@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Eye, Search, Calendar, DollarSign, Clock, Sparkles, CheckCircle, AlertCircle } from "lucide-react";
+import { Pencil, Trash2, Eye, Search, Calendar, DollarSign, Clock, Sparkles, CheckCircle, AlertCircle, User } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -127,18 +127,19 @@ const ListagemTarot = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <CardTitle className="text-lg text-gray-800">
+                        <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
+                          <User className="h-4 w-4 text-purple-600" />
                           {analysis.nomeCliente}
                         </CardTitle>
                         {getStatusBadge(analysis)}
-                        {analysis.atencao && (
+                        {(analysis.atencao || analysis.atencaoFlag) && (
                           <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
                             <AlertCircle className="h-3 w-3 mr-1" />
                             Atenção
                           </Badge>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                      <div className="flex flex-wrap gap-3 text-sm text-gray-600">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
                           {formatDate(analysis.dataInicio || analysis.dataAnalise)}
@@ -150,7 +151,8 @@ const ListagemTarot = () => {
                           </span>
                         )}
                         {analysis.signo && (
-                          <span className="text-purple-600 font-medium">
+                          <span className="text-purple-600 font-medium flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" />
                             {analysis.signo}
                           </span>
                         )}
@@ -163,6 +165,7 @@ const ListagemTarot = () => {
                         size="sm"
                         onClick={() => handleView(analysis.id)}
                         className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        title="Visualizar análise"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -171,6 +174,7 @@ const ListagemTarot = () => {
                         size="sm"
                         onClick={() => handleEdit(analysis.id)}
                         className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                        title="Editar análise"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -179,6 +183,7 @@ const ListagemTarot = () => {
                         size="sm"
                         onClick={() => handleDelete(analysis.id)}
                         className="text-red-600 border-red-200 hover:bg-red-50"
+                        title="Excluir análise"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -189,9 +194,20 @@ const ListagemTarot = () => {
                 <CardContent className="pt-0">
                   {/* Pergunta Principal */}
                   {analysis.pergunta && (
-                    <div className="mb-4 p-3 bg-purple-50/50 rounded-lg">
-                      <h4 className="font-medium text-gray-700 mb-2">Pergunta:</h4>
-                      <p className="text-sm text-gray-600">{analysis.pergunta}</p>
+                    <div className="mb-4 p-3 bg-purple-50/50 rounded-lg border border-purple-200">
+                      <h4 className="font-medium text-purple-800 mb-2 flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        Pergunta:
+                      </h4>
+                      <p className="text-sm text-gray-700">{analysis.pergunta}</p>
+                    </div>
+                  )}
+
+                  {/* Resposta Principal */}
+                  {analysis.resposta && (
+                    <div className="mb-4 p-3 bg-indigo-50/50 rounded-lg border border-indigo-200">
+                      <h4 className="font-medium text-indigo-800 mb-2">Resposta:</h4>
+                      <p className="text-sm text-gray-700">{analysis.resposta}</p>
                     </div>
                   )}
 
@@ -217,19 +233,49 @@ const ListagemTarot = () => {
                   
                   {/* Detalhes da Análise */}
                   {analysis.detalhesAdicionais && (
-                    <div className="mt-4 p-3 bg-purple-50/50 rounded-lg">
-                      <h4 className="font-medium text-gray-700 mb-2">Detalhes:</h4>
-                      <p className="text-sm text-gray-600">{analysis.detalhesAdicionais}</p>
+                    <div className="mt-4 p-3 bg-violet-50/50 rounded-lg border border-violet-200">
+                      <h4 className="font-medium text-violet-800 mb-2">Detalhes Adicionais:</h4>
+                      <p className="text-sm text-gray-700">{analysis.detalhesAdicionais}</p>
                     </div>
                   )}
 
                   {/* Observações */}
                   {analysis.observacoes && (
-                    <div className="mt-4 p-3 bg-yellow-50/50 rounded-lg">
-                      <h4 className="font-medium text-gray-700 mb-2">Observações:</h4>
-                      <p className="text-sm text-gray-600">{analysis.observacoes}</p>
+                    <div className="mt-4 p-3 bg-yellow-50/50 rounded-lg border border-yellow-200">
+                      <h4 className="font-medium text-yellow-800 mb-2 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Observações:
+                      </h4>
+                      <p className="text-sm text-gray-700">{analysis.observacoes}</p>
                     </div>
                   )}
+
+                  {/* Atenção Nota */}
+                  {(analysis.atencaoNota) && (
+                    <div className="mt-4 p-3 bg-red-50/50 rounded-lg border border-red-200">
+                      <h4 className="font-medium text-red-800 mb-2 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Nota de Atenção:
+                      </h4>
+                      <p className="text-sm text-gray-700">{analysis.atencaoNota}</p>
+                    </div>
+                  )}
+
+                  {/* Informações Adicionais */}
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                      {analysis.dataNascimento && (
+                        <span>Nascimento: {formatDate(analysis.dataNascimento)}</span>
+                      )}
+                      {analysis.dataAtualizacao && (
+                        <span>Atualizado: {formatDate(analysis.dataAtualizacao)}</span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        ID: {analysis.id.slice(0, 8)}...
+                      </span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
