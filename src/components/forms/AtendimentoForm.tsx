@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, CreditCard } from "lucide-react";
+import { AlertTriangle, CreditCard, Calendar } from "lucide-react";
+import SemanalSelector from "./SemanalSelector";
 
 interface AtendimentoFormProps {
   formData: any;
@@ -14,16 +14,23 @@ interface AtendimentoFormProps {
   signo: string;
   atencao: boolean;
   planoAtivo: boolean;
+  semanalAtivo: boolean;
   planoData: {
     meses: string;
     valorMensal: string;
+  };
+  semanalData: {
+    semanas: string;
+    valorSemanal: string;
   };
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (field: string, value: string) => void;
   onDataNascimentoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAtencaoChange: (value: boolean) => void;
   onPlanoAtivoChange: (value: boolean) => void;
+  onSemanalAtivoChange: (value: boolean) => void;
   onPlanoDataChange: (field: string, value: string) => void;
+  onSemanalDataChange: (field: string, value: string) => void;
 }
 
 const AtendimentoForm: React.FC<AtendimentoFormProps> = ({
@@ -32,13 +39,17 @@ const AtendimentoForm: React.FC<AtendimentoFormProps> = ({
   signo,
   atencao,
   planoAtivo,
+  semanalAtivo,
   planoData,
+  semanalData,
   onInputChange,
   onSelectChange,
   onDataNascimentoChange,
   onAtencaoChange,
   onPlanoAtivoChange,
+  onSemanalAtivoChange,
   onPlanoDataChange,
+  onSemanalDataChange,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -236,6 +247,13 @@ const AtendimentoForm: React.FC<AtendimentoFormProps> = ({
               </div>
             )}
           </div>
+
+          <SemanalSelector
+            semanalAtivo={semanalAtivo}
+            semanalData={semanalData}
+            onSemanalAtivoChange={onSemanalAtivoChange}
+            onSemanalDataChange={onSemanalDataChange}
+          />
         </div>
 
         <div className="mt-6 space-y-2">
