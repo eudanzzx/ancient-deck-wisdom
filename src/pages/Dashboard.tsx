@@ -17,24 +17,26 @@ import useUserDataService from "@/services/userDataService";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { getAtendimentos, deleteAtendimento, getAnalises } = useUserDataService();
+  const { getAtendimentos, saveAtendimentos, getTarotAnalyses } = useUserDataService();
   const [atendimentos, setAtendimentos] = useState([]);
   const [analises, setAnalises] = useState([]);
 
   useEffect(() => {
     const fetchData = () => {
       const atendimentosData = getAtendimentos();
-      const analisesData = getAnalises();
+      const analisesData = getTarotAnalyses();
       setAtendimentos(atendimentosData);
       setAnalises(analisesData);
     };
 
     fetchData();
-  }, [getAtendimentos, getAnalises]);
+  }, [getAtendimentos, getTarotAnalyses]);
 
   const handleDeleteAtendimento = (id: string) => {
-    deleteAtendimento(id);
-    const updatedAtendimentos = getAtendimentos();
+    // Implement delete logic manually since there's no deleteAtendimento function
+    const currentAtendimentos = getAtendimentos();
+    const updatedAtendimentos = currentAtendimentos.filter(atendimento => atendimento.id !== id);
+    saveAtendimentos(updatedAtendimentos);
     setAtendimentos(updatedAtendimentos);
   };
 
