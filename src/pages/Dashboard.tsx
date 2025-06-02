@@ -72,6 +72,9 @@ const Dashboard = () => {
 
   const stats = calculateStats();
 
+  // Debug - Log atendimentos data
+  console.log('Atendimentos no Dashboard:', atendimentos);
+
   return (
     <div className="min-h-screen bg-[#F1F7FF]">
       <DashboardHeader />
@@ -116,9 +119,6 @@ const Dashboard = () => {
           onDeleteAtendimento={handleDeleteAtendimento}
         />
 
-        {/* Debug - Vamos ver os dados dos atendimentos */}
-        {console.log('Atendimentos no Dashboard:', atendimentos)}
-
         {/* Controles de Pagamento para Atendimentos com Planos */}
         {atendimentos.map((atendimento: any) => {
           if (atendimento.planoAtivo && atendimento.planoData) {
@@ -137,6 +137,7 @@ const Dashboard = () => {
 
         {/* Controles de Pagamento para Atendimentos com Recorrência Semanal */}
         {atendimentos.map((atendimento: any) => {
+          // Debug log moved outside JSX
           console.log('Verificando atendimento para semanal:', {
             id: atendimento.id,
             nome: atendimento.nome,
