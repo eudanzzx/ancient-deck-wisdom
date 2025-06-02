@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, CreditCard } from "lucide-react";
+import { ChevronDown, CreditCard } from "lucide-react";
 import PlanoPaymentControl from "./PlanoPaymentControl";
 import useUserDataService from "@/services/userDataService";
 
@@ -27,50 +27,46 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
   // Calcular quantos meses foram pagos
   const calculatePaidMonths = () => {
     const planos = getPlanos();
+    if (!planos || planos.length === 0) return 0;
+    
     const totalMonths = parseInt(planoData.meses);
-    let paidCount = 0;
+    const planRecords = planos.filter(p => 
+      p.id.startsWith(`${analysisId}-month-`) && 
+      p.type === 'plano'
+    );
     
-    for (let i = 1; i <= totalMonths; i++) {
-      const planoForMonth = planos.find(plano => 
-        plano.id.startsWith(`${analysisId}-month-${i}`)
-      );
-      
-      if (planoForMonth && !planoForMonth.active) {
-        paidCount++;
-      }
-    }
-    
-    return paidCount;
+    // Count paid months (active: false means paid)
+    const paidCount = planRecords.filter(p => !p.active).length;
+    return Math.min(paidCount, totalMonths);
   };
 
   const paidMonths = calculatePaidMonths();
   const totalMonths = parseInt(planoData.meses);
 
+  const handleClick = () => {
+    setIsOpen(!isOpen);
+  };
+
   return (
     <div className="mt-4">
       <Button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleClick}
         variant="outline"
-        className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200"
+        size="sm"
+        className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200 flex items-center gap-2"
       >
         <CreditCard className="h-4 w-4" />
-        <span className="mx-2 font-medium">{paidMonths}/{totalMonths}</span>
-        {isOpen ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
-        )}
+        <span className="font-medium">{paidMonths}/{totalMonths}</span>
+        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 
       {isOpen && (
-        <div className="mt-2">
-          <PlanoPaymentControl
-            analysisId={analysisId}
-            clientName={clientName}
-            planoData={planoData}
-            startDate={startDate}
-          />
-        </div>
+        <PlanoPaymentControl
+          analysisId={analysisId}
+          clientName={clientName}
+          planoData={planoData}
+          startDate={startDate}
+        />
       )}
     </div>
   );
