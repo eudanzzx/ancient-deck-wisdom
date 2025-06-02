@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -45,25 +44,31 @@ const NovoAtendimento = () => {
     let nextFriday = new Date(today);
     const currentDay = today.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
+    console.log('Hoje é dia:', currentDay, 'Data:', today.toDateString());
+    
     // Calcular quantos dias adicionar para chegar na próxima sexta-feira
-    let daysUntilFriday;
+    let daysToAdd;
     if (currentDay === 5) {
       // Se hoje é sexta-feira, a próxima é em 7 dias
-      daysUntilFriday = 7;
+      daysToAdd = 7;
     } else if (currentDay < 5) {
-      // Se é antes de sexta-feira (domingo a quinta)
-      daysUntilFriday = 5 - currentDay;
+      // Se é antes de sexta-feira (domingo=0 a quinta=4)
+      daysToAdd = 5 - currentDay;
     } else {
       // Se é sábado (6)
-      daysUntilFriday = 6;
+      daysToAdd = 6; // 6 dias depois do sábado é sexta
     }
     
-    nextFriday.setDate(today.getDate() + daysUntilFriday);
+    console.log('Dias para adicionar:', daysToAdd);
+    
+    nextFriday.setDate(today.getDate() + daysToAdd);
+    console.log('Primeira sexta-feira:', nextFriday.toDateString(), 'Dia da semana:', nextFriday.getDay());
     
     // Gerar as próximas sextas-feiras
     for (let i = 0; i < totalWeeks; i++) {
       const friday = new Date(nextFriday);
       friday.setDate(nextFriday.getDate() + (i * 7));
+      console.log(`Sexta-feira ${i + 1}:`, friday.toDateString(), 'Dia da semana:', friday.getDay());
       fridays.push(friday);
     }
     
