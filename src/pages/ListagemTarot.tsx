@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Eye, Search, Calendar, DollarSign, Clock, Sparkles } from "lucide-react";
+import { Pencil, Trash2, Eye, Search, Calendar, DollarSign, Clock, Sparkles, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -34,6 +34,10 @@ const ListagemTarot = () => {
     navigate(`/editar-analise-frequencial/${id}`);
   };
 
+  const handleView = (id: string) => {
+    navigate(`/visualizar-analise/${id}`);
+  };
+
   const formatCurrency = (value: string) => {
     const numValue = parseFloat(value);
     return isNaN(numValue) ? "R$ 0,00" : `R$ ${numValue.toFixed(2).replace('.', ',')}`;
@@ -42,6 +46,24 @@ const ListagemTarot = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
+  };
+
+  const getStatusBadge = (analysis: any) => {
+    if (analysis.finalizado) {
+      return (
+        <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Finalizado
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Pendente
+        </Badge>
+      );
+    }
   };
 
   return (
@@ -104,9 +126,18 @@ const ListagemTarot = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg text-gray-800 mb-2">
-                        {analysis.nomeCliente}
-                      </CardTitle>
+                      <div className="flex items-center gap-3 mb-2">
+                        <CardTitle className="text-lg text-gray-800">
+                          {analysis.nomeCliente}
+                        </CardTitle>
+                        {getStatusBadge(analysis)}
+                        {analysis.atencao && (
+                          <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Atenção
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex flex-wrap gap-2 text-sm text-gray-600">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
@@ -118,10 +149,23 @@ const ListagemTarot = () => {
                             {formatCurrency(analysis.preco)}
                           </span>
                         )}
+                        {analysis.signo && (
+                          <span className="text-purple-600 font-medium">
+                            {analysis.signo}
+                          </span>
+                        )}
                       </div>
                     </div>
                     
                     <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleView(analysis.id)}
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -143,6 +187,14 @@ const ListagemTarot = () => {
                 </CardHeader>
                 
                 <CardContent className="pt-0">
+                  {/* Pergunta Principal */}
+                  {analysis.pergunta && (
+                    <div className="mb-4 p-3 bg-purple-50/50 rounded-lg">
+                      <h4 className="font-medium text-gray-700 mb-2">Pergunta:</h4>
+                      <p className="text-sm text-gray-600">{analysis.pergunta}</p>
+                    </div>
+                  )}
+
                   {/* Planos de Pagamento Mensais */}
                   {analysis.planoAtivo && analysis.planoData && (
                     <PlanoPaymentControl
@@ -168,6 +220,14 @@ const ListagemTarot = () => {
                     <div className="mt-4 p-3 bg-purple-50/50 rounded-lg">
                       <h4 className="font-medium text-gray-700 mb-2">Detalhes:</h4>
                       <p className="text-sm text-gray-600">{analysis.detalhesAdicionais}</p>
+                    </div>
+                  )}
+
+                  {/* Observações */}
+                  {analysis.observacoes && (
+                    <div className="mt-4 p-3 bg-yellow-50/50 rounded-lg">
+                      <h4 className="font-medium text-gray-700 mb-2">Observações:</h4>
+                      <p className="text-sm text-gray-600">{analysis.observacoes}</p>
                     </div>
                   )}
                 </CardContent>
