@@ -75,6 +75,21 @@ const Dashboard = () => {
   // Debug - Log atendimentos data
   console.log('Atendimentos no Dashboard:', atendimentos);
 
+  // Debug específico para dados semanais
+  console.log('=== DEBUG SEMANAL ===');
+  atendimentos.forEach((atendimento: any, index: number) => {
+    console.log(`Atendimento ${index + 1}:`, {
+      id: atendimento.id,
+      nome: atendimento.nome,
+      statusPagamento: atendimento.statusPagamento,
+      semanalAtivo: atendimento.semanalAtivo,
+      semanalData: atendimento.semanalData,
+      hasValidSemanalData: atendimento.semanalData && (atendimento.semanalData.semanas || atendimento.semanalData.valorSemanal),
+      shouldShowSemanal: atendimento.statusPagamento === 'parcelado' && atendimento.semanalData && 
+        (atendimento.semanalAtivo || atendimento.semanalData.semanas)
+    });
+  });
+
   return (
     <div className="min-h-screen bg-[#F1F7FF]">
       <DashboardHeader />
@@ -136,23 +151,42 @@ const Dashboard = () => {
         })}
 
         {/* Botões de Controle de Pagamento Semanal */}
-        {atendimentos.map((atendimento: any) => {
-          // Verifica se tem pagamento semanal ativo
-          if (atendimento.statusPagamento === 'parcelado' && atendimento.semanalData && 
-              (atendimento.semanalAtivo || atendimento.semanalData.semanas)) {
-            console.log('Renderizando SemanalPaymentButton para:', atendimento.nome);
-            return (
-              <SemanalPaymentButton
-                key={`semanal-${atendimento.id}`}
-                analysisId={atendimento.id}
-                clientName={atendimento.nome}
-                semanalData={atendimento.semanalData}
-                startDate={atendimento.dataAtendimento || atendimento.data}
-              />
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-[#0EA5E9] mb-4">Controles de Pagamento Semanal</h2>
+          {atendimentos.map((atendimento: any) => {
+            // Condições mais flexíveis para mostrar o controle semanal
+            const hasValidSemanalData = atendimento.semanalData && 
+              (atendimento.semanalData.semanas || atendimento.semanalData.valorSemanal);
+            
+            const shouldShow = (
+              atendimento.statusPagamento === 'parcelado' || 
+              atendimento.semanalAtivo || 
+              hasValidSemanalData
             );
-          }
-          return null;
-        })}
+
+            console.log(`Checando ${atendimento.nome}:`, {
+              shouldShow,
+              statusPagamento: atendimento.statusPagamento,
+              semanalAtivo: atendimento.semanalAtivo,
+              hasValidSemanalData,
+              semanalData: atendimento.semanalData
+            });
+
+            if (shouldShow && hasValidSemanalData) {
+              console.log('Renderizando SemanalPaymentButton para:', atendimento.nome);
+              return (
+                <SemanalPaymentButton
+                  key={`semanal-${atendimento.id}`}
+                  analysisId={atendimento.id}
+                  clientName={atendimento.nome}
+                  semanalData={atendimento.semanalData}
+                  startDate={atendimento.dataAtendimento || atendimento.data}
+                />
+              );
+            }
+            return null;
+          })}
+        </div>
       </div>
     </div>
   );
