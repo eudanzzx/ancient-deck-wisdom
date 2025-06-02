@@ -143,12 +143,22 @@ const ListagemTarot = () => {
                 </CardHeader>
                 
                 <CardContent className="pt-0">
-                  {/* Planos de Pagamento */}
+                  {/* Planos de Pagamento Mensais */}
                   {analysis.planoAtivo && analysis.planoData && (
                     <PlanoPaymentControl
                       analysisId={analysis.id}
                       clientName={analysis.nomeCliente}
                       planoData={analysis.planoData}
+                      startDate={analysis.dataInicio || analysis.dataAnalise}
+                    />
+                  )}
+                  
+                  {/* Planos de Pagamento Semanais */}
+                  {analysis.planoSemanalAtivo && analysis.planoSemanalData && (
+                    <PlanoSemanalPaymentControl
+                      analysisId={analysis.id}
+                      clientName={analysis.nomeCliente}
+                      planoSemanalData={analysis.planoSemanalData}
                       startDate={analysis.dataInicio || analysis.dataAnalise}
                     />
                   )}
