@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -177,13 +176,17 @@ const NovoAtendimento = () => {
           signo={signo}
           atencao={atencao}
           planoAtivo={planoAtivo}
+          semanalAtivo={semanalAtivo}
           planoData={planoData}
+          semanalData={semanalData}
           onInputChange={handleInputChange}
           onSelectChange={handleSelectChange}
           onDataNascimentoChange={handleDataNascimentoChange}
           onAtencaoChange={setAtencao}
           onPlanoAtivoChange={setPlanoAtivo}
+          onSemanalAtivoChange={setSemanalAtivo}
           onPlanoDataChange={handlePlanoDataChange}
+          onSemanalDataChange={handleSemanalDataChange}
         />
 
         <CardFooter className="flex justify-end gap-3 border-t border-white/10 px-0 py-4">
