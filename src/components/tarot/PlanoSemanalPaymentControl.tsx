@@ -125,8 +125,8 @@ const PlanoSemanalPaymentControl: React.FC<PlanoSemanalPaymentControlProps> = ({
         type: 'planoSemanal' as const,
         amount: parseFloat(planoSemanalData.valorSemanal),
         dueDate: week.dueDate,
-        week: week.week,
-        totalWeeks: parseInt(planoSemanalData.semanas),
+        month: week.week, // Using month field to store week number for compatibility
+        totalMonths: parseInt(planoSemanalData.semanas), // Using totalMonths to store total weeks for compatibility
         created: new Date().toISOString(),
         active: false
       };
