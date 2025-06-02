@@ -10,7 +10,7 @@ import useUserDataService from "@/services/userDataService";
 interface PlanoNotification {
   id: string;
   clientName: string;
-  type: 'plano';
+  type: 'plano' | 'planoSemanal';
   amount: number;
   dueDate: string;
   month: number;
@@ -136,7 +136,7 @@ const PlanoNotifications: React.FC = () => {
                         {notification.clientName}
                       </h4>
                       <Badge variant={isOverdue ? "destructive" : "secondary"}>
-                        Mês {notification.month}/{notification.totalMonths}
+                        {notification.type === 'planoSemanal' ? 'Semana' : 'Mês'} {notification.month}/{notification.totalMonths}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-slate-600">

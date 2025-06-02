@@ -10,7 +10,7 @@ import useUserDataService from "@/services/userDataService";
 interface TarotPlanoNotification {
   id: string;
   clientName: string;
-  type: 'plano';
+  type: 'plano' | 'planoSemanal';
   amount: number;
   dueDate: string;
   month: number;
@@ -51,7 +51,7 @@ const TarotPlanoNotifications: React.FC = () => {
           `🔮 Pagamento do plano de tarot de ${notification.clientName} vence hoje!`,
           {
             duration: 8000,
-            description: `Valor: R$ ${notification.amount.toFixed(2)} - Mês ${notification.month}/${notification.totalMonths}`,
+            description: `Valor: R$ ${notification.amount.toFixed(2)} - ${notification.type === 'planoSemanal' ? 'Semana' : 'Mês'} ${notification.month}/${notification.totalMonths}`,
             action: {
               label: "Ver detalhes",
               onClick: () => console.log("Detalhes do plano:", notification)
@@ -140,7 +140,7 @@ const TarotPlanoNotifications: React.FC = () => {
                         variant={isOverdue ? "destructive" : "secondary"}
                         className={isOverdue ? "" : "bg-[#6B21A8]/10 text-[#6B21A8] border-[#6B21A8]/20"}
                       >
-                        Mês {notification.month}/{notification.totalMonths}
+                        {notification.type === 'planoSemanal' ? 'Semana' : 'Mês'} {notification.month}/{notification.totalMonths}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-slate-600">
