@@ -29,16 +29,24 @@ const SemanalPaymentNotifications = () => {
   const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const getNextFriday = (date: Date): Date => {
-    const nextFriday = new Date(date);
-    const dayOfWeek = date.getDay();
-    const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
-    if (daysUntilFriday === 0 && date.getDay() === 5) {
+  const getNextFriday = (fromDate: Date): Date => {
+    const nextFriday = new Date(fromDate);
+    const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
+    
+    // Calcular quantos dias faltam até sexta-feira (dia 5)
+    let daysToAdd;
+    if (currentDay === 5) {
       // Se hoje é sexta, próxima sexta é em 7 dias
-      nextFriday.setDate(date.getDate() + 7);
+      daysToAdd = 7;
+    } else if (currentDay < 5) {
+      // Se é antes de sexta na semana atual
+      daysToAdd = 5 - currentDay;
     } else {
-      nextFriday.setDate(date.getDate() + daysUntilFriday);
+      // Se é sábado (6) ou domingo (0), próxima sexta
+      daysToAdd = currentDay === 6 ? 6 : 5;
     }
+    
+    nextFriday.setDate(nextFriday.getDate() + daysToAdd);
     return nextFriday;
   };
 
@@ -51,15 +59,9 @@ const SemanalPaymentNotifications = () => {
       if (plano.type === 'semanal' && plano.active) {
         const semanalPlano = plano as PlanoSemanal;
         
-        // Calcular a próxima sexta-feira a partir da data de vencimento original
-        const originalDueDate = new Date(semanalPlano.dueDate);
-        let nextFriday = getNextFriday(originalDueDate);
+        // Calcular a próxima sexta-feira a partir de hoje
+        const nextFriday = getNextFriday(today);
         
-        // Se a data original já passou, calcular a próxima sexta apropriada
-        while (nextFriday < today) {
-          nextFriday.setDate(nextFriday.getDate() + 7);
-        }
-
         const timeDiff = nextFriday.getTime() - today.getTime();
         const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24));
 

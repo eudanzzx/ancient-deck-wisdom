@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -37,18 +36,24 @@ const NovoAtendimento = () => {
     setSemanalAtivo,
   } = useAtendimentoForm();
 
-  const getNextFriday = (startDate: Date): Date => {
-    const nextFriday = new Date(startDate);
-    const dayOfWeek = startDate.getDay();
-    const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+  const getNextFriday = (fromDate: Date): Date => {
+    const nextFriday = new Date(fromDate);
+    const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
-    if (daysUntilFriday === 0 && startDate.getDay() === 5) {
-      // Se a data de início é uma sexta, próxima sexta é em 7 dias
-      nextFriday.setDate(startDate.getDate() + 7);
+    // Calcular quantos dias faltam até sexta-feira (dia 5)
+    let daysToAdd;
+    if (currentDay === 5) {
+      // Se a data é sexta, próxima sexta é em 7 dias
+      daysToAdd = 7;
+    } else if (currentDay < 5) {
+      // Se é antes de sexta na semana atual
+      daysToAdd = 5 - currentDay;
     } else {
-      nextFriday.setDate(startDate.getDate() + daysUntilFriday);
+      // Se é sábado (6) ou domingo (0), próxima sexta
+      daysToAdd = currentDay === 6 ? 6 : 5;
     }
     
+    nextFriday.setDate(nextFriday.getDate() + daysToAdd);
     return nextFriday;
   };
 
@@ -82,11 +87,14 @@ const NovoAtendimento = () => {
     
     for (let i = 1; i <= parseInt(semanas); i++) {
       // Primeira sexta-feira após a data de início
-      let dueDate = getNextFriday(startDate);
-      
-      // Para semanas subsequentes, adicionar 7 dias para cada semana
-      if (i > 1) {
-        dueDate.setDate(dueDate.getDate() + ((i - 1) * 7));
+      let dueDate;
+      if (i === 1) {
+        dueDate = getNextFriday(startDate);
+      } else {
+        // Para semanas subsequentes, adicionar 7 dias para cada semana adicional
+        const previousWeekDate = getNextFriday(startDate);
+        previousWeekDate.setDate(previousWeekDate.getDate() + ((i - 1) * 7));
+        dueDate = previousWeekDate;
       }
       
       notifications.push({
