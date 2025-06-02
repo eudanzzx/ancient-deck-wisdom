@@ -25,6 +25,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
+import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
+import SemanalPaymentControl from "@/components/tarot/SemanalPaymentControl";
 
 interface Atendimento {
   id: string;
@@ -47,6 +49,11 @@ interface Atendimento {
     meses: string;
     valorMensal: string;
   } | null;
+  semanalAtivo?: boolean;
+  semanalData?: {
+    semanas: string;
+    valorSemanal: string;
+  };
 }
 
 interface AtendimentosTableProps {
@@ -57,6 +64,7 @@ interface AtendimentosTableProps {
 const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onDeleteAtendimento }) => {
   const navigate = useNavigate();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expandedPayments, setExpandedPayments] = useState<Set<string>>(new Set());
 
   const toggleRowExpansion = (id: string) => {
     const newExpanded = new Set(expandedRows);
@@ -66,6 +74,16 @@ const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onD
       newExpanded.add(id);
     }
     setExpandedRows(newExpanded);
+  };
+
+  const togglePaymentExpansion = (id: string) => {
+    const newExpanded = new Set(expandedPayments);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedPayments(newExpanded);
   };
 
   const formatDate = (dateString: string) => {
@@ -96,6 +114,11 @@ const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onD
       default:
         return tipo;
     }
+  };
+
+  const hasPaymentControls = (atendimento: Atendimento) => {
+    return (atendimento.planoAtivo && atendimento.planoData) || 
+           (atendimento.semanalAtivo && atendimento.semanalData);
   };
 
   if (atendimentos.length === 0) {
@@ -140,7 +163,21 @@ const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onD
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div>
-                          <div className="font-medium text-slate-900">{atendimento.nome}</div>
+                          <div className="font-medium text-slate-900 flex items-center gap-2">
+                            {atendimento.nome}
+                            {hasPaymentControls(atendimento) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => togglePaymentExpansion(atendimento.id)}
+                                className="h-6 w-6 p-0 hover:bg-blue-100"
+                              >
+                                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                                  expandedPayments.has(atendimento.id) ? 'rotate-180' : ''
+                                }`} />
+                              </Button>
+                            )}
+                          </div>
                           {atendimento.signo && (
                             <div className="text-sm text-slate-500">{atendimento.signo}</div>
                           )}
@@ -170,6 +207,12 @@ const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onD
                           <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">
                             <CreditCard className="h-3 w-3 mr-1" />
                             {atendimento.planoData.meses}x
+                          </Badge>
+                        )}
+                        {atendimento.semanalAtivo && atendimento.semanalData && (
+                          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {atendimento.semanalData.semanas}sem
                           </Badge>
                         )}
                         {atendimento.planoAtivo && atendimento.planoData && (
@@ -235,6 +278,30 @@ const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onD
                       <TableCell colSpan={7} className="p-0">
                         <div className="p-4 bg-slate-50/50">
                           <PlanoMonthsVisualizer atendimento={atendimento} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {expandedPayments.has(atendimento.id) && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="p-0">
+                        <div className="p-4 bg-slate-50/50 space-y-4">
+                          {atendimento.planoAtivo && atendimento.planoData && (
+                            <PlanoPaymentControl
+                              analysisId={atendimento.id}
+                              clientName={atendimento.nome}
+                              planoData={atendimento.planoData}
+                              startDate={atendimento.dataAtendimento}
+                            />
+                          )}
+                          {atendimento.semanalAtivo && atendimento.semanalData && (
+                            <SemanalPaymentControl
+                              analysisId={atendimento.id}
+                              clientName={atendimento.nome}
+                              semanalData={atendimento.semanalData}
+                              startDate={atendimento.dataAtendimento}
+                            />
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
