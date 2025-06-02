@@ -121,12 +121,12 @@ const EditarAnaliseFrequencial = () => {
       return;
     }
 
-    setNomeCliente(analise.nomeCliente || "");
-    setDataNascimento(analise.dataNascimento || "");
-    setSigno(analise.signo || "");
-    setAtencao(analise.atencao || false);
-    setDataInicio(analise.dataInicio || "");
-    setPreco(analise.preco || "");
+    setNomeCliente(analise.nomeCliente || analise.clientName || "");
+    setDataNascimento(analise.dataNascimento || analise.clientBirthdate || "");
+    setSigno(analise.signo || analise.clientSign || "");
+    setAtencao(analise.atencao || analise.attentionFlag || false);
+    setDataInicio(analise.dataInicio || analise.analysisDate || "");
+    setPreco(analise.preco || analise.value || "");
     setAnaliseAntes(analise.analiseAntes || "");
     setAnaliseDepois(analise.analiseDepois || "");
     setPlanoAtivo(analise.planoAtivo || false);
@@ -134,7 +134,17 @@ const EditarAnaliseFrequencial = () => {
 
     // Load reminders only once when the component mounts
     if (!initialLembretesLoaded) {
-      setLembretes(analise.lembretes || [{ id: 1, texto: "", dias: 7 }]);
+      // Handle both array and string formats for lembretes
+      let lembretesToSet = [{ id: 1, texto: "", dias: 7 }];
+      if (analise.lembretes) {
+        if (Array.isArray(analise.lembretes)) {
+          lembretesToSet = analise.lembretes;
+        } else if (typeof analise.lembretes === 'string') {
+          // Convert string format to array format
+          lembretesToSet = [{ id: 1, texto: analise.lembretes, dias: 7 }];
+        }
+      }
+      setLembretes(lembretesToSet);
       setInitialLembretesLoaded(true);
     }
   }, [id, getTarotAnalyses, initialLembretesLoaded]);
@@ -290,6 +300,13 @@ const EditarAnaliseFrequencial = () => {
     // Preparar dados da análise no formato TarotAnalysis
     const updatedAnalise = {
       id: id,
+      // Required TarotAnalysis properties
+      clientName: nomeCliente,
+      analysisDate: dataInicio,
+      analysisType: "Análise Frequencial",
+      paymentStatus: 'pago' as const,
+      value: preco || "150",
+      // Legacy fields for backward compatibility
       nomeCliente,
       dataNascimento,
       signo,
@@ -309,7 +326,9 @@ const EditarAnaliseFrequencial = () => {
       dataCriacao: new Date().toISOString(),
       finalizado: false,
       status: 'ativo' as const,
-      atencaoFlag: atencao
+      atencaoFlag: atencao,
+      valor: preco || "150",
+      tipoServico: "Tarot Frequencial"
     };
 
     // Get current analyses

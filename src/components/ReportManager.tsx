@@ -17,7 +17,7 @@ const ReportManager: React.FC<ReportManagerProps> = ({ variant = 'home' }) => {
     const clientsMap = new Map();
 
     analises.forEach(analise => {
-      const clientName = analise.nomeCliente;
+      const clientName = analise.nomeCliente || analise.clientName;
       if (clientsMap.has(clientName)) {
         clientsMap.get(clientName).count++;
         clientsMap.get(clientName).consultations.push(analise);
@@ -53,7 +53,14 @@ const ReportManager: React.FC<ReportManagerProps> = ({ variant = 'home' }) => {
 
   // Para home, usamos atendimentos normais
   const atendimentos = getAtendimentos();
-  const clients = getClientsWithConsultations();
+  const clientsWithConsultations = getClientsWithConsultations();
+  
+  // Transform the client data to match expected format
+  const clients = clientsWithConsultations.map(client => ({
+    name: client.nome,
+    count: client.consultations.length,
+    consultations: client.consultations
+  }));
 
   return (
     <div className="space-y-4">

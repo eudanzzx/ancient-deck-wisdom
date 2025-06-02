@@ -1,4 +1,3 @@
-
 import { Plano } from "@/types/payment";
 
 interface AtendimentoData {
@@ -77,7 +76,16 @@ interface TarotAnalysis {
   preco?: string;
   analiseAntes?: string;
   analiseDepois?: string;
-  lembretes?: string;
+  lembretes?: any;
+  finalizado?: boolean;
+  tipoServico?: string;
+  valor?: string;
+  pergunta?: string;
+  resposta?: string;
+  dataAnalise?: string;
+  dataCriacao?: string;
+  status?: string;
+  dataAtendimento?: string;
 }
 
 const useUserDataService = () => {

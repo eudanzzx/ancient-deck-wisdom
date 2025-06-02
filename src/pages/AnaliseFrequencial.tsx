@@ -250,6 +250,13 @@ const AnaliseFrequencial = () => {
       // Preparar dados da análise no formato correto
       const novaAnalise = {
         id: novoId,
+        // Required TarotAnalysis properties
+        clientName: nomeCliente,
+        analysisDate: new Date().toISOString(),
+        analysisType: "Análise Frequencial",
+        paymentStatus: 'pago' as const,
+        value: preco || "150",
+        // Legacy fields for backward compatibility
         nomeCliente,
         dataNascimento,
         signo,
