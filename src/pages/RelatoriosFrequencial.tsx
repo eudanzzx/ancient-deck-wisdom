@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,7 +6,6 @@ import { CalendarClock, CheckCircle2, AlertTriangle } from "lucide-react";
 import useUserDataService from "@/services/userDataService";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { AnaliseFrequencial } from "@/types";
 import {
   Table,
   TableBody,
@@ -138,7 +138,7 @@ const RelatoriosFrequencial = () => {
               {analises.map((analise) => (
                 <TableRow key={analise.id} className="cursor-pointer hover:bg-gray-100" onClick={() => navigate(`/editar-tarot/${analise.id}`)}>
                   <TableCell>
-                    <Badge variant={analise.finalizado ? "success" : "secondary"}>
+                    <Badge variant={analise.finalizado ? "default" : "secondary"}>
                       {analise.finalizado ? "Finalizado" : "Em Andamento"}
                     </Badge>
                   </TableCell>
