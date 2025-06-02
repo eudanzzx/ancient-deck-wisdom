@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +55,7 @@ const RelatoriosFrequencial = () => {
       analiseAntes: analise.analiseAntes || "",
       analiseDepois: analise.analiseDepois || "",
       lembretes: typeof analise.lembretes === 'string' ? [] : (analise.lembretes || []),
-      atencaoFlag: analise.atencaoFlag || analise.attentionFlag || analise.atencao || false
+      atencaoFlag: analise.atencaoFlag || analise.attentionFlag || false
     }));
     
     setAnalises(analisesFormatadas);
@@ -156,3 +157,4 @@ const RelatoriosFrequencial = () => {
 };
 
 export default RelatoriosFrequencial;
+
