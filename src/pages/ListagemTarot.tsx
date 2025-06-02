@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +10,8 @@ import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
-import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
-import PlanoSemanalPaymentControl from "@/components/tarot/PlanoSemanalPaymentControl";
+import PlanoPaymentButton from "@/components/tarot/PlanoPaymentButton";
+import PlanoSemanalPaymentButton from "@/components/tarot/PlanoSemanalPaymentButton";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -255,7 +256,7 @@ const ListagemTarot = () => {
 
                   {/* Planos de Pagamento Mensais */}
                   {analysis.planoAtivo && analysis.planoData && (
-                    <PlanoPaymentControl
+                    <PlanoPaymentButton
                       analysisId={analysis.id}
                       clientName={analysis.nomeCliente}
                       planoData={analysis.planoData}
@@ -265,7 +266,7 @@ const ListagemTarot = () => {
                   
                   {/* Planos de Pagamento Semanais */}
                   {analysis.planoSemanalAtivo && analysis.planoSemanalData && (
-                    <PlanoSemanalPaymentControl
+                    <PlanoSemanalPaymentButton
                       analysisId={analysis.id}
                       clientName={analysis.nomeCliente}
                       planoSemanalData={analysis.planoSemanalData}
