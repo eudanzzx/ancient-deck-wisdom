@@ -1,7 +1,6 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { Cake } from "lucide-react";
 
 interface FormData {
   nome: string;

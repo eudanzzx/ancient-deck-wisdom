@@ -130,12 +130,12 @@ const Index = () => {
     };
   }, [atendimentos, periodoVisualizacao]);
 
-  const checkBirthdaysToday = useCallback((atendimentos: Atendimento[]) => {
+  const checkBirthdaysToday = useCallback((atendimentosList: Atendimento[]) => {
     const today = new Date();
     const todayDay = today.getDate();
     const todayMonth = today.getMonth() + 1;
     
-    const birthdayClient = atendimentos.find(atendimento => {
+    const birthdayClient = atendimentosList.find(atendimento => {
       if (!atendimento.dataNascimento) return false;
       
       try {
@@ -164,7 +164,7 @@ const Index = () => {
     console.log('Index - Regular atendimentos loaded:', regularAtendimentos.length);
     setAtendimentos(regularAtendimentos);
     checkBirthdaysToday(regularAtendimentos);
-  }, [getAtendimentos, checkBirthdaysToday]);
+  }, []); // Remove getAtendimentos from dependencies to prevent infinite loop
 
   const getPeriodoLabel = useCallback(() => {
     switch(periodoVisualizacao) {
