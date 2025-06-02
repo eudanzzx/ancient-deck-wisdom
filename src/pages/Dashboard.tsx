@@ -116,6 +116,9 @@ const Dashboard = () => {
           onDeleteAtendimento={handleDeleteAtendimento}
         />
 
+        {/* Debug - Vamos ver os dados dos atendimentos */}
+        {console.log('Atendimentos no Dashboard:', atendimentos)}
+
         {/* Controles de Pagamento para Atendimentos com Planos */}
         {atendimentos.map((atendimento: any) => {
           if (atendimento.planoAtivo && atendimento.planoData) {
@@ -134,7 +137,18 @@ const Dashboard = () => {
 
         {/* Controles de Pagamento para Atendimentos com Recorrência Semanal */}
         {atendimentos.map((atendimento: any) => {
-          if (atendimento.semanalAtivo && atendimento.semanalData) {
+          console.log('Verificando atendimento para semanal:', {
+            id: atendimento.id,
+            nome: atendimento.nome,
+            semanalAtivo: atendimento.semanalAtivo,
+            semanalData: atendimento.semanalData,
+            statusPagamento: atendimento.statusPagamento
+          });
+
+          // Verifica se tem pagamento semanal ativo
+          if (atendimento.statusPagamento === 'parcelado' && atendimento.semanalData && 
+              (atendimento.semanalAtivo || atendimento.semanalData.semanas)) {
+            console.log('Renderizando SemanalPaymentControl para:', atendimento.nome);
             return (
               <SemanalPaymentControl
                 key={`semanal-${atendimento.id}`}
