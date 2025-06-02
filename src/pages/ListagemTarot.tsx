@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +30,7 @@ import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import TarotCounterPriorityNotifications from "@/components/TarotCounterPriorityNotifications";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
+import SemanalPaymentControl from "@/components/tarot/SemanalPaymentControl";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -548,6 +548,16 @@ const ListagemTarot = () => {
                               analysisId={analise.id}
                               clientName={analise.nomeCliente}
                               planoData={analise.planoData}
+                              startDate={analise.dataInicio || analise.dataAtendimento || new Date().toISOString().split('T')[0]}
+                            />
+                          )}
+
+                          {/* Controle de Pagamentos Semanal - aparece apenas se o semanal estiver ativo */}
+                          {analise.semanalAtivo && analise.semanalData && (
+                            <SemanalPaymentControl
+                              analysisId={analise.id}
+                              clientName={analise.nomeCliente}
+                              semanalData={analise.semanalData}
                               startDate={analise.dataInicio || analise.dataAtendimento || new Date().toISOString().split('T')[0]}
                             />
                           )}

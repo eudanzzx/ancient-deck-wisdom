@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 interface Atendimento {
@@ -325,6 +324,24 @@ const useUserDataService = () => {
     });
   };
 
+  const getSemanalPayments = (analysisId: string): boolean[] => {
+    try {
+      const data = localStorage.getItem(`semanalPayments_${analysisId}`);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error('Error getting semanal payments:', error);
+      return [];
+    }
+  };
+
+  const saveSemanalPayments = (analysisId: string, payments: boolean[]): void => {
+    try {
+      localStorage.setItem(`semanalPayments_${analysisId}`, JSON.stringify(payments));
+    } catch (error) {
+      console.error('Error saving semanal payments:', error);
+    }
+  };
+
   return {
     // Atendimentos
     getAtendimentos,
@@ -345,7 +362,9 @@ const useUserDataService = () => {
     savePlanos,
     // Utilities
     checkBirthdays,
-    initialized
+    initialized,
+    getSemanalPayments,
+    saveSemanalPayments
   };
 };
 
