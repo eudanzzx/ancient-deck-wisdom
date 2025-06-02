@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,11 +29,14 @@ const SemanalPaymentNotifications = () => {
   const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const getNextFriday = (fromDate: Date): Date => {
-    const nextFriday = new Date(fromDate);
-    nextFriday.setHours(0, 0, 0, 0);
+  const getNextFridays = (totalWeeks: number): Date[] => {
+    const fridays: Date[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
+    // Encontrar a próxima sexta-feira a partir de hoje
+    const nextFriday = new Date(today);
+    const currentDay = today.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
     let daysToAdd;
     if (currentDay === 5) {
@@ -46,20 +50,22 @@ const SemanalPaymentNotifications = () => {
       daysToAdd = 6;
     }
     
-    nextFriday.setDate(nextFriday.getDate() + daysToAdd);
+    nextFriday.setDate(today.getDate() + daysToAdd);
     
-    // Verificar se realmente é sexta-feira (5)
-    if (nextFriday.getDay() !== 5) {
-      console.error('Erro no cálculo da sexta-feira:', nextFriday.getDay(), 'deveria ser 5');
+    // Criar array com as próximas sextas-feiras
+    for (let i = 0; i < totalWeeks; i++) {
+      const friday = new Date(nextFriday);
+      friday.setDate(nextFriday.getDate() + (i * 7));
+      fridays.push(friday);
     }
     
-    return nextFriday;
+    return fridays;
   };
 
   const checkPaymentNotifications = () => {
     const planos = getPlanos() || [];
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time for accurate comparison
+    today.setHours(0, 0, 0, 0);
     const upcoming: UpcomingPayment[] = [];
 
     planos.forEach((plano) => {
@@ -67,7 +73,8 @@ const SemanalPaymentNotifications = () => {
         const semanalPlano = plano as PlanoSemanal;
         
         // Calcular a próxima sexta-feira a partir de hoje
-        const nextFriday = getNextFriday(today);
+        const nextFridays = getNextFridays(1);
+        const nextFriday = nextFridays[0];
         
         const timeDiff = nextFriday.getTime() - today.getTime();
         const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24));

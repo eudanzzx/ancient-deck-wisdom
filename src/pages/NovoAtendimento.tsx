@@ -36,15 +36,18 @@ const NovoAtendimento = () => {
     setSemanalAtivo,
   } = useAtendimentoForm();
 
-  const getNextFriday = (fromDate: Date): Date => {
-    const nextFriday = new Date(fromDate);
-    nextFriday.setHours(0, 0, 0, 0);
+  const getNextFridays = (totalWeeks: number): Date[] => {
+    const fridays: Date[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    const currentDay = nextFriday.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
+    // Encontrar a próxima sexta-feira a partir de hoje
+    const nextFriday = new Date(today);
+    const currentDay = today.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
     let daysToAdd;
     if (currentDay === 5) {
-      // Se a data é sexta-feira, próxima sexta é em 7 dias
+      // Se hoje é sexta-feira, próxima sexta é em 7 dias
       daysToAdd = 7;
     } else if (currentDay < 5) {
       // Se é antes de sexta na semana atual (domingo a quinta)
@@ -54,14 +57,16 @@ const NovoAtendimento = () => {
       daysToAdd = 6;
     }
     
-    nextFriday.setDate(nextFriday.getDate() + daysToAdd);
+    nextFriday.setDate(today.getDate() + daysToAdd);
     
-    // Verificar se realmente é sexta-feira (5)
-    if (nextFriday.getDay() !== 5) {
-      console.error('Erro no cálculo da sexta-feira:', nextFriday.getDay(), 'deveria ser 5');
+    // Criar array com as próximas sextas-feiras
+    for (let i = 0; i < totalWeeks; i++) {
+      const friday = new Date(nextFriday);
+      friday.setDate(nextFriday.getDate() + (i * 7));
+      fridays.push(friday);
     }
     
-    return nextFriday;
+    return fridays;
   };
 
   const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
@@ -90,33 +95,22 @@ const NovoAtendimento = () => {
 
   const createSemanalNotifications = (nomeCliente: string, semanas: string, valorSemanal: string, dataInicio: string) => {
     const notifications: PlanoSemanal[] = [];
-    const startDate = new Date(dataInicio);
-    startDate.setHours(0, 0, 0, 0);
+    const totalWeeks = parseInt(semanas);
+    const fridays = getNextFridays(totalWeeks);
     
-    for (let i = 1; i <= parseInt(semanas); i++) {
-      let dueDate;
-      if (i === 1) {
-        // Primeira sexta-feira após a data de início
-        dueDate = getNextFriday(startDate);
-      } else {
-        // Para semanas subsequentes, adicionar 7 dias a partir da primeira sexta
-        const firstFriday = getNextFriday(startDate);
-        dueDate = new Date(firstFriday);
-        dueDate.setDate(firstFriday.getDate() + ((i - 1) * 7));
-      }
-      
+    fridays.forEach((friday, index) => {
       notifications.push({
-        id: `semanal-${Date.now()}-${i}`,
+        id: `semanal-${Date.now()}-${index + 1}`,
         clientName: nomeCliente,
         type: 'semanal',
         amount: parseFloat(valorSemanal),
-        dueDate: dueDate.toISOString().split('T')[0],
-        week: i,
-        totalWeeks: parseInt(semanas),
+        dueDate: friday.toISOString().split('T')[0],
+        week: index + 1,
+        totalWeeks: totalWeeks,
         created: new Date().toISOString(),
         active: true
       });
-    }
+    });
     
     return notifications;
   };
