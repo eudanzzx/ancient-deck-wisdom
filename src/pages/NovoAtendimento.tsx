@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,27 +40,27 @@ const NovoAtendimento = () => {
   const getNextFridays = (totalWeeks: number): Date[] => {
     const fridays: Date[] = [];
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
-    // Encontrar a próxima sexta-feira a partir de hoje
-    const nextFriday = new Date(today);
+    // Encontrar a próxima sexta-feira
+    let nextFriday = new Date(today);
     const currentDay = today.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
     
-    let daysToAdd;
+    // Calcular quantos dias adicionar para chegar na próxima sexta-feira
+    let daysUntilFriday;
     if (currentDay === 5) {
-      // Se hoje é sexta-feira, próxima sexta é em 7 dias
-      daysToAdd = 7;
+      // Se hoje é sexta-feira, a próxima é em 7 dias
+      daysUntilFriday = 7;
     } else if (currentDay < 5) {
-      // Se é antes de sexta na semana atual (domingo a quinta)
-      daysToAdd = 5 - currentDay;
+      // Se é antes de sexta-feira (domingo a quinta)
+      daysUntilFriday = 5 - currentDay;
     } else {
-      // Se é sábado (6), próxima sexta é em 6 dias
-      daysToAdd = 6;
+      // Se é sábado (6)
+      daysUntilFriday = 6;
     }
     
-    nextFriday.setDate(today.getDate() + daysToAdd);
+    nextFriday.setDate(today.getDate() + daysUntilFriday);
     
-    // Criar array com as próximas sextas-feiras
+    // Gerar as próximas sextas-feiras
     for (let i = 0; i < totalWeeks; i++) {
       const friday = new Date(nextFriday);
       friday.setDate(nextFriday.getDate() + (i * 7));
