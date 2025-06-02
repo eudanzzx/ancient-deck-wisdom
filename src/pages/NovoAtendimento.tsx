@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,17 +22,13 @@ const NovoAtendimento = () => {
     signo,
     atencao,
     planoAtivo,
-    semanalAtivo,
     planoData,
-    semanalData,
     handleInputChange,
     handleSelectChange,
     handlePlanoDataChange,
-    handleSemanalDataChange,
     handleDataNascimentoChange,
     setAtencao,
     setPlanoAtivo,
-    setSemanalAtivo,
   } = useAtendimentoForm();
 
   const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
@@ -58,30 +55,6 @@ const NovoAtendimento = () => {
     return notifications;
   };
 
-  const createSemanalNotifications = (nomeCliente: string, semanas: string, valorSemanal: string, dataInicio: string) => {
-    const notifications = [];
-    const startDate = new Date(dataInicio);
-    
-    for (let i = 1; i <= parseInt(semanas); i++) {
-      const notificationDate = new Date(startDate);
-      notificationDate.setDate(notificationDate.getDate() + (i * 7));
-      
-      notifications.push({
-        id: `semanal-${Date.now()}-${i}`,
-        clientName: nomeCliente,
-        type: 'semanal',
-        amount: parseFloat(valorSemanal),
-        dueDate: notificationDate.toISOString().split('T')[0],
-        week: i,
-        totalWeeks: parseInt(semanas),
-        created: new Date().toISOString(),
-        active: true
-      });
-    }
-    
-    return notifications;
-  };
-
   const handleSaveAndFinish = () => {
     const existingAtendimentos = getAtendimentos();
     
@@ -94,55 +67,29 @@ const NovoAtendimento = () => {
       data: new Date().toISOString(),
       planoAtivo,
       planoData: planoAtivo ? planoData : null,
-      semanalAtivo,
-      semanalData: semanalAtivo ? semanalData : null,
     };
     
     existingAtendimentos.push(novoAtendimento);
     saveAtendimentos(existingAtendimentos);
     
-    let notificationsCreated = [];
-    
     // Se tem plano ativo, criar as notificações
     if (planoAtivo && planoData.meses && planoData.valorMensal && formData.dataAtendimento) {
-      const planoNotifications = createPlanoNotifications(
+      const notifications = createPlanoNotifications(
         formData.nome,
         planoData.meses,
         planoData.valorMensal,
         formData.dataAtendimento
       );
-      notificationsCreated.push(...planoNotifications);
-    }
-    
-    // Se tem semanal ativo, criar as notificações
-    if (semanalAtivo && semanalData.semanas && semanalData.valorSemanal && formData.dataAtendimento) {
-      const semanalNotifications = createSemanalNotifications(
-        formData.nome,
-        semanalData.semanas,
-        semanalData.valorSemanal,
-        formData.dataAtendimento
-      );
-      notificationsCreated.push(...semanalNotifications);
-    }
-    
-    // Salvar todas as notificações
-    if (notificationsCreated.length > 0) {
+      
+      // Salvar as notificações de plano
       const existingPlanos = getPlanos() || [];
-      const updatedPlanos = [...existingPlanos, ...notificationsCreated];
+      const updatedPlanos = [...existingPlanos, ...notifications];
       savePlanos(updatedPlanos);
+      
+      toast.success(`Atendimento salvo! Plano de ${planoData.meses} meses criado com sucesso.`);
+    } else {
+      toast.success("Atendimento salvo com sucesso!");
     }
-    
-    // Mensagem de sucesso
-    let successMessage = "Atendimento salvo com sucesso!";
-    if (planoAtivo && semanalAtivo) {
-      successMessage = `Atendimento salvo! Plano de ${planoData.meses} meses e recorrência de ${semanalData.semanas} semanas criados.`;
-    } else if (planoAtivo) {
-      successMessage = `Atendimento salvo! Plano de ${planoData.meses} meses criado com sucesso.`;
-    } else if (semanalAtivo) {
-      successMessage = `Atendimento salvo! Recorrência de ${semanalData.semanas} semanas criada com sucesso.`;
-    }
-    
-    toast.success(successMessage);
     
     // Navegar diretamente de volta
     navigate("/");
@@ -180,17 +127,13 @@ const NovoAtendimento = () => {
           signo={signo}
           atencao={atencao}
           planoAtivo={planoAtivo}
-          semanalAtivo={semanalAtivo}
           planoData={planoData}
-          semanalData={semanalData}
           onInputChange={handleInputChange}
           onSelectChange={handleSelectChange}
           onDataNascimentoChange={handleDataNascimentoChange}
           onAtencaoChange={setAtencao}
           onPlanoAtivoChange={setPlanoAtivo}
-          onSemanalAtivoChange={setSemanalAtivo}
           onPlanoDataChange={handlePlanoDataChange}
-          onSemanalDataChange={handleSemanalDataChange}
         />
 
         <CardFooter className="flex justify-end gap-3 border-t border-white/10 px-0 py-4">

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 interface Atendimento {
@@ -78,13 +79,11 @@ interface TarotAnalysis {
 interface Plano {
   id: string;
   clientName: string;
-  type: 'plano' | 'semanal';
+  type: 'plano';
   amount: number;
   dueDate: string;
-  month?: number;
-  totalMonths?: number;
-  week?: number;
-  totalWeeks?: number;
+  month: number;
+  totalMonths: number;
   created: string;
   active: boolean;
 }
@@ -326,24 +325,6 @@ const useUserDataService = () => {
     });
   };
 
-  const getSemanalPayments = (analysisId: string): boolean[] => {
-    try {
-      const data = localStorage.getItem(`semanalPayments_${analysisId}`);
-      return data ? JSON.parse(data) : [];
-    } catch (error) {
-      console.error('Error getting semanal payments:', error);
-      return [];
-    }
-  };
-
-  const saveSemanalPayments = (analysisId: string, payments: boolean[]): void => {
-    try {
-      localStorage.setItem(`semanalPayments_${analysisId}`, JSON.stringify(payments));
-    } catch (error) {
-      console.error('Error saving semanal payments:', error);
-    }
-  };
-
   return {
     // Atendimentos
     getAtendimentos,
@@ -364,9 +345,7 @@ const useUserDataService = () => {
     savePlanos,
     // Utilities
     checkBirthdays,
-    initialized,
-    getSemanalPayments,
-    saveSemanalPayments
+    initialized
   };
 };
 

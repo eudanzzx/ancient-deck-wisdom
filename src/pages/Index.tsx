@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useUserDataService from "@/services/userDataService";
 import DashboardBirthdayNotifications from "@/components/DashboardBirthdayNotifications";
@@ -7,14 +8,10 @@ import PeriodSelector from "@/components/dashboard/PeriodSelector";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import AtendimentosTable from "@/components/dashboard/AtendimentosTable";
 import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
-import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
-import SemanalPaymentControl from "@/components/tarot/SemanalPaymentControl";
-import { CalendarDays, Users, Activity, BellRing, Search, Sparkles, CreditCard, Calendar, ChevronDown } from "lucide-react";
+import { CalendarDays, Users, Activity, BellRing, Search, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import TratamentoCountdown from "@/components/TratamentoCountdown";
 import Logo from "@/components/Logo";
 
@@ -34,16 +31,6 @@ interface Atendimento {
   indicacao?: string;
   atencaoFlag?: boolean;
   atencaoNota?: string;
-  planoAtivo?: boolean;
-  planoData?: {
-    meses: string;
-    valorMensal: string;
-  } | null;
-  semanalAtivo?: boolean;
-  semanalData?: {
-    semanas: string;
-    valorSemanal: string;
-  };
 }
 
 // Componente otimizado com React.memo e animações aprimoradas
@@ -66,13 +53,11 @@ const DashboardCard = React.memo(({ title, value, icon, delay = "0s" }: { title:
 DashboardCard.displayName = "DashboardCard";
 
 const Index = () => {
-  const { getAtendimentos, saveAtendimentos, getTarotAnalyses } = useUserDataService();
+  const { getAtendimentos, saveAtendimentos } = useUserDataService();
   const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
-  const [analises, setAnalises] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [periodoVisualizacao, setPeriodoVisualizacao] = useState("semana");
   const [aniversarianteHoje, setAniversarianteHoje] = useState<{nome: string, dataNascimento: string} | null>(null);
-  const [expandedControls, setExpandedControls] = useState<{[key: string]: boolean}>({});
 
   // Memoizar atendimentos filtrados para evitar recálculos desnecessários
   const filteredAtendimentos = useMemo(() => {
@@ -175,13 +160,11 @@ const Index = () => {
     const regularAtendimentos = getAtendimentos().filter((atendimento: Atendimento) => 
       atendimento.tipoServico !== "tarot-frequencial"
     );
-    const analisesData = getTarotAnalyses();
     
     console.log('Index - Regular atendimentos loaded:', regularAtendimentos.length);
     setAtendimentos(regularAtendimentos);
-    setAnalises(analisesData);
     checkBirthdaysToday(regularAtendimentos);
-  }, [getAtendimentos, getTarotAnalyses, checkBirthdaysToday]);
+  }, [getAtendimentos, checkBirthdaysToday]);
 
   const getPeriodoLabel = useCallback(() => {
     switch(periodoVisualizacao) {
@@ -219,14 +202,6 @@ const Index = () => {
 
   const handlePeriodoChange = useCallback((value: string) => {
     if (value) setPeriodoVisualizacao(value);
-  }, []);
-
-  // Função para alternar a expansão dos controles
-  const toggleControlExpansion = useCallback((controlId: string) => {
-    setExpandedControls(prev => ({
-      ...prev,
-      [controlId]: !prev[controlId]
-    }));
   }, []);
 
   return (
@@ -342,243 +317,6 @@ const Index = () => {
             atendimentos={filteredAtendimentos}
             onDeleteAtendimento={handleDeleteAtendimento}
           />
-        </div>
-
-        {/* Controles de Pagamento Compactos */}
-        <div className="mt-8 space-y-4">
-          <h2 className="text-xl font-semibold text-blue-800 mb-4">Controles de Pagamento</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Controles de Plano dos Atendimentos */}
-            {atendimentos.map((atendimento: any) => {
-              if (atendimento.planoAtivo && atendimento.planoData) {
-                const controlId = `plano-${atendimento.id}`;
-                const isExpanded = expandedControls[controlId];
-                
-                return (
-                  <div key={controlId} className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg rounded-2xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-5 w-5 text-[#6B21A8]" />
-                        <span className="font-medium text-slate-700">{atendimento.nome}</span>
-                      </div>
-                      <Badge variant="secondary" className="bg-[#6B21A8]/10 text-[#6B21A8] border-[#6B21A8]/20">
-                        Plano
-                      </Badge>
-                    </div>
-                    
-                    <Button
-                      onClick={() => toggleControlExpansion(controlId)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-all duration-300 flex items-center gap-2"
-                    >
-                      <span>Ver Controle</span>
-                      <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                    </Button>
-                    
-                    {isExpanded && (
-                      <div className="mt-4 transform transition-all duration-300 animate-fade-in">
-                        <PlanoPaymentControl
-                          analysisId={atendimento.id}
-                          clientName={atendimento.nome}
-                          planoData={atendimento.planoData}
-                          startDate={atendimento.dataAtendimento || atendimento.data}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              return null;
-            })}
-
-            {/* Controles de Plano das Análises */}
-            {analises.map((analise: any) => {
-              if (analise.planoAtivo && analise.planoData) {
-                const controlId = `plano-analise-${analise.id}`;
-                const isExpanded = expandedControls[controlId];
-                
-                return (
-                  <div key={controlId} className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg rounded-2xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-5 w-5 text-[#6B21A8]" />
-                        <span className="font-medium text-slate-700">{analise.nomeCliente}</span>
-                      </div>
-                      <Badge variant="secondary" className="bg-[#6B21A8]/10 text-[#6B21A8] border-[#6B21A8]/20">
-                        Plano
-                      </Badge>
-                    </div>
-                    
-                    <Button
-                      onClick={() => toggleControlExpansion(controlId)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-all duration-300 flex items-center gap-2"
-                    >
-                      <span>Ver Controle</span>
-                      <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                    </Button>
-                    
-                    {isExpanded && (
-                      <div className="mt-4 transform transition-all duration-300 animate-fade-in">
-                        <PlanoPaymentControl
-                          analysisId={analise.id}
-                          clientName={analise.nomeCliente}
-                          planoData={analise.planoData}
-                          startDate={analise.dataInicio || analise.dataAtendimento || analise.data}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              return null;
-            })}
-
-            {/* Controles Semanais dos Atendimentos */}
-            {atendimentos.map((atendimento: any) => {
-              const semanalData = atendimento.semanalData || 
-                                 atendimento.semanal || 
-                                 atendimento.pagamentoSemanal ||
-                                 (atendimento.semanas && atendimento.valorSemanal ? {
-                                   semanas: atendimento.semanas,
-                                   valorSemanal: atendimento.valorSemanal
-                                 } : null);
-
-              const hasValidSemanalData = !!(semanalData && 
-                (semanalData.semanas || semanalData.numeroSemanas) && 
-                (semanalData.valorSemanal || semanalData.valor));
-
-              const shouldShow = !!(
-                hasValidSemanalData ||
-                atendimento.semanalAtivo ||
-                atendimento.statusPagamento === 'parcelado'
-              );
-
-              if (shouldShow && hasValidSemanalData) {
-                const controlId = `semanal-atendimento-${atendimento.id}`;
-                const isExpanded = expandedControls[controlId];
-                const normalizedSemanalData = {
-                  semanas: semanalData.semanas || semanalData.numeroSemanas || '4',
-                  valorSemanal: semanalData.valorSemanal || semanalData.valor || '100'
-                };
-
-                return (
-                  <div key={controlId} className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg rounded-2xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-[#0EA5E9]" />
-                        <span className="font-medium text-slate-700">{atendimento.nome}</span>
-                      </div>
-                      <Badge variant="secondary" className="bg-[#0EA5E9]/10 text-[#0EA5E9] border-[#0EA5E9]/20">
-                        Semanal
-                      </Badge>
-                    </div>
-                    
-                    <Button
-                      onClick={() => toggleControlExpansion(controlId)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-[#0EA5E9]/30 text-[#0EA5E9] hover:bg-[#0EA5E9]/10 hover:border-[#0EA5E9] transition-all duration-300 flex items-center gap-2"
-                    >
-                      <span>Ver Controle</span>
-                      <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                    </Button>
-                    
-                    {isExpanded && (
-                      <div className="mt-4 transform transition-all duration-300 animate-fade-in">
-                        <SemanalPaymentControl
-                          analysisId={atendimento.id}
-                          clientName={atendimento.nome}
-                          semanalData={normalizedSemanalData}
-                          startDate={atendimento.dataAtendimento || atendimento.data}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              return null;
-            })}
-
-            {/* Controles Semanais das Análises */}
-            {analises.map((analise: any) => {
-              const semanalData = analise.semanalData || 
-                                 analise.semanal || 
-                                 analise.pagamentoSemanal ||
-                                 (analise.semanas && analise.valorSemanal ? {
-                                   semanas: analise.semanas,
-                                   valorSemanal: analise.valorSemanal
-                                 } : null);
-
-              const hasValidSemanalData = !!(semanalData && 
-                (semanalData.semanas || semanalData.numeroSemanas) && 
-                (semanalData.valorSemanal || semanalData.valor));
-
-              const shouldShow = !!(
-                hasValidSemanalData ||
-                analise.semanalAtivo ||
-                analise.statusPagamento === 'parcelado'
-              );
-
-              if (shouldShow && hasValidSemanalData) {
-                const controlId = `semanal-analise-${analise.id}`;
-                const isExpanded = expandedControls[controlId];
-                const normalizedSemanalData = {
-                  semanas: semanalData.semanas || semanalData.numeroSemanas || '4',
-                  valorSemanal: semanalData.valorSemanal || semanalData.valor || '100'
-                };
-
-                return (
-                  <div key={controlId} className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg rounded-2xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-[#0EA5E9]" />
-                        <span className="font-medium text-slate-700">{analise.nomeCliente}</span>
-                      </div>
-                      <Badge variant="secondary" className="bg-[#0EA5E9]/10 text-[#0EA5E9] border-[#0EA5E9]/20">
-                        Semanal
-                      </Badge>
-                    </div>
-                    
-                    <Button
-                      onClick={() => toggleControlExpansion(controlId)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-[#0EA5E9]/30 text-[#0EA5E9] hover:bg-[#0EA5E9]/10 hover:border-[#0EA5E9] transition-all duration-300 flex items-center gap-2"
-                    >
-                      <span>Ver Controle</span>
-                      <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                    </Button>
-                    
-                    {isExpanded && (
-                      <div className="mt-4 transform transition-all duration-300 animate-fade-in">
-                        <SemanalPaymentControl
-                          analysisId={analise.id}
-                          clientName={analise.nomeCliente}
-                          semanalData={normalizedSemanalData}
-                          startDate={analise.dataInicio || analise.dataAtendimento || analise.data}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              return null;
-            })}
-          </div>
-
-          {/* Mensagem se não houver controles */}
-          {(atendimentos.length === 0 && analises.length === 0) && (
-            <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-lg border border-blue-200/30">
-              <p className="text-blue-600">Nenhum atendimento ou análise com pagamento encontrado.</p>
-              <p className="text-sm text-blue-500 mt-2">
-                Para adicionar pagamentos, configure os planos ao criar um atendimento ou análise.
-              </p>
-            </div>
-          )}
         </div>
       </main>
     </div>

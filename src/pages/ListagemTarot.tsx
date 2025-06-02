@@ -29,8 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import TarotCounterPriorityNotifications from "@/components/TarotCounterPriorityNotifications";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
-import SemanalPaymentControl from "@/components/tarot/SemanalPaymentControl";
+import PlanoPaymentButton from "@/components/tarot/PlanoPaymentButton";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -474,7 +473,7 @@ const ListagemTarot = () => {
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <Star className="h-4 w-4 text-amber-500" />
+                                      <Sparkles className="h-4 w-4 text-amber-500" />
                                       <span>{analise.signo || 'Signo não informado'}</span>
                                     </div>
                                   </div>
@@ -542,22 +541,12 @@ const ListagemTarot = () => {
                             </CardContent>
                           </Card>
                           
-                          {/* Controle de Pagamentos do Plano - aparece apenas se o plano estiver ativo */}
+                          {/* Botão de Pagamentos do Plano - aparece apenas se o plano estiver ativo */}
                           {analise.planoAtivo && analise.planoData && (
-                            <PlanoPaymentControl
+                            <PlanoPaymentButton
                               analysisId={analise.id}
                               clientName={analise.nomeCliente}
                               planoData={analise.planoData}
-                              startDate={analise.dataInicio || analise.dataAtendimento || new Date().toISOString().split('T')[0]}
-                            />
-                          )}
-
-                          {/* Controle de Pagamentos Semanal - aparece apenas se o semanal estiver ativo */}
-                          {analise.semanalAtivo && analise.semanalData && (
-                            <SemanalPaymentControl
-                              analysisId={analise.id}
-                              clientName={analise.nomeCliente}
-                              semanalData={analise.semanalData}
                               startDate={analise.dataInicio || analise.dataAtendimento || new Date().toISOString().split('T')[0]}
                             />
                           )}
