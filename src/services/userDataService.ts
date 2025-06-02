@@ -72,6 +72,12 @@ interface TarotAnalysis {
     meses: string;
     valorMensal: string;
   } | null;
+  // Weekly plan fields
+  planoSemanalAtivo?: boolean;
+  planoSemanalData?: {
+    semanas: string;
+    valorSemanal: string;
+  } | null;
   dataAtendimento?: string;
   data?: string;
 }
