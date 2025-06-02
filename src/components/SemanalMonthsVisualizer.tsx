@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, CreditCard, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
+import { Plano, PlanoSemanal } from "@/types/payment";
 
 interface SemanalMonthsVisualizerProps {
   atendimento: {
@@ -79,11 +79,12 @@ const SemanalMonthsVisualizer: React.FC<SemanalMonthsVisualizerProps> = ({ atend
       const dueDate = new Date(startDate);
       dueDate.setDate(dueDate.getDate() + (i * 7));
       
-      const semanalForWeek = planos.find(plano => 
+      const semanalForWeek = planos.find((plano): plano is PlanoSemanal => 
         plano.clientName === atendimento.nome && 
+        plano.type === 'semanal' &&
+        'week' in plano &&
         plano.week === i && 
-        plano.totalWeeks === totalWeeks &&
-        plano.type === 'semanal'
+        plano.totalWeeks === totalWeeks
       );
       
       weeks.push({
@@ -112,10 +113,10 @@ const SemanalMonthsVisualizer: React.FC<SemanalMonthsVisualizerProps> = ({ atend
       );
       savePlanos(updatedPlanos);
     } else if (newIsPaid) {
-      const newSemanal = {
+      const newSemanal: PlanoSemanal = {
         id: `${Date.now()}-${weekIndex}`,
         clientName: atendimento.nome,
-        type: 'semanal' as const,
+        type: 'semanal',
         amount: parseFloat(atendimento.semanalData?.valorSemanal || '0'),
         dueDate: week.dueDate,
         week: week.week,

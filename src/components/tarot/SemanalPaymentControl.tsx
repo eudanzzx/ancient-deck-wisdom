@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, X, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
+import { PlanoSemanal } from "@/types/payment";
 
 interface SemanalPaymentControlProps {
   analysisId: string;
@@ -49,8 +49,8 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
       const dueDate = new Date(baseDate);
       dueDate.setDate(dueDate.getDate() + (i * 7));
       
-      const semanalForWeek = planos.find(plano => 
-        plano.id.startsWith(`${analysisId}-week-${i}`)
+      const semanalForWeek = planos.find((plano): plano is PlanoSemanal => 
+        plano.id.startsWith(`${analysisId}-week-${i}`) && plano.type === 'semanal'
       );
       
       weeks.push({
@@ -79,10 +79,10 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
       );
       savePlanos(updatedPlanos);
     } else if (newIsPaid) {
-      const newSemanal = {
+      const newSemanal: PlanoSemanal = {
         id: `${analysisId}-week-${week.week}`,
         clientName: clientName,
-        type: 'semanal' as const,
+        type: 'semanal',
         amount: parseFloat(semanalData.valorSemanal),
         dueDate: week.dueDate,
         week: week.week,

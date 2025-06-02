@@ -11,6 +11,7 @@ import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import AtendimentoForm from "@/components/forms/AtendimentoForm";
 import useAtendimentoForm from "@/hooks/useAtendimentoForm";
+import { PlanoMensal, PlanoSemanal } from "@/types/payment";
 
 const NovoAtendimento = () => {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const NovoAtendimento = () => {
   } = useAtendimentoForm();
 
   const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
-    const notifications = [];
+    const notifications: PlanoMensal[] = [];
     const startDate = new Date(dataInicio);
     
     for (let i = 1; i <= parseInt(meses); i++) {
@@ -60,7 +61,7 @@ const NovoAtendimento = () => {
   };
 
   const createSemanalNotifications = (nomeCliente: string, semanas: string, valorSemanal: string, dataInicio: string) => {
-    const notifications = [];
+    const notifications: PlanoSemanal[] = [];
     const startDate = new Date(dataInicio);
     
     for (let i = 1; i <= parseInt(semanas); i++) {
@@ -176,17 +177,13 @@ const NovoAtendimento = () => {
           signo={signo}
           atencao={atencao}
           planoAtivo={planoAtivo}
-          semanalAtivo={semanalAtivo}
           planoData={planoData}
-          semanalData={semanalData}
           onInputChange={handleInputChange}
           onSelectChange={handleSelectChange}
           onDataNascimentoChange={handleDataNascimentoChange}
           onAtencaoChange={setAtencao}
           onPlanoAtivoChange={setPlanoAtivo}
-          onSemanalAtivoChange={setSemanalAtivo}
           onPlanoDataChange={handlePlanoDataChange}
-          onSemanalDataChange={handleSemanalDataChange}
         />
 
         <CardFooter className="flex justify-end gap-3 border-t border-white/10 px-0 py-4">
