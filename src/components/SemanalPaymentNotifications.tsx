@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { getNextFridays } from "@/utils/fridayCalculator";
 
 interface UpcomingPayment {
   id: string;
@@ -28,44 +29,6 @@ const SemanalPaymentNotifications = () => {
   const { getPlanos } = useUserDataService();
   const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-
-  const getNextFridays = (totalWeeks: number): Date[] => {
-    const fridays: Date[] = [];
-    const today = new Date();
-    
-    // Encontrar a próxima sexta-feira
-    let nextFriday = new Date(today);
-    const currentDay = today.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
-    
-    console.log('SemanalPaymentNotifications - Hoje é dia:', currentDay, 'Data:', today.toDateString());
-    
-    // Calcular quantos dias adicionar para chegar na próxima sexta-feira
-    let daysToAdd;
-    if (currentDay === 5) {
-      // Se hoje é sexta-feira, a próxima é em 7 dias
-      daysToAdd = 7;
-    } else if (currentDay < 5) {
-      // Se é antes de sexta-feira (domingo=0 a quinta=4)
-      daysToAdd = 5 - currentDay;
-    } else {
-      // Se é sábado (6)
-      daysToAdd = 6; // 6 dias depois do sábado é sexta
-    }
-    
-    console.log('SemanalPaymentNotifications - Dias para adicionar:', daysToAdd);
-    
-    nextFriday.setDate(today.getDate() + daysToAdd);
-    console.log('SemanalPaymentNotifications - Primeira sexta-feira:', nextFriday.toDateString(), 'Dia da semana:', nextFriday.getDay());
-    
-    // Gerar as próximas sextas-feiras
-    for (let i = 0; i < totalWeeks; i++) {
-      const friday = new Date(nextFriday);
-      friday.setDate(nextFriday.getDate() + (i * 7));
-      fridays.push(friday);
-    }
-    
-    return fridays;
-  };
 
   const checkPaymentNotifications = () => {
     const planos = getPlanos() || [];

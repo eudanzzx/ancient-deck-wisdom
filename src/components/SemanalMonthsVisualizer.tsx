@@ -6,6 +6,7 @@ import { Calendar, CreditCard, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 import { Plano, PlanoSemanal } from "@/types/payment";
+import { getNextFridays } from "@/utils/fridayCalculator";
 
 interface SemanalMonthsVisualizerProps {
   atendimento: {
@@ -42,44 +43,6 @@ const SemanalMonthsVisualizer: React.FC<SemanalMonthsVisualizerProps> = ({ atend
       initializeSemanalWeeks();
     }
   }, [atendimento]);
-
-  const getNextFridays = (totalWeeks: number): Date[] => {
-    const fridays: Date[] = [];
-    const today = new Date();
-    
-    // Encontrar a próxima sexta-feira
-    let nextFriday = new Date(today);
-    const currentDay = today.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
-    
-    console.log('SemanalMonthsVisualizer - Hoje é dia:', currentDay, 'Data:', today.toDateString());
-    
-    // Calcular quantos dias adicionar para chegar na próxima sexta-feira
-    let daysToAdd;
-    if (currentDay === 5) {
-      // Se hoje é sexta-feira, a próxima é em 7 dias
-      daysToAdd = 7;
-    } else if (currentDay < 5) {
-      // Se é antes de sexta-feira (domingo=0 a quinta=4)
-      daysToAdd = 5 - currentDay;
-    } else {
-      // Se é sábado (6)
-      daysToAdd = 6; // 6 dias depois do sábado é sexta
-    }
-    
-    console.log('SemanalMonthsVisualizer - Dias para adicionar:', daysToAdd);
-    
-    nextFriday.setDate(today.getDate() + daysToAdd);
-    console.log('SemanalMonthsVisualizer - Primeira sexta-feira:', nextFriday.toDateString(), 'Dia da semana:', nextFriday.getDay());
-    
-    // Gerar as próximas sextas-feiras
-    for (let i = 0; i < totalWeeks; i++) {
-      const friday = new Date(nextFriday);
-      friday.setDate(nextFriday.getDate() + (i * 7));
-      fridays.push(friday);
-    }
-    
-    return fridays;
-  };
 
   const initializeSemanalWeeks = () => {
     if (!atendimento.semanalData) {

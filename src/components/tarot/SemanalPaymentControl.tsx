@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Check, X, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 import { PlanoSemanal } from "@/types/payment";
+import { getNextFridays } from "@/utils/fridayCalculator";
 
 interface SemanalPaymentControlProps {
   analysisId: string;
@@ -34,44 +34,6 @@ const SemanalPaymentControl: React.FC<SemanalPaymentControlProps> = ({
 }) => {
   const { getPlanos, savePlanos } = useUserDataService();
   const [semanalWeeks, setSemanalWeeks] = useState<SemanalWeek[]>([]);
-
-  const getNextFridays = (totalWeeks: number): Date[] => {
-    const fridays: Date[] = [];
-    const today = new Date();
-    
-    // Encontrar a próxima sexta-feira
-    let nextFriday = new Date(today);
-    const currentDay = today.getDay(); // 0 = domingo, 1 = segunda, ..., 5 = sexta, 6 = sábado
-    
-    console.log('SemanalPaymentControl - Hoje é dia:', currentDay, 'Data:', today.toDateString());
-    
-    // Calcular quantos dias adicionar para chegar na próxima sexta-feira
-    let daysToAdd;
-    if (currentDay === 5) {
-      // Se hoje é sexta-feira, a próxima é em 7 dias
-      daysToAdd = 7;
-    } else if (currentDay < 5) {
-      // Se é antes de sexta-feira (domingo=0 a quinta=4)
-      daysToAdd = 5 - currentDay;
-    } else {
-      // Se é sábado (6)
-      daysToAdd = 6; // 6 dias depois do sábado é sexta
-    }
-    
-    console.log('SemanalPaymentControl - Dias para adicionar:', daysToAdd);
-    
-    nextFriday.setDate(today.getDate() + daysToAdd);
-    console.log('SemanalPaymentControl - Primeira sexta-feira:', nextFriday.toDateString(), 'Dia da semana:', nextFriday.getDay());
-    
-    // Gerar as próximas sextas-feiras
-    for (let i = 0; i < totalWeeks; i++) {
-      const friday = new Date(nextFriday);
-      friday.setDate(nextFriday.getDate() + (i * 7));
-      fridays.push(friday);
-    }
-    
-    return fridays;
-  };
 
   useEffect(() => {
     initializeSemanalWeeks();
