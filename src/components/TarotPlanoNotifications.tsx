@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,14 +31,17 @@ const TarotPlanoNotifications: React.FC = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const pendingNotifications = allPlanos.filter(plano => {
+    // Filter only plano type notifications
+    const planoNotifications = allPlanos.filter(plano => plano.type === 'plano');
+    
+    const pendingNotifications = planoNotifications.filter(plano => {
       if (!plano.active) return false;
       
       const dueDate = new Date(plano.dueDate);
       dueDate.setHours(0, 0, 0, 0);
       
       return dueDate <= today;
-    });
+    }) as TarotPlanoNotification[];
 
     setNotifications(pendingNotifications);
 

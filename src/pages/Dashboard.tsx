@@ -17,24 +17,65 @@ import useUserDataService from "@/services/userDataService";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { getAtendimentos } = useUserDataService();
+  const { getAtendimentos, deleteAtendimento, getAnalises } = useUserDataService();
   const [atendimentos, setAtendimentos] = useState([]);
+  const [analises, setAnalises] = useState([]);
 
   useEffect(() => {
-    const fetchAtendimentos = () => {
-      const data = getAtendimentos();
-      setAtendimentos(data);
+    const fetchData = () => {
+      const atendimentosData = getAtendimentos();
+      const analisesData = getAnalises();
+      setAtendimentos(atendimentosData);
+      setAnalises(analisesData);
     };
 
-    fetchAtendimentos();
-  }, [getAtendimentos]);
+    fetchData();
+  }, [getAtendimentos, getAnalises]);
+
+  const handleDeleteAtendimento = (id: string) => {
+    deleteAtendimento(id);
+    const updatedAtendimentos = getAtendimentos();
+    setAtendimentos(updatedAtendimentos);
+  };
+
+  // Calculate stats
+  const calculateStats = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+
+    const thisMonth = atendimentos.filter((atendimento: any) => {
+      const date = new Date(atendimento.dataAtendimento || atendimento.data);
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+    });
+
+    const thisWeek = atendimentos.filter((atendimento: any) => {
+      const date = new Date(atendimento.dataAtendimento || atendimento.data);
+      return date >= startOfWeek;
+    });
+
+    const totalRecebido = thisMonth.reduce((sum: number, atendimento: any) => {
+      return sum + parseFloat(atendimento.valor || '0');
+    }, 0);
+
+    return {
+      totalAtendimentos: atendimentos.length,
+      atendimentosSemana: thisWeek.length,
+      totalRecebido,
+      periodoLabel: "Mês Atual"
+    };
+  };
+
+  const stats = calculateStats();
 
   return (
     <div className="min-h-screen bg-[#F1F7FF]">
       <DashboardHeader />
       <BirthdayNotifications />
-      <TarotCounterNotifications />
-      <TarotCounterPriorityNotifications />
+      <TarotCounterNotifications analises={analises} />
+      <TarotCounterPriorityNotifications analises={analises} />
       <TarotPlanoNotifications />
       <PlanoNotifications />
       
@@ -62,8 +103,16 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <DashboardStats />
-        <AtendimentosTable />
+        <DashboardStats 
+          totalAtendimentos={stats.totalAtendimentos}
+          atendimentosSemana={stats.atendimentosSemana}
+          totalRecebido={stats.totalRecebido}
+          periodoLabel={stats.periodoLabel}
+        />
+        <AtendimentosTable 
+          atendimentos={atendimentos}
+          onDeleteAtendimento={handleDeleteAtendimento}
+        />
 
         {/* Controles de Pagamento para Atendimentos com Planos */}
         {atendimentos.map((atendimento: any) => {
