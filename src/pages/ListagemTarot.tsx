@@ -10,8 +10,6 @@ import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import TarotPlanoNotifications from "@/components/TarotPlanoNotifications";
-import PlanoPaymentControl from "@/components/tarot/PlanoPaymentControl";
-import PlanoSemanalPaymentControl from "@/components/tarot/PlanoSemanalPaymentControl";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -252,26 +250,6 @@ const ListagemTarot = () => {
                       <h4 className="font-medium text-indigo-800 mb-2">Resposta:</h4>
                       <p className="text-sm text-gray-700">{analysis.resposta}</p>
                     </div>
-                  )}
-
-                  {/* Planos de Pagamento Mensais */}
-                  {analysis.planoAtivo && analysis.planoData && (
-                    <PlanoPaymentControl
-                      analysisId={analysis.id}
-                      clientName={analysis.nomeCliente}
-                      planoData={analysis.planoData}
-                      startDate={analysis.dataInicio || analysis.dataAnalise}
-                    />
-                  )}
-                  
-                  {/* Planos de Pagamento Semanais */}
-                  {analysis.planoSemanalAtivo && analysis.planoSemanalData && (
-                    <PlanoSemanalPaymentControl
-                      analysisId={analysis.id}
-                      clientName={analysis.nomeCliente}
-                      planoSemanalData={analysis.planoSemanalData}
-                      startDate={analysis.dataInicio || analysis.dataAnalise}
-                    />
                   )}
                   
                   {/* Detalhes da Análise */}
