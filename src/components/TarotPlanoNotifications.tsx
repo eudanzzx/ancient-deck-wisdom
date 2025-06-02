@@ -6,22 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Check, Calendar, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
-
-interface TarotPlanoNotification {
-  id: string;
-  clientName: string;
-  type: 'plano';
-  amount: number;
-  dueDate: string;
-  month: number;
-  totalMonths: number;
-  created: string;
-  active: boolean;
-}
+import { PlanoMensal } from "@/types/payment";
 
 const TarotPlanoNotifications: React.FC = () => {
   const { getPlanos, savePlanos } = useUserDataService();
-  const [notifications, setNotifications] = useState<TarotPlanoNotification[]>([]);
+  const [notifications, setNotifications] = useState<PlanoMensal[]>([]);
 
   useEffect(() => {
     checkTarotPlanoNotifications();
@@ -32,7 +21,12 @@ const TarotPlanoNotifications: React.FC = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const pendingNotifications = allPlanos.filter(plano => {
+    // Filter for monthly plans only
+    const monthlyPlanos = allPlanos.filter((plano): plano is PlanoMensal => 
+      plano.type === 'plano' && 'month' in plano && 'totalMonths' in plano
+    );
+
+    const pendingNotifications = monthlyPlanos.filter(plano => {
       if (!plano.active) return false;
       
       const dueDate = new Date(plano.dueDate);

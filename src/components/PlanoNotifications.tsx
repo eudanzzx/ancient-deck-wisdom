@@ -6,22 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Check, X, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
-
-interface PlanoNotification {
-  id: string;
-  clientName: string;
-  type: 'plano';
-  amount: number;
-  dueDate: string;
-  month: number;
-  totalMonths: number;
-  created: string;
-  active: boolean;
-}
+import { PlanoMensal } from "@/types/payment";
 
 const PlanoNotifications: React.FC = () => {
   const { getPlanos, savePlanos } = useUserDataService();
-  const [notifications, setNotifications] = useState<PlanoNotification[]>([]);
+  const [notifications, setNotifications] = useState<PlanoMensal[]>([]);
 
   useEffect(() => {
     checkPlanoNotifications();
@@ -32,7 +21,12 @@ const PlanoNotifications: React.FC = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const pendingNotifications = allPlanos.filter(plano => {
+    // Filter for monthly plans only
+    const monthlyPlanos = allPlanos.filter((plano): plano is PlanoMensal => 
+      plano.type === 'plano' && 'month' in plano && 'totalMonths' in plano
+    );
+
+    const pendingNotifications = monthlyPlanos.filter(plano => {
       if (!plano.active) return false;
       
       const dueDate = new Date(plano.dueDate);

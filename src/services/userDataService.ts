@@ -1,3 +1,4 @@
+
 import { Plano } from "@/types/payment";
 
 interface AtendimentoData {
@@ -67,6 +68,16 @@ interface TarotAnalysis {
   counter3Active?: boolean;
   data?: string;
   dataUltimaEdicao?: string;
+  // Legacy fields for backward compatibility
+  nomeCliente?: string;
+  dataNascimento?: string;
+  signo?: string;
+  atencao?: boolean;
+  dataInicio?: string;
+  preco?: string;
+  analiseAntes?: string;
+  analiseDepois?: string;
+  lembretes?: string;
 }
 
 const useUserDataService = () => {
@@ -135,6 +146,44 @@ const useUserDataService = () => {
     }
   };
 
+  // Legacy methods for backward compatibility
+  const getAllTarotAnalyses = () => getTarotAnalyses();
+  const saveAllTarotAnalyses = (analyses: TarotAnalysis[]) => saveTarotAnalyses(analyses);
+  const deleteTarotAnalysis = (id: string) => {
+    const analyses = getTarotAnalyses();
+    const updatedAnalyses = analyses.filter(analysis => analysis.id !== id);
+    saveTarotAnalyses(updatedAnalyses);
+  };
+
+  const getClientsWithConsultations = () => {
+    const atendimentos = getAtendimentos();
+    return atendimentos.map(a => ({
+      id: a.id,
+      nome: a.nome,
+      consultations: [a]
+    }));
+  };
+
+  const checkClientBirthday = (birthDate: string) => {
+    if (!birthDate) return false;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    return today.getMonth() === birth.getMonth() && today.getDate() === birth.getDate();
+  };
+
+  const saveTarotAnalysisWithPlan = (analysis: TarotAnalysis) => {
+    const analyses = getTarotAnalyses();
+    const existingIndex = analyses.findIndex(a => a.id === analysis.id);
+    
+    if (existingIndex >= 0) {
+      analyses[existingIndex] = analysis;
+    } else {
+      analyses.push(analysis);
+    }
+    
+    saveTarotAnalyses(analyses);
+  };
+
   return {
     getAtendimentos,
     saveAtendimentos,
@@ -142,6 +191,13 @@ const useUserDataService = () => {
     saveTarotAnalyses,
     getPlanos,
     savePlanos,
+    // Legacy methods
+    getAllTarotAnalyses,
+    saveAllTarotAnalyses,
+    deleteTarotAnalysis,
+    getClientsWithConsultations,
+    checkClientBirthday,
+    saveTarotAnalysisWithPlan,
   };
 };
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, CreditCard, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import useUserDataService from "@/services/userDataService";
+import { PlanoMensal } from "@/types/payment";
 
 interface PlanoMonthsVisualizerProps {
   atendimento: {
@@ -17,7 +18,7 @@ interface PlanoMonthsVisualizerProps {
       valorMensal: string;
     } | null;
     dataAtendimento: string;
-    data?: string; // Data de criação do atendimento
+    data?: string;
   };
 }
 
@@ -49,14 +50,12 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       return;
     }
 
-    // Use data de criação como fallback se dataAtendimento estiver vazio
     let startDateString = atendimento.dataAtendimento;
     if (!startDateString || startDateString.trim() === '') {
       startDateString = atendimento.data || new Date().toISOString();
       console.log('PlanoMonthsVisualizer - Using fallback date:', startDateString);
     }
 
-    // Validate the date before using it
     const startDate = new Date(startDateString);
     if (isNaN(startDate.getTime())) {
       console.error('Invalid date provided:', startDateString);
@@ -81,16 +80,18 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
       const dueDate = new Date(startDate);
       dueDate.setMonth(dueDate.getMonth() + i);
       
-      // Verificar se este mês já foi pago
-      const planoForMonth = planos.find(plano => 
+      // Filter for monthly plans only
+      const planoForMonth = planos.find((plano): plano is PlanoMensal => 
         plano.clientName === atendimento.nome && 
+        plano.type === 'plano' &&
+        'month' in plano &&
         plano.month === i && 
         plano.totalMonths === totalMonths
       );
       
       months.push({
         month: i,
-        isPaid: planoForMonth ? !planoForMonth.active : false, // Se o plano existe e não está ativo, significa que foi pago
+        isPaid: planoForMonth ? !planoForMonth.active : false,
         dueDate: dueDate.toISOString().split('T')[0],
         planoId: planoForMonth?.id
       });
@@ -107,43 +108,38 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
     const newIsPaid = !month.isPaid;
     
     if (month.planoId) {
-      // Atualizar o status do plano existente
       const updatedPlanos = planos.map(plano => 
         plano.id === month.planoId 
-          ? { ...plano, active: !newIsPaid } // Se vai ser marcado como pago, plano não fica ativo
+          ? { ...plano, active: !newIsPaid }
           : plano
       );
       savePlanos(updatedPlanos);
     } else if (newIsPaid) {
-      // Criar novo registro de plano quando marcar como pago
-      const newPlano = {
+      const newPlano: PlanoMensal = {
         id: `${Date.now()}-${monthIndex}`,
         clientName: atendimento.nome,
-        type: 'plano' as const,
+        type: 'plano',
         amount: parseFloat(atendimento.planoData?.valorMensal || '0'),
         dueDate: month.dueDate,
         month: month.month,
         totalMonths: parseInt(atendimento.planoData?.meses || '0'),
         created: new Date().toISOString(),
-        active: false // Não ativo porque foi pago
+        active: false
       };
       
       const updatedPlanos = [...planos, newPlano];
       savePlanos(updatedPlanos);
       
-      // Atualizar o planoId no estado local
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].planoId = newPlano.id;
       updatedMonths[monthIndex].isPaid = true;
       setPlanoMonths(updatedMonths);
     } else {
-      // Atualizar apenas o estado local se está desmarcando um mês que não tinha planoId
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].isPaid = false;
       setPlanoMonths(updatedMonths);
     }
     
-    // Se não criou novo plano, atualizar estado local
     if (month.planoId || !newIsPaid) {
       const updatedMonths = [...planoMonths];
       updatedMonths[monthIndex].isPaid = newIsPaid;
@@ -215,7 +211,6 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
                     }
                   `}
                 >
-                  {/* Background decoration */}
                   <div className={`
                     absolute inset-0 opacity-10 transition-opacity duration-300
                     ${month.isPaid 
@@ -224,7 +219,6 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
                     }
                   `} />
                   
-                  {/* Status icon */}
                   <div className={`
                     absolute top-3 right-3 p-1.5 rounded-full transition-all duration-300
                     ${month.isPaid 
@@ -239,7 +233,6 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
                     )}
                   </div>
                   
-                  {/* Month number */}
                   <div className="relative z-10 text-center">
                     <div className={`
                       text-2xl font-bold mb-1 transition-colors duration-300
@@ -255,7 +248,6 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
                     </div>
                   </div>
                   
-                  {/* Due date */}
                   <div className="relative z-10 text-center">
                     <div className={`
                       text-xs opacity-75 mb-1 transition-colors duration-300
@@ -271,7 +263,6 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
                     </div>
                   </div>
                   
-                  {/* Status badge */}
                   <Badge 
                     variant="outline"
                     className={`
@@ -288,7 +279,6 @@ const PlanoMonthsVisualizer: React.FC<PlanoMonthsVisualizerProps> = ({ atendimen
               ))}
             </div>
             
-            {/* Summary section */}
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
