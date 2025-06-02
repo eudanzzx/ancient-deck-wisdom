@@ -21,8 +21,7 @@ const ListagemTarot = () => {
   const analyses = getTarotAnalyses();
   
   const filteredAnalyses = analyses.filter(analysis =>
-    analysis.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    analysis.clientPhone.toLowerCase().includes(searchTerm.toLowerCase())
+    analysis.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleDelete = (id: string) => {
@@ -67,7 +66,7 @@ const ListagemTarot = () => {
         <div className="mb-6 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Buscar por nome ou telefone..."
+            placeholder="Buscar por nome..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-white/80 backdrop-blur-sm border-purple-200 focus:border-purple-400"
@@ -106,20 +105,17 @@ const ListagemTarot = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <CardTitle className="text-lg text-gray-800 mb-2">
-                        {analysis.clientName}
+                        {analysis.nomeCliente}
                       </CardTitle>
                       <div className="flex flex-wrap gap-2 text-sm text-gray-600">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          {formatDate(analysis.analysisDate)}
+                          {formatDate(analysis.dataInicio || analysis.dataAnalise)}
                         </span>
-                        <span className="flex items-center gap-1">
-                          📱 {analysis.clientPhone}
-                        </span>
-                        {analysis.serviceValue && (
+                        {analysis.preco && (
                           <span className="flex items-center gap-1">
                             <DollarSign className="h-4 w-4" />
-                            {formatCurrency(analysis.serviceValue)}
+                            {formatCurrency(analysis.preco)}
                           </span>
                         )}
                       </div>
@@ -151,26 +147,17 @@ const ListagemTarot = () => {
                   {analysis.planoAtivo && analysis.planoData && (
                     <PlanoPaymentControl
                       analysisId={analysis.id}
-                      clientName={analysis.clientName}
+                      clientName={analysis.nomeCliente}
                       planoData={analysis.planoData}
-                      startDate={analysis.analysisDate}
-                    />
-                  )}
-                  
-                  {analysis.planoSemanalAtivo && analysis.planoSemanalData && (
-                    <PlanoSemanalPaymentControl
-                      analysisId={analysis.id}
-                      clientName={analysis.clientName}
-                      planoSemanalData={analysis.planoSemanalData}
-                      startDate={analysis.analysisDate}
+                      startDate={analysis.dataInicio || analysis.dataAnalise}
                     />
                   )}
                   
                   {/* Detalhes da Análise */}
-                  {analysis.details && (
+                  {analysis.detalhesAdicionais && (
                     <div className="mt-4 p-3 bg-purple-50/50 rounded-lg">
                       <h4 className="font-medium text-gray-700 mb-2">Detalhes:</h4>
-                      <p className="text-sm text-gray-600">{analysis.details}</p>
+                      <p className="text-sm text-gray-600">{analysis.detalhesAdicionais}</p>
                     </div>
                   )}
                 </CardContent>
