@@ -23,7 +23,15 @@ import RelatorioGeralTarot from "@/pages/RelatorioGeralTarot";
 import RelatorioIndividualTarot from "@/pages/RelatorioIndividualTarot";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const queryClient = new QueryClient();
+// Create QueryClient outside of component to avoid recreation on re-renders
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
