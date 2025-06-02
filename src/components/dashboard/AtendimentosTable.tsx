@@ -25,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import PlanoMonthsVisualizer from "@/components/PlanoMonthsVisualizer";
+import SemanalMonthsVisualizer from "@/components/SemanalMonthsVisualizer";
 
 interface Atendimento {
   id: string;
@@ -46,6 +47,11 @@ interface Atendimento {
   planoData?: {
     meses: string;
     valorMensal: string;
+  } | null;
+  semanalAtivo?: boolean;
+  semanalData?: {
+    semanas: string;
+    valorSemanal: string;
   } | null;
 }
 
@@ -129,7 +135,7 @@ const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onD
                 <TableHead className="font-semibold text-slate-700">Serviço</TableHead>
                 <TableHead className="font-semibold text-slate-700">Valor</TableHead>
                 <TableHead className="font-semibold text-slate-700">Status</TableHead>
-                <TableHead className="font-semibold text-slate-700">Plano</TableHead>
+                <TableHead className="font-semibold text-slate-700">Planos</TableHead>
                 <TableHead className="font-semibold text-slate-700 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -172,7 +178,13 @@ const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onD
                             {atendimento.planoData.meses}x
                           </Badge>
                         )}
-                        {atendimento.planoAtivo && atendimento.planoData && (
+                        {atendimento.semanalAtivo && atendimento.semanalData && (
+                          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {atendimento.semanalData.semanas}s
+                          </Badge>
+                        )}
+                        {((atendimento.planoAtivo && atendimento.planoData) || (atendimento.semanalAtivo && atendimento.semanalData)) && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -230,11 +242,16 @@ const AtendimentosTable: React.FC<AtendimentosTableProps> = ({ atendimentos, onD
                       </div>
                     </TableCell>
                   </TableRow>
-                  {expandedRows.has(atendimento.id) && atendimento.planoAtivo && atendimento.planoData && (
+                  {expandedRows.has(atendimento.id) && (
                     <TableRow>
                       <TableCell colSpan={7} className="p-0">
                         <div className="p-4 bg-slate-50/50">
-                          <PlanoMonthsVisualizer atendimento={atendimento} />
+                          {atendimento.planoAtivo && atendimento.planoData && (
+                            <PlanoMonthsVisualizer atendimento={atendimento} />
+                          )}
+                          {atendimento.semanalAtivo && atendimento.semanalData && (
+                            <SemanalMonthsVisualizer atendimento={atendimento} />
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

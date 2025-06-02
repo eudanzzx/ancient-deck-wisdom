@@ -22,13 +22,17 @@ const NovoAtendimento = () => {
     signo,
     atencao,
     planoAtivo,
+    semanalAtivo,
     planoData,
+    semanalData,
     handleInputChange,
     handleSelectChange,
     handlePlanoDataChange,
+    handleSemanalDataChange,
     handleDataNascimentoChange,
     setAtencao,
     setPlanoAtivo,
+    setSemanalAtivo,
   } = useAtendimentoForm();
 
   const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
@@ -55,6 +59,30 @@ const NovoAtendimento = () => {
     return notifications;
   };
 
+  const createSemanalNotifications = (nomeCliente: string, semanas: string, valorSemanal: string, dataInicio: string) => {
+    const notifications = [];
+    const startDate = new Date(dataInicio);
+    
+    for (let i = 1; i <= parseInt(semanas); i++) {
+      const notificationDate = new Date(startDate);
+      notificationDate.setDate(notificationDate.getDate() + (i * 7));
+      
+      notifications.push({
+        id: `semanal-${Date.now()}-${i}`,
+        clientName: nomeCliente,
+        type: 'semanal',
+        amount: parseFloat(valorSemanal),
+        dueDate: notificationDate.toISOString().split('T')[0],
+        week: i,
+        totalWeeks: parseInt(semanas),
+        created: new Date().toISOString(),
+        active: true
+      });
+    }
+    
+    return notifications;
+  };
+
   const handleSaveAndFinish = () => {
     const existingAtendimentos = getAtendimentos();
     
@@ -67,12 +95,14 @@ const NovoAtendimento = () => {
       data: new Date().toISOString(),
       planoAtivo,
       planoData: planoAtivo ? planoData : null,
+      semanalAtivo,
+      semanalData: semanalAtivo ? semanalData : null,
     };
     
     existingAtendimentos.push(novoAtendimento);
     saveAtendimentos(existingAtendimentos);
     
-    // Se tem plano ativo, criar as notificações
+    // Criar notificações de plano se ativo
     if (planoAtivo && planoData.meses && planoData.valorMensal && formData.dataAtendimento) {
       const notifications = createPlanoNotifications(
         formData.nome,
@@ -81,17 +111,36 @@ const NovoAtendimento = () => {
         formData.dataAtendimento
       );
       
-      // Salvar as notificações de plano
       const existingPlanos = getPlanos() || [];
       const updatedPlanos = [...existingPlanos, ...notifications];
       savePlanos(updatedPlanos);
       
       toast.success(`Atendimento salvo! Plano de ${planoData.meses} meses criado com sucesso.`);
-    } else {
+    }
+    
+    // Criar notificações semanais se ativo
+    if (semanalAtivo && semanalData.semanas && semanalData.valorSemanal && formData.dataAtendimento) {
+      const notifications = createSemanalNotifications(
+        formData.nome,
+        semanalData.semanas,
+        semanalData.valorSemanal,
+        formData.dataAtendimento
+      );
+      
+      const existingPlanos = getPlanos() || [];
+      const updatedPlanos = [...existingPlanos, ...notifications];
+      savePlanos(updatedPlanos);
+      
+      if (!planoAtivo) {
+        toast.success(`Atendimento salvo! Plano semanal de ${semanalData.semanas} semanas criado com sucesso.`);
+      }
+    }
+    
+    // Se nenhum plano foi criado
+    if (!planoAtivo && !semanalAtivo) {
       toast.success("Atendimento salvo com sucesso!");
     }
     
-    // Navegar diretamente de volta
     navigate("/");
   };
 
@@ -127,13 +176,17 @@ const NovoAtendimento = () => {
           signo={signo}
           atencao={atencao}
           planoAtivo={planoAtivo}
+          semanalAtivo={semanalAtivo}
           planoData={planoData}
+          semanalData={semanalData}
           onInputChange={handleInputChange}
           onSelectChange={handleSelectChange}
           onDataNascimentoChange={handleDataNascimentoChange}
           onAtencaoChange={setAtencao}
           onPlanoAtivoChange={setPlanoAtivo}
+          onSemanalAtivoChange={setSemanalAtivo}
           onPlanoDataChange={handlePlanoDataChange}
+          onSemanalDataChange={handleSemanalDataChange}
         />
 
         <CardFooter className="flex justify-end gap-3 border-t border-white/10 px-0 py-4">
