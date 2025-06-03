@@ -30,6 +30,7 @@ import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
 import TarotCounterPriorityNotifications from "@/components/TarotCounterPriorityNotifications";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import PlanoPaymentButton from "@/components/tarot/PlanoPaymentButton";
+import SemanalPaymentButton from "@/components/tarot/SemanalPaymentButton";
 
 const ListagemTarot = () => {
   const navigate = useNavigate();
@@ -547,6 +548,16 @@ const ListagemTarot = () => {
                               analysisId={analise.id}
                               clientName={analise.nomeCliente}
                               planoData={analise.planoData}
+                              startDate={analise.dataInicio || analise.dataAtendimento || new Date().toISOString().split('T')[0]}
+                            />
+                          )}
+                          
+                          {/* Botão de Pagamentos Semanais - aparece apenas se o plano semanal estiver ativo */}
+                          {analise.semanalAtivo && analise.semanalData && (
+                            <SemanalPaymentButton
+                              analysisId={analise.id}
+                              clientName={analise.nomeCliente}
+                              semanalData={analise.semanalData}
                               startDate={analise.dataInicio || analise.dataAtendimento || new Date().toISOString().split('T')[0]}
                             />
                           )}
