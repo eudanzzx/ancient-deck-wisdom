@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Plus, Trash2, BellRing } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, BellRing, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
@@ -533,54 +534,53 @@ const AnaliseFrequencial = () => {
               />
             </div>
 
-            {/* Seção de Plano Semanal */}
+            {/* Seção de Plano Semanal - Igual ao AtendimentoForm */}
             <div className="mt-8">
-              <div className="space-y-4 p-4 border border-[#10B981]/20 rounded-lg bg-[#10B981]/5">
-                <h3 className="text-lg font-medium text-[#10B981]">Plano Semanal</h3>
-                
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Ativar Plano Semanal</Label>
-                    <div className="text-sm text-muted-foreground">
-                      Habilita o sistema de pagamento semanal (vence toda sexta-feira)
-                    </div>
-                  </div>
-                  <Switch
-                    checked={semanalAtivo}
-                    onCheckedChange={setSemanalAtivo}
+              <div className="space-y-2 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="semanal" className="text-slate-700 font-medium flex items-center">
+                    <Calendar className={`mr-2 h-4 w-4 ${semanalAtivo ? "text-[#10B981]" : "text-slate-400"}`} />
+                    PLANO SEMANAL
+                  </Label>
+                  <Switch 
+                    checked={semanalAtivo} 
+                    onCheckedChange={setSemanalAtivo} 
+                    className="data-[state=checked]:bg-[#10B981]"
                   />
                 </div>
-
+                
                 {semanalAtivo && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="semanalSemanas">Quantidade de Semanas</Label>
-                      <Input
-                        id="semanalSemanas"
-                        type="number"
-                        placeholder="Ex: 8"
-                        value={semanalData.semanas}
-                        onChange={(e) => handleSemanalDataChange('semanas', e.target.value)}
-                        className="bg-white/50 border-[#10B981]/20 focus:border-[#10B981]"
-                      />
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="space-y-1">
+                      <Label className="text-sm text-slate-600">Semanas</Label>
+                      <Select onValueChange={(value) => handleSemanalDataChange("semanas", value)}>
+                        <SelectTrigger className="bg-[#10B981]/10 border-[#10B981]/30 focus:border-[#10B981]">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i + 1} value={(i + 1).toString()}>
+                              {i + 1} {i === 0 ? 'semana' : 'semanas'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-
-                    <div>
-                      <Label htmlFor="semanalValorSemanal">Valor Semanal (R$)</Label>
-                      <Input
-                        id="semanalValorSemanal"
-                        type="number"
-                        step="0.01"
-                        placeholder="Ex: 37.50"
+                    <div className="space-y-1">
+                      <Label className="text-sm text-slate-600">Valor Semanal (R$)</Label>
+                      <Input 
+                        type="number" 
+                        placeholder="0.00" 
                         value={semanalData.valorSemanal}
-                        onChange={(e) => handleSemanalDataChange('valorSemanal', e.target.value)}
-                        className="bg-white/50 border-[#10B981]/20 focus:border-[#10B981]"
+                        onChange={(e) => handleSemanalDataChange("valorSemanal", e.target.value)}
+                        className="bg-[#10B981]/10 border-[#10B981]/30 focus:border-[#10B981] focus:ring-[#10B981]/20"
                       />
                     </div>
                   </div>
                 )}
               </div>
             </div>
+            
             
             <div className="mt-8">
               <div className="flex justify-between items-center mb-4">
