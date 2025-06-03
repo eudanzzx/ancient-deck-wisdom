@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -336,7 +337,10 @@ const AnaliseFrequencial = () => {
         planoAtivo,
         planoData: planoAtivo ? planoData : null,
         semanalAtivo,
-        semanalData: semanalAtivo ? semanalData : null,
+        semanalData: semanalAtivo ? {
+          semanas: semanalData.semanas,
+          valorSemanal: semanalData.valorSemanal
+        } : null,
         lembretes: [...lembretes],
         dataCriacao: new Date().toISOString(),
         finalizado: false,

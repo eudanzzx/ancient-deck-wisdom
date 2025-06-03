@@ -22,7 +22,7 @@ const SemanalPaymentButton: React.FC<SemanalPaymentButtonProps> = ({
   semanalData,
   startDate,
 }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false); // Mudando para false (fechado por padrão)
 
   return (
     <div className="mt-4">
@@ -34,6 +34,7 @@ const SemanalPaymentButton: React.FC<SemanalPaymentButtonProps> = ({
             className="border-[#10B981]/30 text-[#10B981] hover:bg-[#10B981]/10 hover:border-[#10B981] transition-colors duration-200 flex items-center gap-2"
           >
             <Calendar className="h-4 w-4" />
+            Pagamentos Semanais
             <ChevronDown className={cn(
               "h-3 w-3 transition-transform duration-200",
               isOpen && "rotate-180"
