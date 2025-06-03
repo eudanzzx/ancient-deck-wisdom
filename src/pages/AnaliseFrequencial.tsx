@@ -20,6 +20,8 @@ import useUserDataService from "@/services/userDataService";
 import ClientForm from "@/components/tarot/ClientForm";
 import AnalysisCards from "@/components/tarot/AnalysisCards";
 import PlanoSelector from "@/components/tarot/PlanoSelector";
+import { PlanoMensal, PlanoSemanal } from "@/types/payment";
+import { getNextFridays } from "@/utils/fridayCalculator";
 
 // Memoized reminder component to prevent unnecessary re-renders
 const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
@@ -92,15 +94,20 @@ const AnaliseFrequencial = () => {
   const [analiseAntes, setAnaliseAntes] = useState("");
   const [analiseDepois, setAnaliseDepois] = useState("");
   const [planoAtivo, setPlanoAtivo] = useState(false);
+  const [semanalAtivo, setSemanalAtivo] = useState(false);
   const [planoData, setPlanoData] = useState({
     meses: "",
     valorMensal: "",
+  });
+  const [semanalData, setSemanalData] = useState({
+    semanas: "",
+    valorSemanal: "",
   });
   const [lembretes, setLembretes] = useState([
     { id: 1, texto: "", dias: 7 }
   ]);
   
-  const { checkClientBirthday, saveTarotAnalysisWithPlan } = useUserDataService();
+  const { checkClientBirthday, saveTarotAnalysisWithPlan, getPlanos, savePlanos } = useUserDataService();
   
   // Verificar notificações ao carregar a página
   useEffect(() => {
@@ -217,8 +224,61 @@ const AnaliseFrequencial = () => {
     ));
   }, []);
 
+  const createPlanoNotifications = (nomeCliente: string, meses: string, valorMensal: string, dataInicio: string) => {
+    const notifications: PlanoMensal[] = [];
+    const startDate = new Date(dataInicio);
+    
+    for (let i = 1; i <= parseInt(meses); i++) {
+      const notificationDate = new Date(startDate);
+      notificationDate.setMonth(notificationDate.getMonth() + i);
+      
+      notifications.push({
+        id: `plano-${Date.now()}-${i}`,
+        clientName: nomeCliente,
+        type: 'plano',
+        amount: parseFloat(valorMensal),
+        dueDate: notificationDate.toISOString().split('T')[0],
+        month: i,
+        totalMonths: parseInt(meses),
+        created: new Date().toISOString(),
+        active: true
+      });
+    }
+    
+    return notifications;
+  };
+
+  const createSemanalNotifications = (nomeCliente: string, semanas: string, valorSemanal: string, dataInicio: string) => {
+    const notifications: PlanoSemanal[] = [];
+    const totalWeeks = parseInt(semanas);
+    const fridays = getNextFridays(totalWeeks, new Date(dataInicio));
+    
+    fridays.forEach((friday, index) => {
+      notifications.push({
+        id: `semanal-${Date.now()}-${index + 1}`,
+        clientName: nomeCliente,
+        type: 'semanal',
+        amount: parseFloat(valorSemanal),
+        dueDate: friday.toISOString().split('T')[0],
+        week: index + 1,
+        totalWeeks: totalWeeks,
+        created: new Date().toISOString(),
+        active: true
+      });
+    });
+    
+    return notifications;
+  };
+
   const handlePlanoDataChange = useCallback((field: string, value: string) => {
     setPlanoData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
+
+  const handleSemanalDataChange = useCallback((field: string, value: string) => {
+    setSemanalData(prev => ({
       ...prev,
       [field]: value,
     }));
@@ -239,6 +299,8 @@ const AnaliseFrequencial = () => {
       dataInicio,
       planoAtivo,
       planoData,
+      semanalAtivo,
+      semanalData,
       lembretes
     });
 
@@ -272,6 +334,8 @@ const AnaliseFrequencial = () => {
         analiseDepois,
         planoAtivo,
         planoData: planoAtivo ? planoData : null,
+        semanalAtivo,
+        semanalData: semanalAtivo ? semanalData : null,
         lembretes: [...lembretes],
         dataCriacao: new Date().toISOString(),
         finalizado: false,
@@ -287,6 +351,38 @@ const AnaliseFrequencial = () => {
       saveTarotAnalysisWithPlan(novaAnalise);
       console.log('handleSalvarAnalise - Análise salva via saveTarotAnalysisWithPlan');
 
+      // Criar notificações de plano se ativo
+      if (planoAtivo && planoData.meses && planoData.valorMensal && dataInicio) {
+        const notifications = createPlanoNotifications(
+          nomeCliente,
+          planoData.meses,
+          planoData.valorMensal,
+          dataInicio
+        );
+        
+        const existingPlanos = getPlanos() || [];
+        const updatedPlanos = [...existingPlanos, ...notifications];
+        savePlanos(updatedPlanos);
+        
+        console.log('handleSalvarAnalise - Notificações de plano criadas:', notifications.length);
+      }
+      
+      // Criar notificações semanais se ativo
+      if (semanalAtivo && semanalData.semanas && semanalData.valorSemanal && dataInicio) {
+        const notifications = createSemanalNotifications(
+          nomeCliente,
+          semanalData.semanas,
+          semanalData.valorSemanal,
+          dataInicio
+        );
+        
+        const existingPlanos = getPlanos() || [];
+        const updatedPlanos = [...existingPlanos, ...notifications];
+        savePlanos(updatedPlanos);
+        
+        console.log('handleSalvarAnalise - Notificações semanais criadas:', notifications.length);
+      }
+
       // Verificar se foi salvo corretamente
       const verificacao = JSON.parse(localStorage.getItem("analises") || "[]");
       const analiseEncontrada = verificacao.find((a: any) => a.id === novoId);
@@ -300,9 +396,17 @@ const AnaliseFrequencial = () => {
       }
       
       // Notificar usuário
-      const mensagem = planoAtivo && planoData.meses && planoData.valorMensal
-        ? `Análise frequencial salva! Plano de ${planoData.meses} meses criado com sucesso.`
-        : "Análise frequencial salva com sucesso!";
+      let mensagem = "Análise frequencial salva com sucesso!";
+      if (planoAtivo && planoData.meses && planoData.valorMensal) {
+        mensagem = `Análise frequencial salva! Plano de ${planoData.meses} meses criado com sucesso.`;
+      }
+      if (semanalAtivo && semanalData.semanas && semanalData.valorSemanal) {
+        if (planoAtivo) {
+          mensagem += ` Plano semanal de ${semanalData.semanas} semanas também criado. Vencimentos toda sexta-feira.`;
+        } else {
+          mensagem = `Análise frequencial salva! Plano semanal de ${semanalData.semanas} semanas criado com sucesso. Vencimentos toda sexta-feira.`;
+        }
+      }
       
       toast.success(mensagem);
       console.log('handleSalvarAnalise - Sucesso:', mensagem);
@@ -337,6 +441,8 @@ const AnaliseFrequencial = () => {
       setAnaliseDepois("");
       setPlanoAtivo(false);
       setPlanoData({ meses: "", valorMensal: "" });
+      setSemanalAtivo(false);
+      setSemanalData({ semanas: "", valorSemanal: "" });
       setLembretes([{ id: 1, texto: "", dias: 7 }]);
       
       // Aguardar um pouco antes de navegar para garantir que o estado foi atualizado
@@ -349,7 +455,7 @@ const AnaliseFrequencial = () => {
       console.error('handleSalvarAnalise - Erro ao salvar:', error);
       toast.error("Erro ao salvar análise - verifique os dados e tente novamente");
     }
-  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, lembretes, navigate, saveTarotAnalysisWithPlan]);
+  }, [nomeCliente, dataInicio, dataNascimento, signo, atencao, preco, analiseAntes, analiseDepois, planoAtivo, planoData, semanalAtivo, semanalData, lembretes, navigate, saveTarotAnalysisWithPlan, getPlanos, savePlanos]);
 
   const handleBack = useCallback(() => {
     navigate("/listagem-tarot");
@@ -425,6 +531,55 @@ const AnaliseFrequencial = () => {
                 onPlanoAtivoChange={setPlanoAtivo}
                 onPlanoDataChange={handlePlanoDataChange}
               />
+            </div>
+
+            {/* Seção de Plano Semanal */}
+            <div className="mt-8">
+              <div className="space-y-4 p-4 border border-[#10B981]/20 rounded-lg bg-[#10B981]/5">
+                <h3 className="text-lg font-medium text-[#10B981]">Plano Semanal</h3>
+                
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Ativar Plano Semanal</Label>
+                    <div className="text-sm text-muted-foreground">
+                      Habilita o sistema de pagamento semanal (vence toda sexta-feira)
+                    </div>
+                  </div>
+                  <Switch
+                    checked={semanalAtivo}
+                    onCheckedChange={setSemanalAtivo}
+                  />
+                </div>
+
+                {semanalAtivo && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="semanalSemanas">Quantidade de Semanas</Label>
+                      <Input
+                        id="semanalSemanas"
+                        type="number"
+                        placeholder="Ex: 8"
+                        value={semanalData.semanas}
+                        onChange={(e) => handleSemanalDataChange('semanas', e.target.value)}
+                        className="bg-white/50 border-[#10B981]/20 focus:border-[#10B981]"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="semanalValorSemanal">Valor Semanal (R$)</Label>
+                      <Input
+                        id="semanalValorSemanal"
+                        type="number"
+                        step="0.01"
+                        placeholder="Ex: 37.50"
+                        value={semanalData.valorSemanal}
+                        onChange={(e) => handleSemanalDataChange('valorSemanal', e.target.value)}
+                        className="bg-white/50 border-[#10B981]/20 focus:border-[#10B981]"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="mt-8">

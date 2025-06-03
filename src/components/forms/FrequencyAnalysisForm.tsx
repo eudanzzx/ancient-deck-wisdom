@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, memo } from "react";
 import {
   Form,
@@ -35,6 +36,9 @@ const formSchema = z.object({
   planoAtivo: z.boolean().default(false),
   planoMeses: z.string().default(""),
   planoValorMensal: z.string().default(""),
+  semanalAtivo: z.boolean().default(false),
+  semanalSemanas: z.string().default(""),
+  semanalValorSemanal: z.string().default(""),
   counters: z.array(
     z.object({
       id: z.string(),
@@ -88,11 +92,15 @@ const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
       planoAtivo: editingAnalysis?.planoAtivo || false,
       planoMeses: editingAnalysis?.planoData?.meses || "",
       planoValorMensal: editingAnalysis?.planoData?.valorMensal || "",
+      semanalAtivo: editingAnalysis?.semanalAtivo || false,
+      semanalSemanas: editingAnalysis?.semanalData?.semanas || "",
+      semanalValorSemanal: editingAnalysis?.semanalData?.valorSemanal || "",
       counters: initialCounters,
     },
   });
 
   const planoAtivo = form.watch("planoAtivo");
+  const semanalAtivo = form.watch("semanalAtivo");
 
   const handleAddCounter = useCallback(() => {
     const newCounter: Counter = {
@@ -140,6 +148,11 @@ const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
         meses: data.planoMeses,
         valorMensal: data.planoValorMensal,
       } : null,
+      semanalAtivo: data.semanalAtivo,
+      semanalData: data.semanalAtivo ? {
+        semanas: data.semanalSemanas,
+        valorSemanal: data.semanalValorSemanal,
+      } : null,
       counters: data.counters,
       completed: false,
       createdAt: editingAnalysis?.createdAt || new Date(),
@@ -166,9 +179,9 @@ const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base">Ativar Plano</FormLabel>
+                  <FormLabel className="text-base">Ativar Plano Mensal</FormLabel>
                   <div className="text-sm text-muted-foreground">
-                    Habilita o sistema de pagamento parcelado
+                    Habilita o sistema de pagamento parcelado mensal
                   </div>
                 </div>
                 <FormControl>
@@ -215,6 +228,75 @@ const FrequencyAnalysisForm: React.FC<FrequencyAnalysisFormProps> = memo(({
                         placeholder="Ex: 150.00"
                         {...field}
                         className="bg-white/50 border-[#6B21A8]/20 focus:border-[#6B21A8]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Semanal Section */}
+        <div className="space-y-4 p-4 border border-[#10B981]/20 rounded-lg bg-[#10B981]/5">
+          <h3 className="text-lg font-medium text-[#10B981]">Plano Semanal</h3>
+          
+          <FormField
+            control={form.control}
+            name="semanalAtivo"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Ativar Plano Semanal</FormLabel>
+                  <div className="text-sm text-muted-foreground">
+                    Habilita o sistema de pagamento semanal (vence toda sexta-feira)
+                  </div>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          {semanalAtivo && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="semanalSemanas"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantidade de Semanas</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 8"
+                        {...field}
+                        className="bg-white/50 border-[#10B981]/20 focus:border-[#10B981]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="semanalValorSemanal"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor Semanal (R$)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Ex: 37.50"
+                        {...field}
+                        className="bg-white/50 border-[#10B981]/20 focus:border-[#10B981]"
                       />
                     </FormControl>
                     <FormMessage />
