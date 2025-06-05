@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -153,212 +154,6 @@ const RelatorioIndividualTarot = () => {
     }
   }, [toast]);
 
-  const gerarRelatorioIndividual = useCallback((cliente: any) => {
-    const doc = new jsPDF();
-    
-    // Header elegante
-    doc.setFontSize(22);
-    doc.setTextColor(103, 49, 147);
-    doc.text('Relatório Individual', 105, 25, { align: 'center' });
-    
-    doc.setFontSize(16);
-    doc.setTextColor(120, 120, 120);
-    doc.text('Tarot Frequencial', 105, 35, { align: 'center' });
-    
-    // Linha decorativa
-    doc.setDrawColor(103, 49, 147);
-    doc.setLineWidth(0.5);
-    doc.line(20, 45, 190, 45);
-    
-    // Informações do cliente
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Cliente: ${cliente.nome}`, 20, 60);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, 20, 70);
-    
-    // Resumo em caixas
-    const totalGasto = calcularTotalCliente(cliente.analises);
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    
-    // Box 1 - Total de análises
-    doc.rect(20, 80, 50, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Total de Análises', 25, 87);
-    doc.setFontSize(16);
-    doc.setTextColor(103, 49, 147);
-    doc.text(cliente.analises.length.toString(), 45, 96, { align: 'center' });
-    
-    // Box 2 - Valor total
-    doc.rect(80, 80, 50, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Valor Total', 85, 87);
-    doc.setFontSize(16);
-    doc.setTextColor(103, 49, 147);
-    doc.text(`R$ ${totalGasto.toFixed(2)}`, 105, 96, { align: 'center' });
-    
-    // Box 3 - Valor médio
-    doc.rect(140, 80, 50, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Valor Médio', 145, 87);
-    doc.setFontSize(16);
-    doc.setTextColor(103, 49, 147);
-    doc.text(`R$ ${(totalGasto / cliente.analises.length).toFixed(2)}`, 165, 96, { align: 'center' });
-
-    // Tabela simplificada
-    const tableData = cliente.analises.map((analise: any) => [
-      format(new Date(analise.dataInicio), 'dd/MM/yyyy'),
-      `R$ ${parseFloat(analise.preco || "150").toFixed(2)}`,
-      analise.finalizado ? 'Finalizada' : 'Em andamento'
-    ]);
-
-    autoTable(doc, {
-      head: [['Data', 'Valor', 'Status']],
-      body: tableData,
-      startY: 115,
-      theme: 'grid',
-      styles: {
-        fontSize: 10,
-        cellPadding: 8,
-        textColor: [60, 60, 60],
-      },
-      headStyles: {
-        fillColor: [103, 49, 147],
-        textColor: [255, 255, 255],
-        fontSize: 11,
-        fontStyle: 'bold',
-      },
-      alternateRowStyles: {
-        fillColor: [248, 248, 248],
-      },
-      margin: { left: 20, right: 20 },
-    });
-
-    // Footer elegante
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Libertá - Página ${i} de ${pageCount}`,
-        105,
-        doc.internal.pageSize.height - 10,
-        { align: 'center' }
-      );
-    }
-
-    doc.save(`relatorio-${cliente.nome.replace(/\s+/g, '-').toLowerCase()}.pdf`);
-  }, []);
-
-  const gerarRelatorioConsolidado = useCallback(() => {
-    const doc = new jsPDF();
-    
-    // Header elegante
-    doc.setFontSize(22);
-    doc.setTextColor(103, 49, 147);
-    doc.text('Relatório Consolidado', 105, 25, { align: 'center' });
-    
-    doc.setFontSize(16);
-    doc.setTextColor(120, 120, 120);
-    doc.text('Tarot Frequencial', 105, 35, { align: 'center' });
-    
-    // Linha decorativa
-    doc.setDrawColor(103, 49, 147);
-    doc.setLineWidth(0.5);
-    doc.line(20, 45, 190, 45);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, 20, 55);
-    
-    const totalGeral = clientesUnicos.reduce((total, cliente) => {
-      return total + calcularTotalCliente(cliente.analises);
-    }, 0);
-    
-    // Resumo geral em boxes
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    
-    // Box 1 - Total de clientes
-    doc.rect(30, 65, 40, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Clientes', 35, 72);
-    doc.setFontSize(16);
-    doc.setTextColor(103, 49, 147);
-    doc.text(clientesUnicos.length.toString(), 50, 81, { align: 'center' });
-    
-    // Box 2 - Receita total
-    doc.rect(80, 65, 60, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Receita Total', 85, 72);
-    doc.setFontSize(16);
-    doc.setTextColor(103, 49, 147);
-    doc.text(`R$ ${totalGeral.toFixed(2)}`, 110, 81, { align: 'center' });
-    
-    // Box 3 - Ticket médio
-    doc.rect(150, 65, 40, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Ticket Médio', 155, 72);
-    doc.setFontSize(16);
-    doc.setTextColor(103, 49, 147);
-    doc.text(`R$ ${(totalGeral / clientesUnicos.length).toFixed(2)}`, 170, 81, { align: 'center' });
-
-    // Tabela de clientes
-    const tableData = clientesUnicos.map(cliente => [
-      cliente.nome,
-      cliente.analises.length.toString(),
-      `R$ ${calcularTotalCliente(cliente.analises).toFixed(2)}`
-    ]);
-
-    autoTable(doc, {
-      head: [['Cliente', 'Análises', 'Total']],
-      body: tableData,
-      startY: 100,
-      theme: 'grid',
-      styles: {
-        fontSize: 10,
-        cellPadding: 8,
-        textColor: [60, 60, 60],
-      },
-      headStyles: {
-        fillColor: [103, 49, 147],
-        textColor: [255, 255, 255],
-        fontSize: 11,
-        fontStyle: 'bold',
-      },
-      alternateRowStyles: {
-        fillColor: [248, 248, 248],
-      },
-      margin: { left: 20, right: 20 },
-    });
-
-    // Footer elegante
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Libertá - Página ${i} de ${pageCount}`,
-        105,
-        doc.internal.pageSize.height - 10,
-        { align: 'center' }
-      );
-    }
-
-    doc.save('relatorio-consolidado-tarot.pdf');
-  }, [clientesUnicos]);
-
   const totalReceita = useMemo(() => {
     return clientesUnicos.reduce((total, cliente) => {
       return total + calcularTotalCliente(cliente.analises);
@@ -370,7 +165,7 @@ const RelatorioIndividualTarot = () => {
       <DashboardHeader />
       
       <main className="container mx-auto py-24 px-4">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex items-center">
           <div className="flex items-center gap-4">
             <Logo height={50} width={50} />
             <div>
@@ -380,14 +175,6 @@ const RelatorioIndividualTarot = () => {
               <p className="text-[#673193] mt-1 opacity-80">Análises por cliente</p>
             </div>
           </div>
-          
-          <Button 
-            onClick={gerarRelatorioConsolidado}
-            className="bg-[#673193] hover:bg-[#673193]/90 text-white"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Relatório Consolidado
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -522,14 +309,6 @@ const RelatorioIndividualTarot = () => {
                             {expandedClient === cliente.nome ? 'Ocultar' : 'Ver'} Detalhes
                           </Button>
                           <TarotFormPdfGenerator cliente={cliente} />
-                          <Button
-                            variant="outline"
-                            className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10"
-                            onClick={() => gerarRelatorioIndividual(cliente)}
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Relatório
-                          </Button>
                         </div>
                       </div>
 
