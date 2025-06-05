@@ -24,6 +24,7 @@ import PlanoSelector from "@/components/tarot/PlanoSelector";
 import DailySemanalNotificationManager from "@/components/DailySemanalNotificationManager";
 import { PlanoMensal, PlanoSemanal } from "@/types/payment";
 import { getNextFridays } from "@/utils/fridayCalculator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Memoized reminder component to prevent unnecessary re-renders
 const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
@@ -31,6 +32,8 @@ const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
   onUpdate: (id: number, campo: string, valor: any) => void;
   onRemove: (id: number) => void;
 }) => {
+  const isMobile = useIsMobile();
+  
   const handleTextoChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onUpdate(lembrete.id, 'texto', e.target.value);
   }, [lembrete.id, onUpdate]);
@@ -46,37 +49,39 @@ const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
   return (
     <div className="flex flex-col gap-3 p-3 border border-slate-200 rounded-md bg-white/50 hover:bg-white/70 transition-colors duration-200">
       <div className="flex items-center gap-2">
-        <BellRing className="h-5 w-5 text-[#6B21A8]" />
-        <span className="font-medium text-[#6B21A8]">Contador {lembrete.id}</span>
+        <BellRing className="h-5 w-5 text-[#6B21A8] flex-shrink-0" />
+        <span className="font-medium text-[#6B21A8] text-sm sm:text-base">Contador {lembrete.id}</span>
         <div className="flex-grow"></div>
         <Button 
           variant="ghost" 
           size="icon"
-          className="text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
+          className="text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors duration-200 flex-shrink-0"
           onClick={handleRemoveClick}
         >
           <Trash2 className="h-5 w-5" />
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`}>
+        <div className={isMobile ? '' : 'md:col-span-2'}>
           <Textarea 
             placeholder="Descrição do tratamento..." 
             value={lembrete.texto}
             onChange={handleTextoChange}
-            className="min-h-[80px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200"
+            className="min-h-[80px] bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200 text-sm"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <span className="whitespace-nowrap text-slate-600">Avisar daqui a</span>
-          <Input 
-            type="number" 
-            className="w-20 bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200" 
-            value={lembrete.dias}
-            onChange={handleDiasChange}
-          />
-          <span className="whitespace-nowrap text-slate-600">dias</span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <span className="whitespace-nowrap text-slate-600 text-sm">Avisar daqui a</span>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Input 
+              type="number" 
+              className="w-16 sm:w-20 bg-white/50 border-slate-200 focus:border-[#6B21A8] focus:ring-[#6B21A8]/20 transition-colors duration-200 text-sm" 
+              value={lembrete.dias}
+              onChange={handleDiasChange}
+            />
+            <span className="whitespace-nowrap text-slate-600 text-sm">dias</span>
+          </div>
         </div>
       </div>
     </div>
@@ -87,6 +92,7 @@ ReminderCard.displayName = 'ReminderCard';
 
 const AnaliseFrequencial = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [nomeCliente, setNomeCliente] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
   const [signo, setSigno] = useState("");
@@ -474,22 +480,23 @@ const AnaliseFrequencial = () => {
   }, [nomeCliente, dataNascimento]);
 
   return (
-    <div className="min-h-screen bg-[#F1F7FF] py-6 px-4">
+    <div className="min-h-screen bg-[#F1F7FF] py-4 sm:py-6 px-2 sm:px-4">
       {/* Adicionar o gerenciador de notificações diárias */}
       <DailySemanalNotificationManager />
       
       <div className="container mx-auto max-w-4xl">
-        <div className="mb-6 flex items-center">
+        <div className="mb-4 sm:mb-6 flex items-center">
           <Button 
             variant="ghost" 
             className="mr-2 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:text-[#6B21A8] transition-colors duration-200" 
             onClick={handleBack}
+            size={isMobile ? "sm" : "default"}
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
-          <div className="flex items-center gap-3">
-            <Logo height={40} width={40} />
-            <h1 className="text-2xl font-bold text-[#6B21A8]">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <Logo height={isMobile ? 32 : 40} width={isMobile ? 32 : 40} />
+            <h1 className="text-lg sm:text-2xl font-bold text-[#6B21A8] truncate">
               Tarot Frequencial
             </h1>
           </div>
@@ -503,11 +510,11 @@ const AnaliseFrequencial = () => {
           />
         )}
 
-        <Card className="border-[#6B21A8]/20 shadow-sm mb-6 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-300">
-          <CardHeader>
-            <CardTitle className="text-[#6B21A8]">Tarot Frequencial</CardTitle>
+        <Card className="border-[#6B21A8]/20 shadow-sm mb-4 sm:mb-6 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-300">
+          <CardHeader className="pb-4 sm:pb-6">
+            <CardTitle className="text-[#6B21A8] text-lg sm:text-xl">Tarot Frequencial</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6 sm:space-y-8">
             <ClientForm
               nomeCliente={nomeCliente}
               dataNascimento={dataNascimento}
@@ -530,7 +537,7 @@ const AnaliseFrequencial = () => {
             />
 
             {/* Seção de Plano */}
-            <div className="mt-8">
+            <div>
               <PlanoSelector
                 planoAtivo={planoAtivo}
                 planoData={planoData}
@@ -540,10 +547,10 @@ const AnaliseFrequencial = () => {
             </div>
 
             {/* Seção de Plano Semanal - Igual ao AtendimentoForm */}
-            <div className="mt-8">
+            <div>
               <div className="space-y-2 flex flex-col">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="semanal" className="text-slate-700 font-medium flex items-center">
+                  <Label htmlFor="semanal" className="text-slate-700 font-medium flex items-center text-sm sm:text-base">
                     <Calendar className={`mr-2 h-4 w-4 ${semanalAtivo ? "text-[#10B981]" : "text-slate-400"}`} />
                     PLANO SEMANAL
                   </Label>
@@ -555,7 +562,7 @@ const AnaliseFrequencial = () => {
                 </div>
                 
                 {semanalAtivo && (
-                  <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className={`grid gap-2 mt-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                     <div className="space-y-1">
                       <Label className="text-sm text-slate-600">Semanas</Label>
                       <Select onValueChange={(value) => handleSemanalDataChange("semanas", value)}>
@@ -587,12 +594,13 @@ const AnaliseFrequencial = () => {
             </div>
             
             
-            <div className="mt-8">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-[#6B21A8]">Tratamento</h3>
+            <div>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                <h3 className="text-base sm:text-lg font-medium text-[#6B21A8]">Tratamento</h3>
                 <Button 
                   variant="outline" 
-                  className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200"
+                  size={isMobile ? "sm" : "default"}
+                  className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200 w-full sm:w-auto"
                   onClick={adicionarLembrete}
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -612,17 +620,19 @@ const AnaliseFrequencial = () => {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end gap-3">
+          <CardFooter className="flex flex-col sm:flex-row justify-end gap-3 pt-4 sm:pt-6">
             <Button 
               variant="outline" 
               onClick={handleCancel}
-              className="border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors duration-200"
+              className="border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors duration-200 w-full sm:w-auto order-2 sm:order-1"
+              size={isMobile ? "sm" : "default"}
             >
               Cancelar
             </Button>
             <Button 
-              className="bg-[#6B21A8] hover:bg-[#6B21A8]/90 text-white transition-colors duration-200 hover:shadow-md"
+              className="bg-[#6B21A8] hover:bg-[#6B21A8]/90 text-white transition-colors duration-200 hover:shadow-md w-full sm:w-auto order-1 sm:order-2"
               onClick={handleSalvarAnalise}
+              size={isMobile ? "sm" : "default"}
             >
               <Save className="h-4 w-4 mr-2" />
               Salvar Análise

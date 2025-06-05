@@ -73,12 +73,47 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+  }
+  
+  /* Prevent text from being too small on mobile */
+  input, textarea, select {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+  
+  /* Ensure containers don't overflow */
+  .container {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  .text-responsive {
+    @apply text-sm sm:text-base;
+  }
+  
+  .heading-responsive {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  .padding-responsive {
+    @apply px-2 sm:px-4 py-2 sm:py-4;
+  }
+  
+  .gap-responsive {
+    @apply gap-2 sm:gap-4;
+  }
+  
+  .grid-responsive {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
   }
 }
 
 /* Tarot specific styles */
 .tarot-card {
-  @apply relative w-24 h-36 md:w-32 md:h-48 rounded-lg shadow-lg cursor-pointer;
+  @apply relative w-20 h-32 sm:w-24 sm:h-36 md:w-32 md:h-48 rounded-lg shadow-lg cursor-pointer;
   @apply transition-all duration-500 ease-in-out;
   @apply bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800;
   @apply border border-yellow-400/30;
@@ -108,7 +143,7 @@
 .tarot-card-front {
   @apply bg-gradient-to-br from-amber-50 to-yellow-100;
   @apply border border-yellow-600;
-  @apply flex flex-col items-center justify-center p-2;
+  @apply flex flex-col items-center justify-center p-1 sm:p-2;
   transform: rotateY(180deg);
 }
 
@@ -145,4 +180,27 @@
 
 .text-shadow {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile scrolling improvements */
+@supports (-webkit-overflow-scrolling: touch) {
+  .overflow-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Better touch targets for mobile */
+button, a, input, select, textarea {
+  min-height: 44px; /* Apple's recommended minimum touch target size */
+}
+
+/* Responsive table improvements */
+@media (max-width: 768px) {
+  table {
+    font-size: 14px;
+  }
+  
+  th, td {
+    padding: 8px 4px !important;
+  }
 }

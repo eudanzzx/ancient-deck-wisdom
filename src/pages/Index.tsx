@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useUserDataService from "@/services/userDataService";
 import DashboardBirthdayNotifications from "@/components/DashboardBirthdayNotifications";
@@ -14,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import TratamentoCountdown from "@/components/TratamentoCountdown";
 import Logo from "@/components/Logo";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Atendimento {
   id: string;
@@ -36,13 +36,13 @@ interface Atendimento {
 // Componente otimizado com React.memo e animações aprimoradas
 const DashboardCard = React.memo(({ title, value, icon, delay = "0s" }: { title: string; value: string; icon: React.ReactNode; delay?: string }) => (
   <Card className="bg-white/90 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-500 group hover:bg-white hover:-translate-y-2 hover:scale-105" style={{ animationDelay: delay }}>
-    <CardContent className="pt-6">
+    <CardContent className="pt-4 sm:pt-6">
       <div className="flex justify-between items-center">
-        <div>
-          <p className="text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300">{title}</p>
-          <p className="text-3xl font-bold text-slate-800 group-hover:text-blue-700 transition-colors duration-300">{value}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm font-medium text-slate-600 mb-1 group-hover:text-slate-700 transition-colors duration-300 truncate">{title}</p>
+          <p className="text-xl sm:text-3xl font-bold text-slate-800 group-hover:text-blue-700 transition-colors duration-300 truncate">{value}</p>
         </div>
-        <div className="rounded-xl p-3 bg-blue-600/10 group-hover:bg-blue-600/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12">
+        <div className="rounded-xl p-2 sm:p-3 bg-blue-600/10 group-hover:bg-blue-600/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12 flex-shrink-0">
           {icon}
         </div>
       </div>
@@ -58,6 +58,7 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [periodoVisualizacao, setPeriodoVisualizacao] = useState("semana");
   const [aniversarianteHoje, setAniversarianteHoje] = useState<{nome: string, dataNascimento: string} | null>(null);
+  const isMobile = useIsMobile();
 
   // Memoizar atendimentos filtrados para evitar recálculos desnecessários
   const filteredAtendimentos = useMemo(() => {
@@ -214,7 +215,7 @@ const Index = () => {
 
       <DashboardHeader />
 
-      <main className="container mx-auto py-24 px-4 relative z-10">
+      <main className="container mx-auto py-20 sm:py-24 px-2 sm:px-4 relative z-10">
         <DashboardBirthdayNotifications />
         
         {/* Tarot Plan Notifications */}
@@ -228,83 +229,85 @@ const Index = () => {
           />
         )}
 
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="transform hover:scale-110 transition-transform duration-300 cursor-pointer">
-              <Logo height={50} width={50} />
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <div className="transform hover:scale-110 transition-transform duration-300 cursor-pointer flex-shrink-0">
+              <Logo height={isMobile ? 40 : 50} width={isMobile ? 40 : 50} />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-blue-800 bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent truncate">
                 Dashboard
               </h1>
-              <p className="text-blue-600 mt-1 opacity-80">Gerencie seus atendimentos</p>
+              <p className="text-sm sm:text-base text-blue-600 mt-1 opacity-80 truncate">Gerencie seus atendimentos</p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-2 text-blue-600/60 hover:text-blue-600 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-1">
-            <Sparkles className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
-            <span className="text-sm font-medium">Sistema Inteligente</span>
-          </div>
+          {!isMobile && (
+            <div className="flex items-center gap-2 text-blue-600/60 hover:text-blue-600 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-1 flex-shrink-0">
+              <Sparkles className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
+              <span className="text-sm font-medium">Sistema Inteligente</span>
+            </div>
+          )}
         </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-blue-800">Visão Geral</h2>
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30 hover:shadow-xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-blue-800">Visão Geral</h2>
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30 hover:shadow-xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1 w-full sm:w-auto">
             <ToggleGroup 
               type="single" 
               value={periodoVisualizacao} 
               onValueChange={handlePeriodoChange}
               className="border rounded-xl overflow-hidden"
             >
-              <ToggleGroupItem value="dia" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50 hover:scale-105">
+              <ToggleGroupItem value="dia" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-2 sm:px-4 text-xs sm:text-sm transition-all duration-300 hover:bg-blue-50 hover:scale-105">
                 Dia
               </ToggleGroupItem>
-              <ToggleGroupItem value="semana" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50 hover:scale-105">
+              <ToggleGroupItem value="semana" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-2 sm:px-4 text-xs sm:text-sm transition-all duration-300 hover:bg-blue-50 hover:scale-105">
                 Semana
               </ToggleGroupItem>
-              <ToggleGroupItem value="mes" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50 hover:scale-105">
+              <ToggleGroupItem value="mes" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-2 sm:px-4 text-xs sm:text-sm transition-all duration-300 hover:bg-blue-50 hover:scale-105">
                 Mês
               </ToggleGroupItem>
-              <ToggleGroupItem value="ano" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-4 transition-all duration-300 hover:bg-blue-50 hover:scale-105">
+              <ToggleGroupItem value="ano" className="data-[state=on]:bg-blue-600 data-[state=on]:text-white px-2 sm:px-4 text-xs sm:text-sm transition-all duration-300 hover:bg-blue-50 hover:scale-105">
                 Ano
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
         </div>
 
-        <div className="transform hover:scale-[1.02] transition-all duration-500 hover:-translate-y-1">
+        <div className="transform hover:scale-[1.02] transition-all duration-500 hover:-translate-y-1 mb-6 sm:mb-8">
           <TratamentoCountdown analises={atendimentos} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <DashboardCard 
             title="Total Atendimentos" 
             value={atendimentos.length.toString()} 
-            icon={<Users className="h-8 w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
+            icon={<Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
           />
           <DashboardCard 
             title="Esta Semana" 
             value={stats.atendimentosSemana.toString()}
-            icon={<CalendarDays className="h-8 w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
+            icon={<CalendarDays className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
           />
           <DashboardCard 
             title={`Recebido (${getPeriodoLabel()})`}
             value={`R$ ${stats.totalRecebido.toFixed(2)}`} 
-            icon={<Activity className="h-8 w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
+            icon={<Activity className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
           />
           <DashboardCard 
             title="Tratamentos" 
             value={stats.totalLembretes.toString()} 
-            icon={<BellRing className="h-8 w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
+            icon={<BellRing className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />} 
           />
         </div>
 
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-blue-800">Atendimentos</h2>
-          <div className="relative group">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-blue-800">Atendimentos</h2>
+          <div className="relative group w-full sm:w-auto">
             <Input 
               type="text" 
               placeholder="Buscar por nome..." 
-              className="pr-10 bg-white/90 border-white/30 focus:border-blue-600 focus:ring-blue-600/20 transition-all duration-300 w-64 hover:shadow-lg transform hover:scale-105 hover:-translate-y-1"
+              className="pr-10 bg-white/90 border-white/30 focus:border-blue-600 focus:ring-blue-600/20 transition-all duration-300 w-full sm:w-64 hover:shadow-lg transform hover:scale-105 hover:-translate-y-1"
               value={searchTerm}
               onChange={handleSearchChange}
             />
