@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
@@ -123,7 +122,7 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
       doc.text('Ano:', margin + 110, yPos);
       doc.setFont(undefined, 'normal');
       doc.text(ultimoAtendimento?.ano || '', margin + 155, yPos);
-      yPos += 25;
+      yPos += 20;
 
       // Plano Contratado - Nova estrutura
       doc.setFont(undefined, 'bold');
@@ -174,11 +173,11 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
         doc.text(labelPeriodo, margin + 110, yPos);
         doc.setFont(undefined, 'normal');
         doc.text(`R$ ${valorPorPeriodo.toFixed(2)}`, margin + 165, yPos);
-        yPos += 20;
+        yPos += 15;
       } else {
         doc.setFont(undefined, 'normal');
         doc.text('Nenhum plano contratado', margin, yPos);
-        yPos += 20;
+        yPos += 15;
       }
 
       // Detalhes da Sessão
@@ -198,9 +197,9 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
         const detalhesLines = doc.splitTextToSize(ultimoAtendimento.detalhes, pageWidth - 2 * margin - 4);
         doc.text(detalhesLines.slice(0, 3), margin + 2, yPos + 3);
       }
-      yPos += detalhesHeight + 10;
+      yPos += detalhesHeight + 5;
 
-      // Tratamento
+      // Tratamento - moved up by reducing spacing
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('TRATAMENTO', margin, yPos);
@@ -217,7 +216,7 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
         const tratamentoLines = doc.splitTextToSize(ultimoAtendimento.tratamento, pageWidth - 2 * margin - 4);
         doc.text(tratamentoLines.slice(0, 2), margin + 2, yPos + 3);
       }
-      yPos += tratamentoHeight + 10;
+      yPos += tratamentoHeight + 5;
 
       // Indicação
       doc.setFont(undefined, 'bold');
