@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Clock, AlertTriangle, Timer, ChevronDown, ChevronUp, Minimize, User } from 'lucide-react';
+import { Clock, AlertTriangle, Timer, ChevronDown, ChevronUp, Minimize, User, Calendar } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +10,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface CounterData {
   nomeCliente: string;
@@ -17,9 +23,11 @@ interface CounterData {
   horasRestantes: number;
   minutosRestantes: number;
   dataExpiracao: Date;
+  dataInicio: Date;
+  diasTotais: number;
   priority: number;
   timeDiff: number;
-  analysisId: string; // Add analysis ID to track which analysis this counter belongs to
+  analysisId: string;
 }
 
 interface TarotCounterPriorityNotificationsProps {
@@ -30,6 +38,7 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
   const [counters, setCounters] = useState<CounterData[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const checkCounters = () => {
@@ -78,9 +87,11 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
                   horasRestantes,
                   minutosRestantes,
                   dataExpiracao,
+                  dataInicio,
+                  diasTotais: parseInt(lembrete.dias),
                   priority,
                   timeDiff,
-                  analysisId: analise.id // Track which analysis this counter belongs to
+                  analysisId: analise.id
                 });
               }
             }
@@ -131,7 +142,7 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
     if (counter.diasRestantes === 1) {
       return `1 dia ${counter.horasRestantes}h`;
     }
-    return `${counter.diasRestantes} dias ${counter.horasRestantes}h`;
+    return `${counter.diasRestantes} dias`;
   };
 
   const formatExactTime = (date: Date) => {
@@ -172,12 +183,12 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
 
   const getIcon = (counter: CounterData) => {
     if (counter.diasRestantes === 0 && counter.horasRestantes <= 1) {
-      return <AlertTriangle className="h-5 w-5 text-red-600 animate-pulse" />;
+      return <AlertTriangle className="h-4 w-4 text-red-600 animate-pulse" />;
     }
     if (counter.diasRestantes <= 1) {
-      return <Timer className="h-5 w-5 text-amber-600" />;
+      return <Timer className="h-4 w-4 text-amber-600" />;
     }
-    return <Clock className="h-5 w-5 text-blue-600" />;
+    return <Clock className="h-4 w-4 text-blue-600" />;
   };
 
   const groupedCounters = counters.reduce((acc, counter) => {
@@ -188,9 +199,20 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
     return acc;
   }, {} as Record<string, CounterData[]>);
 
-  const topClientGroups = Object.entries(groupedCounters)
-    .sort(([, a], [, b]) => a[0].timeDiff - b[0].timeDiff)
-    .slice(0, 3);
+  const sortedClientGroups = Object.entries(groupedCounters)
+    .sort(([, a], [, b]) => a[0].timeDiff - b[0].timeDiff);
+
+  const toggleClientExpansion = (clientName: string) => {
+    setExpandedClients(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(clientName)) {
+        newSet.delete(clientName);
+      } else {
+        newSet.add(clientName);
+      }
+      return newSet;
+    });
+  };
 
   if (counters.length === 0 || isHidden) return null;
 
@@ -200,11 +222,11 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
         <div className="flex items-center gap-2">
           <Timer className="h-5 w-5 text-purple-600" />
           <h3 className="text-lg font-semibold text-purple-800">
-            Contadores Prioritários ({counters.length})
+            Contadores Ativos ({counters.length})
           </h3>
-          {topClientGroups[0] && !isMinimized && (
+          {sortedClientGroups[0] && !isMinimized && (
             <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-              Próximo em {formatDetailedTime(topClientGroups[0][1][0])}
+              Próximo em {formatDetailedTime(sortedClientGroups[0][1][0])}
             </Badge>
           )}
         </div>
@@ -233,10 +255,11 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
       </div>
 
       {!isMinimized && (
-        <>
-          {topClientGroups.map(([clientName, clientCounters], groupIndex) => {
+        <div className="space-y-3">
+          {sortedClientGroups.map(([clientName, clientCounters], groupIndex) => {
             const primaryCounter = clientCounters[0]; // O contador mais próximo do cliente
             const hasMultipleCounters = clientCounters.length > 1;
+            const isExpanded = expandedClients.has(clientName);
             
             return (
               <Card 
@@ -246,98 +269,143 @@ const TarotCounterPriorityNotifications: React.FC<TarotCounterPriorityNotificati
                 }`}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${
-                        primaryCounter.diasRestantes === 0 
-                          ? primaryCounter.horasRestantes <= 1 
-                            ? "bg-red-100" 
-                            : "bg-orange-100"
-                          : primaryCounter.diasRestantes === 1 
-                            ? "bg-amber-100"
-                            : "bg-blue-100"
-                      }`}>
-                        {getIcon(primaryCounter)}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          {hasMultipleCounters ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  className="p-0 h-auto font-semibold text-gray-800 hover:bg-transparent hover:text-purple-600 flex items-center gap-1"
-                                >
-                                  <User className="h-4 w-4" />
-                                  {clientName}
-                                  <ChevronDown className="h-3 w-3" />
-                                  <Badge variant="secondary" className="ml-1 text-xs bg-purple-100 text-purple-700">
-                                    {clientCounters.length}
-                                  </Badge>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start" className="w-80 bg-white border shadow-lg">
-                                {clientCounters.map((counter, index) => (
-                                  <DropdownMenuItem key={index} className="flex-col items-start p-3 hover:bg-gray-50">
-                                    <div className="flex items-center gap-2 w-full">
-                                      <Badge 
-                                        variant="outline"
-                                        className={getUrgencyBadge(counter)}
-                                      >
-                                        {formatDetailedTime(counter)}
-                                      </Badge>
-                                      <span className="text-xs text-gray-500 ml-auto">
-                                        {formatExactTime(counter.dataExpiracao)}
-                                      </span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                      {counter.lembreteTexto}
-                                    </p>
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <h4 className="font-semibold text-gray-800">
+                  <div className="space-y-3">
+                    {/* Cabeçalho principal */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full flex-shrink-0 ${
+                          primaryCounter.diasRestantes === 0 
+                            ? primaryCounter.horasRestantes <= 1 
+                              ? "bg-red-100" 
+                              : "bg-orange-100"
+                            : primaryCounter.diasRestantes === 1 
+                              ? "bg-amber-100"
+                              : "bg-blue-100"
+                        }`}>
+                          {getIcon(primaryCounter)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-semibold text-gray-800 text-sm sm:text-base">
                               {clientName}
                             </h4>
-                          )}
-                          {groupIndex === 0 && (
-                            <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
-                              MAIS PRÓXIMO
-                            </Badge>
-                          )}
+                            {hasMultipleCounters && (
+                              <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                                {clientCounters.length} contadores
+                              </Badge>
+                            )}
+                            {groupIndex === 0 && (
+                              <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
+                                PRÓXIMO
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-gray-700 text-xs sm:text-sm truncate">
+                            {primaryCounter.lembreteTexto}
+                          </p>
                         </div>
-                        <p className="text-gray-700 text-sm">
-                          {primaryCounter.lembreteTexto}
-                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <Badge 
+                          variant="outline"
+                          className={`${getUrgencyBadge(primaryCounter)} text-xs`}
+                        >
+                          {formatDetailedTime(primaryCounter)}
+                        </Badge>
+                        <div className="text-xs mt-1">
+                          <p className="text-gray-600 font-medium">
+                            {formatExactTime(primaryCounter.dataExpiracao)}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge 
-                        variant="outline"
-                        className={getUrgencyBadge(primaryCounter)}
-                      >
-                        {formatDetailedTime(primaryCounter)}
-                      </Badge>
-                      <div className="text-xs mt-1 space-y-1">
-                        <p className="text-gray-600 font-medium">
-                          {formatExactTime(primaryCounter.dataExpiracao)}
-                        </p>
+
+                    {/* Botão para expandir se houver múltiplos contadores */}
+                    {hasMultipleCounters && (
+                      <Collapsible open={isExpanded} onOpenChange={() => toggleClientExpansion(clientName)}>
+                        <CollapsibleTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="w-full justify-center hover:bg-white/50 text-gray-600 text-xs"
+                          >
+                            {isExpanded ? (
+                              <>
+                                <ChevronUp className="h-3 w-3 mr-1" />
+                                Ocultar outros contadores
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="h-3 w-3 mr-1" />
+                                Ver outros {clientCounters.length - 1} contadores
+                              </>
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-2 mt-2">
+                          {clientCounters.slice(1).map((counter, index) => (
+                            <div 
+                              key={index}
+                              className="bg-white/30 rounded-lg p-3 border border-white/50"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <div className={`p-1.5 rounded-full flex-shrink-0 ${
+                                    counter.diasRestantes === 0 
+                                      ? counter.horasRestantes <= 1 
+                                        ? "bg-red-100" 
+                                        : "bg-orange-100"
+                                      : counter.diasRestantes === 1 
+                                        ? "bg-amber-100"
+                                        : "bg-blue-100"
+                                  }`}>
+                                    {getIcon(counter)}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs sm:text-sm text-gray-700 truncate">
+                                      {counter.lembreteTexto}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                      <Calendar className="h-3 w-3" />
+                                      <span>Duração: {counter.diasTotais} dias</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  <Badge 
+                                    variant="outline"
+                                    className={`${getUrgencyBadge(counter)} text-xs`}
+                                  >
+                                    {formatDetailedTime(counter)}
+                                  </Badge>
+                                  <div className="text-xs mt-1">
+                                    <p className="text-gray-600">
+                                      {formatExactTime(counter.dataExpiracao)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+
+                    {/* Informações adicionais do contador principal */}
+                    {!hasMultipleCounters && (
+                      <div className="flex items-center gap-2 text-xs text-gray-600 bg-white/20 rounded p-2">
+                        <Calendar className="h-3 w-3" />
+                        <span>Duração total: {primaryCounter.diasTotais} dias</span>
+                        <span>•</span>
+                        <span>Iniciado em: {primaryCounter.dataInicio.toLocaleDateString('pt-BR')}</span>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             );
           })}
-
-          {Object.keys(groupedCounters).length > 3 && (
-            <p className="text-sm text-gray-600 text-center">
-              + {Object.keys(groupedCounters).length - 3} outros clientes com contadores ativos
-            </p>
-          )}
-        </>
+        </div>
       )}
     </div>
   );

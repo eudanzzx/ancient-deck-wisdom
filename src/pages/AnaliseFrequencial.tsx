@@ -25,6 +25,7 @@ import DailySemanalNotificationManager from "@/components/DailySemanalNotificati
 import { PlanoMensal, PlanoSemanal } from "@/types/payment";
 import { getNextFridays } from "@/utils/fridayCalculator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import TarotCounterPriorityNotifications from "@/components/TarotCounterPriorityNotifications";
 
 // Memoized reminder component to prevent unnecessary re-renders
 const ReminderCard = memo(({ lembrete, onUpdate, onRemove }: {
@@ -114,7 +115,8 @@ const AnaliseFrequencial = () => {
   const [lembretes, setLembretes] = useState([
     { id: 1, texto: "", dias: 7 }
   ]);
-  
+  const [analises, setAnalises] = useState<any[]>([]);
+
   const { checkClientBirthday, saveTarotAnalysisWithPlan, getPlanos, savePlanos } = useUserDataService();
   
   // Verificar notificações ao carregar a página
@@ -136,6 +138,25 @@ const AnaliseFrequencial = () => {
       }
     }
   }, [nomeCliente, dataNascimento, checkClientBirthday]);
+
+  // Carregar análises ao montar o componente
+  useEffect(() => {
+    const loadAnalises = () => {
+      try {
+        const analisesData = JSON.parse(localStorage.getItem("analises") || "[]");
+        setAnalises(analisesData);
+      } catch (error) {
+        console.error('Erro ao carregar análises:', error);
+        setAnalises([]);
+      }
+    };
+
+    loadAnalises();
+    // Recarregar análises a cada 30 segundos para manter atualizado
+    const interval = setInterval(loadAnalises, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDataNascimentoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -413,7 +434,7 @@ const AnaliseFrequencial = () => {
       }
       if (semanalAtivo && semanalData.semanas && semanalData.valorSemanal) {
         if (planoAtivo) {
-          mensagem += ` Plano semanal de ${semanalData.semanas} semanas também criado. Vencimentos toda sexta-feira.`;
+          mensagem = `Análise frequencial salva! Plano semanal de ${semanalData.semanas} semanas também criado. Vencimentos toda sexta-feira.`;
         } else {
           mensagem = `Análise frequencial salva! Plano semanal de ${semanalData.semanas} semanas criado com sucesso. Vencimentos toda sexta-feira.`;
         }
@@ -501,6 +522,9 @@ const AnaliseFrequencial = () => {
             </h1>
           </div>
         </div>
+
+        {/* Mostrar contadores ativos */}
+        <TarotCounterPriorityNotifications analises={analises} />
 
         {shouldShowBirthdayAlert && (
           <ClientBirthdayAlert 
