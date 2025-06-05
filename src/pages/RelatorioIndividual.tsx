@@ -1,13 +1,10 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { Button } from "@/components/ui/button";
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search, Calendar, DollarSign, FileText, Users, Star, User } from "lucide-react";
+import { Search, DollarSign, FileText, Users, User } from "lucide-react";
 import useUserDataService from "@/services/userDataService";
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -68,132 +65,6 @@ const RelatorioIndividual = () => {
     }, 0);
   };
 
-  const gerarRelatorioIndividual = useCallback((cliente: any) => {
-    try {
-      console.log('Gerando relatório para cliente:', cliente.nome);
-      console.log('Atendimentos do cliente:', cliente.atendimentos);
-      
-      const doc = new jsPDF();
-      
-      // Header elegante
-      doc.setFontSize(22);
-      doc.setTextColor(37, 99, 235);
-      doc.text('Relatório de Atendimentos', 105, 25, { align: 'center' });
-      
-      doc.setFontSize(16);
-      doc.setTextColor(120, 120, 120);
-      doc.text('Histórico Detalhado', 105, 35, { align: 'center' });
-      
-      // Linha decorativa
-      doc.setDrawColor(37, 99, 235);
-      doc.setLineWidth(0.5);
-      doc.line(20, 45, 190, 45);
-      
-      // Informações do cliente
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Cliente: ${cliente.nome}`, 20, 60);
-      
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`, 20, 70);
-      
-      // Resumo em caixas
-      const totalGasto = calcularTotalCliente(cliente.atendimentos);
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      
-      // Box 1 - Total de atendimentos
-      doc.rect(20, 80, 50, 20);
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text('Total Atendimentos', 25, 87);
-      doc.setFontSize(16);
-      doc.setTextColor(37, 99, 235);
-      doc.text(cliente.atendimentos.length.toString(), 45, 96, { align: 'center' });
-      
-      // Box 2 - Valor total
-      doc.rect(80, 80, 50, 20);
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text('Valor Total', 85, 87);
-      doc.setFontSize(16);
-      doc.setTextColor(37, 99, 235);
-      doc.text(`R$ ${totalGasto.toFixed(2)}`, 105, 96, { align: 'center' });
-      
-      // Box 3 - Valor médio
-      doc.rect(140, 80, 50, 20);
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text('Valor Médio', 145, 87);
-      doc.setFontSize(16);
-      doc.setTextColor(37, 99, 235);
-      const valorMedio = cliente.atendimentos.length > 0 ? (totalGasto / cliente.atendimentos.length).toFixed(2) : '0.00';
-      doc.text(`R$ ${valorMedio}`, 165, 96, { align: 'center' });
-
-      // Histórico de atendimentos detalhado - removendo campos internos
-      const tableData = cliente.atendimentos.slice(0, 8).map((atendimento: any) => [
-        formatarDataSegura(atendimento.dataAtendimento || atendimento.data),
-        atendimento.tipoServico || 'Consulta',
-        `R$ ${parseFloat(atendimento.valor || "0").toFixed(2)}`,
-        atendimento.tratamento || 'N/A',
-        atendimento.indicacao || 'N/A'
-      ]);
-
-      console.log('Dados da tabela:', tableData);
-
-      autoTable(doc, {
-        head: [['Data', 'Serviço', 'Valor', 'Tratamento', 'Indicação']],
-        body: tableData,
-        startY: 115,
-        theme: 'grid',
-        styles: {
-          fontSize: 8,
-          cellPadding: 4,
-          textColor: [60, 60, 60],
-        },
-        headStyles: {
-          fillColor: [37, 99, 235],
-          textColor: [255, 255, 255],
-          fontSize: 9,
-          fontStyle: 'bold',
-        },
-        alternateRowStyles: {
-          fillColor: [248, 248, 248],
-        },
-        margin: { left: 20, right: 20 },
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 40 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 45 },
-          4: { cellWidth: 45 }
-        }
-      });
-
-      // Footer elegante
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(
-          `Libertá - Página ${i} de ${pageCount}`,
-          105,
-          doc.internal.pageSize.height - 10,
-          { align: 'center' }
-        );
-      }
-
-      console.log('PDF gerado com sucesso, iniciando download...');
-      doc.save(`relatorio-${cliente.nome.replace(/\s+/g, '-').toLowerCase()}.pdf`);
-      
-    } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-      alert('Erro ao gerar relatório. Verifique os dados do cliente.');
-    }
-  }, []);
-
   const calcularTotalGeral = () => {
     return clientesUnicos.reduce((total, cliente) => {
       return total + calcularTotalCliente(cliente.atendimentos);
@@ -204,22 +75,17 @@ const RelatorioIndividual = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100">
       <DashboardHeader />
       
-      <main className="container mx-auto py-24 px-4">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <main className="container mx-auto py-24 px-4 max-w-6xl">
+        <div className="mb-8 text-center">
+          <div className="flex items-center justify-center gap-4 mb-4">
             <Logo height={50} width={50} />
             <div>
               <h1 className="text-3xl font-bold text-[#2563EB]">
-                Relatórios Individuais
+                Formulários de Atendimento
               </h1>
-              <p className="text-[#2563EB] mt-1 opacity-80">Análises por cliente</p>
+              <p className="text-[#2563EB] mt-1 opacity-80">Documentos para clientes</p>
             </div>
           </div>
-          
-          <Button className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white">
-            <Download className="h-4 w-4 mr-2" />
-            Relatório Consolidado
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -275,7 +141,7 @@ const RelatorioIndividual = () => {
                   </p>
                 </div>
                 <div className="rounded-xl p-3 bg-[#2563EB]/10">
-                  <Calendar className="h-8 w-8 text-[#2563EB]" />
+                  <DollarSign className="h-8 w-8 text-[#2563EB]" />
                 </div>
               </div>
             </CardContent>
@@ -318,103 +184,85 @@ const RelatorioIndividual = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {clientesFiltrados.map((cliente, index) => (
                   <div key={`${cliente.nome}-${index}`} className="border border-white/20 rounded-xl bg-white/50 hover:bg-white/70 transition-all duration-300 shadow-md">
-                    <div className="p-4">
+                    <div className="p-6">
                       <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <User className="h-5 w-5 text-[#2563EB]" />
-                            <span className="font-medium text-slate-800">{cliente.nome}</span>
+                        <div className="flex items-center gap-6">
+                          <div className="flex items-center gap-3">
+                            <User className="h-6 w-6 text-[#2563EB]" />
+                            <span className="font-semibold text-slate-800 text-lg">{cliente.nome}</span>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-slate-500">
-                            <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-6 text-sm text-slate-600">
+                            <div className="flex items-center gap-2">
                               <FileText className="h-4 w-4 text-[#2563EB]" />
                               <span>{cliente.atendimentos.length} atendimento(s)</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-2">
                               <DollarSign className="h-4 w-4 text-emerald-600" />
                               <span className="font-medium text-emerald-600">
                                 R$ {calcularTotalCliente(cliente.atendimentos).toFixed(2)}
                               </span>
                             </div>
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                              {cliente.atendimentos.length} atendimento{cliente.atendimentos.length !== 1 ? 's' : ''}
-                            </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setExpandedClient(expandedClient === cliente.nome ? null : cliente.nome)}
-                            className="border-blue-600/30 text-blue-600 hover:bg-blue-600/10"
-                          >
-                            {expandedClient === cliente.nome ? 'Ocultar' : 'Ver'} Detalhes
-                          </Button>
-                          <ClientFormPdfGenerator cliente={cliente} />
-                          <Button
-                            variant="outline"
-                            className="border-[#2563EB]/30 text-[#2563EB] hover:bg-[#2563EB]/10"
-                            onClick={() => gerarRelatorioIndividual(cliente)}
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Relatório
-                          </Button>
-                        </div>
+                        <ClientFormPdfGenerator cliente={cliente} />
                       </div>
 
-                      {expandedClient === cliente.nome && (
-                        <div className="mt-4 border-t border-blue-600/20 pt-4">
-                          <div className="flex justify-between items-center mb-3">
-                            <h4 className="font-medium text-blue-600">Histórico de Atendimentos</h4>
-                            <div className="flex gap-2">
-                              <ClientFormPdfGenerator cliente={cliente} />
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-[#2563EB]/30 text-[#2563EB] hover:bg-[#2563EB]/10"
-                                onClick={() => gerarRelatorioIndividual(cliente)}
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                Baixar PDF
-                              </Button>
+                      {/* Informações do último atendimento em grid lado a lado */}
+                      {cliente.atendimentos.length > 0 && (
+                        <div className="mt-6 pt-4 border-t border-blue-600/20">
+                          <h4 className="font-medium text-blue-600 mb-4">Último Atendimento</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <div className="bg-blue-50/50 rounded-lg p-3">
+                              <span className="text-xs font-medium text-blue-600 block mb-1">Data</span>
+                              <span className="text-sm text-slate-700">
+                                {formatarDataSegura(cliente.atendimentos[cliente.atendimentos.length - 1]?.dataAtendimento)}
+                              </span>
                             </div>
-                          </div>
-                          <div className="space-y-3">
-                            {cliente.atendimentos.map((atendimento: any, idx: number) => (
-                              <div key={idx} className="bg-blue-50/50 rounded-lg p-3 border border-blue-200/30">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                                  <div>
-                                    <span className="font-medium text-blue-600">Data:</span>
-                                    <span className="ml-2 text-slate-700">
-                                      {formatarDataSegura(atendimento.dataAtendimento || atendimento.data)}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-blue-600">Serviço:</span>
-                                    <span className="ml-2 text-slate-700">{atendimento.tipoServico || 'N/A'}</span>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-blue-600">Valor:</span>
-                                    <span className="ml-2 text-slate-700">R$ {parseFloat(atendimento.valor || "0").toFixed(2)}</span>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-blue-600">Sessão:</span>
-                                    <span className="ml-2 text-slate-700">{atendimento.sessao || 'N/A'}</span>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-blue-600">Tratamento:</span>
-                                    <span className="ml-2 text-slate-700">{atendimento.tratamento || 'N/A'}</span>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium text-blue-600">Indicação:</span>
-                                    <span className="ml-2 text-slate-700">{atendimento.indicacao || 'N/A'}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
+                            <div className="bg-blue-50/50 rounded-lg p-3">
+                              <span className="text-xs font-medium text-blue-600 block mb-1">Serviço</span>
+                              <span className="text-sm text-slate-700">
+                                {cliente.atendimentos[cliente.atendimentos.length - 1]?.tipoServico || 'N/A'}
+                              </span>
+                            </div>
+                            <div className="bg-blue-50/50 rounded-lg p-3">
+                              <span className="text-xs font-medium text-blue-600 block mb-1">Valor</span>
+                              <span className="text-sm text-slate-700">
+                                R$ {parseFloat(cliente.atendimentos[cliente.atendimentos.length - 1]?.valor || "0").toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="bg-blue-50/50 rounded-lg p-3">
+                              <span className="text-xs font-medium text-blue-600 block mb-1">Status</span>
+                              <span className="text-sm text-slate-700">
+                                {cliente.atendimentos[cliente.atendimentos.length - 1]?.statusPagamento || 'N/A'}
+                              </span>
+                            </div>
+                            <div className="bg-blue-50/50 rounded-lg p-3">
+                              <span className="text-xs font-medium text-blue-600 block mb-1">Destino</span>
+                              <span className="text-sm text-slate-700">
+                                {cliente.atendimentos[cliente.atendimentos.length - 1]?.destino || 'N/A'}
+                              </span>
+                            </div>
+                            <div className="bg-blue-50/50 rounded-lg p-3">
+                              <span className="text-xs font-medium text-blue-600 block mb-1">Ano</span>
+                              <span className="text-sm text-slate-700">
+                                {cliente.atendimentos[cliente.atendimentos.length - 1]?.ano || 'N/A'}
+                              </span>
+                            </div>
+                            <div className="bg-blue-50/50 rounded-lg p-3">
+                              <span className="text-xs font-medium text-blue-600 block mb-1">Tratamento</span>
+                              <span className="text-sm text-slate-700">
+                                {cliente.atendimentos[cliente.atendimentos.length - 1]?.tratamento || 'N/A'}
+                              </span>
+                            </div>
+                            <div className="bg-blue-50/50 rounded-lg p-3">
+                              <span className="text-xs font-medium text-blue-600 block mb-1">Indicação</span>
+                              <span className="text-sm text-slate-700">
+                                {cliente.atendimentos[cliente.atendimentos.length - 1]?.indicacao || 'N/A'}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       )}
