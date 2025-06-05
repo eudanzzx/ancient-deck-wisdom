@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -289,6 +290,13 @@ const RelatorioIndividualTarot = () => {
                                         <span className="ml-2 text-slate-700">{analise.telefone}</span>
                                       </div>
                                     )}
+                                  </div>
+                                  <div className="ml-4">
+                                    <IndividualTarotFormGenerator
+                                      analise={analise}
+                                      clientName={cliente.nome}
+                                      className="text-xs"
+                                    />
                                   </div>
                                 </div>
 
