@@ -23,6 +23,13 @@ const DashboardHeader = () => {
   const handleTestNotifications = () => {
     console.log('Testando notificações semanais...');
     
+    const today = new Date();
+    const todayFormatted = today.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    });
+    
     // Simular notificação de 1 dia antes (quinta-feira)
     toast.warning(
       `⚠️ Teste: Pagamento semanal amanhã!`,
@@ -39,9 +46,9 @@ const DashboardHeader = () => {
     // Simular notificação do dia (sexta-feira) após 2 segundos
     setTimeout(() => {
       toast.error(
-        `🚨 Teste: Pagamento semanal vence hoje!`,
+        `🚨 Teste: Pagamento semanal vence HOJE!`,
         {
-          description: `Cliente Teste 2 - R$ 200,00 vence hoje (sexta-feira)`,
+          description: `Cliente Teste 2 - R$ 200,00 vence hoje (${todayFormatted})`,
           duration: 15000,
           action: {
             label: "Ver detalhes",
