@@ -1,15 +1,20 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, DollarSign, FileText, Users, Star, User } from "lucide-react";
+import { Search, Calendar, DollarSign, FileText, Users, Star, User, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import useUserDataService from "@/services/userDataService";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import TarotFormPdfGenerator from "@/components/reports/TarotFormPdfGenerator";
+import IndividualTarotFormGenerator from "@/components/reports/IndividualTarotFormGenerator";
 
 const RelatorioIndividualTarot = () => {
   const { getAllTarotAnalyses } = useUserDataService();
@@ -203,6 +208,37 @@ const RelatorioIndividualTarot = () => {
                             {expandedClient === cliente.nome ? 'Ocultar' : 'Ver'} Detalhes
                           </Button>
                           <TarotFormPdfGenerator cliente={cliente} />
+                          
+                          {cliente.analises.length > 1 ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10"
+                                >
+                                  <FileText className="h-4 w-4 mr-2" />
+                                  Formulários
+                                  <ChevronDown className="h-3 w-3 ml-1" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-64">
+                                {cliente.analises.map((analise: any, idx: number) => (
+                                  <IndividualTarotFormGenerator
+                                    key={idx}
+                                    analise={analise}
+                                    clientName={cliente.nome}
+                                    className="w-full"
+                                  />
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <IndividualTarotFormGenerator
+                              analise={cliente.analises[0]}
+                              clientName={cliente.nome}
+                            />
+                          )}
                         </div>
                       </div>
 
