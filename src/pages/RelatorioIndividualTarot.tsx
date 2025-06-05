@@ -4,12 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search, Calendar, DollarSign, FileText, Users, Star, User } from "lucide-react";
+import { Search, Calendar, DollarSign, FileText, Users, Star, User } from "lucide-react";
 import useUserDataService from "@/services/userDataService";
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
@@ -51,108 +47,6 @@ const RelatorioIndividualTarot = () => {
       return total + preco;
     }, 0);
   };
-
-  const downloadIndividualAnalysisReport = useCallback((analise: any) => {
-    try {
-      const doc = new jsPDF();
-      
-      // Header elegante
-      doc.setFontSize(18);
-      doc.setTextColor(103, 49, 147);
-      doc.text('Relatório Individual – Análise', 105, 15, { align: 'center' });
-      
-      let yPos = 35;
-      
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      
-      doc.setFont(undefined, 'bold');
-      doc.text(`Nome do Cliente: ${analise.nomeCliente}`, 14, yPos);
-      yPos += 8;
-      
-      if (analise.dataNascimento) {
-        doc.text(`Data de Nascimento: ${new Date(analise.dataNascimento).toLocaleDateString('pt-BR')}`, 14, yPos);
-        yPos += 8;
-      }
-      
-      if (analise.signo) {
-        doc.text(`Signo: ${analise.signo}`, 14, yPos);
-        yPos += 8;
-      }
-      
-      if (analise.dataInicio) {
-        doc.text(`Data da Análise: ${new Date(analise.dataInicio).toLocaleDateString('pt-BR')}`, 14, yPos);
-        yPos += 8;
-      }
-      
-      doc.text(`Valor da Análise: R$ ${parseFloat(analise.preco || "150").toFixed(2)}`, 14, yPos);
-      yPos += 15;
-      
-      doc.setFont(undefined, 'normal');
-      
-      // Pergunta
-      if (analise.pergunta) {
-        doc.setFont(undefined, 'bold');
-        doc.text('Pergunta:', 14, yPos);
-        yPos += 8;
-        doc.setFont(undefined, 'normal');
-        const perguntaLines = doc.splitTextToSize(analise.pergunta, 180);
-        doc.text(perguntaLines, 14, yPos);
-        yPos += perguntaLines.length * 6 + 10;
-      }
-      
-      // Leitura
-      if (analise.leitura) {
-        doc.setFont(undefined, 'bold');
-        doc.text('Leitura:', 14, yPos);
-        yPos += 8;
-        doc.setFont(undefined, 'normal');
-        const leituraLines = doc.splitTextToSize(analise.leitura, 180);
-        doc.text(leituraLines, 14, yPos);
-        yPos += leituraLines.length * 6 + 10;
-      }
-      
-      // Orientação
-      if (analise.orientacao) {
-        doc.setFont(undefined, 'bold');
-        doc.text('Orientação:', 14, yPos);
-        yPos += 8;
-        doc.setFont(undefined, 'normal');
-        const orientacaoLines = doc.splitTextToSize(analise.orientacao, 180);
-        doc.text(orientacaoLines, 14, yPos);
-        yPos += orientacaoLines.length * 6 + 10;
-      }
-      
-      // Rodapé
-      const totalPages = doc.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.setFontSize(10);
-        doc.setTextColor(150);
-        doc.text(
-          `Libertá - Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} - Página ${i} de ${totalPages}`,
-          105,
-          doc.internal.pageSize.height - 10,
-          { align: 'center' }
-        );
-      }
-      
-      const dataAnalise = analise.dataInicio ? new Date(analise.dataInicio).toLocaleDateString('pt-BR').replace(/\//g, '-') : new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-      doc.save(`Relatório_Análise_${analise.nomeCliente.replace(/ /g, '_')}_${dataAnalise}.pdf`);
-      
-      toast({
-        title: "Relatório gerado",
-        description: "O relatório da análise foi baixado com sucesso.",
-      });
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao baixar relatório",
-        description: "Ocorreu um erro ao gerar o arquivo PDF.",
-      });
-    }
-  }, [toast]);
 
   const totalReceita = useMemo(() => {
     return clientesUnicos.reduce((total, cliente) => {
@@ -360,16 +254,6 @@ const RelatorioIndividualTarot = () => {
                                       </div>
                                     )}
                                   </div>
-                                  
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => downloadIndividualAnalysisReport(analise)}
-                                    className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10 ml-3"
-                                  >
-                                    <Download className="h-4 w-4 mr-1" />
-                                    PDF
-                                  </Button>
                                 </div>
 
                                 {analise.pergunta && (

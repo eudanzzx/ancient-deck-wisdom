@@ -22,7 +22,7 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
   planoData,
   startDate,
 }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="mt-4">
@@ -34,6 +34,7 @@ const PlanoPaymentButton: React.FC<PlanoPaymentButtonProps> = ({
             className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200 flex items-center gap-2"
           >
             <CreditCard className="h-4 w-4" />
+            Pagamentos Mensais
             <ChevronDown className={cn(
               "h-3 w-3 transition-transform duration-200",
               isOpen && "rotate-180"
