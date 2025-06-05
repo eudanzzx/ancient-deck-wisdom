@@ -22,6 +22,7 @@ import useUserDataService from "@/services/userDataService";
 import ClientForm from "@/components/tarot/ClientForm";
 import AnalysisCards from "@/components/tarot/AnalysisCards";
 import PlanoSelector from "@/components/tarot/PlanoSelector";
+import DailySemanalNotificationManager from "@/components/DailySemanalNotificationManager";
 import { PlanoMensal, PlanoSemanal } from "@/types/payment";
 import { getNextFridays } from "@/utils/fridayCalculator";
 
@@ -477,6 +478,9 @@ const AnaliseFrequencial = () => {
 
   return (
     <div className="min-h-screen bg-[#F1F7FF] py-6 px-4">
+      {/* Adicionar o gerenciador de notificações diárias */}
+      <DailySemanalNotificationManager />
+      
       <div className="container mx-auto max-w-4xl">
         <div className="mb-6 flex items-center">
           <Button 
