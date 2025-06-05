@@ -62,22 +62,16 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
 
       // Primeira linha - Nome e Data de Nascimento
       doc.setFont(undefined, 'bold');
-      doc.text('Nome do Cliente:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(cliente.nome || '', margin + 40, yPos);
+      doc.text(`Nome do Cliente: ${cliente.nome || ''}`, margin, yPos);
 
       doc.setFont(undefined, 'bold');
-      doc.text('Data de Nascimento:', margin + 110, yPos);
-      doc.setFont(undefined, 'normal');
       const dataNasc = ultimoAtendimento?.dataNascimento ? formatarDataSegura(ultimoAtendimento.dataNascimento) : '_____/_____/_____';
-      doc.text(dataNasc, margin + 155, yPos);
+      doc.text(`Data de Nascimento: ${dataNasc}`, margin + 110, yPos);
       yPos += 12;
 
       // Segunda linha - Signo
       doc.setFont(undefined, 'bold');
-      doc.text('Signo:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(ultimoAtendimento?.signo || '', margin + 40, yPos);
+      doc.text(`Signo: ${ultimoAtendimento?.signo || ''}`, margin, yPos);
       yPos += 20;
 
       // Dados do Atendimento
@@ -90,42 +84,30 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
 
       // Primeira linha - Tipo de Serviço e Data do Atendimento
       doc.setFont(undefined, 'bold');
-      doc.text('Tipo de Serviço:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(ultimoAtendimento?.tipoServico || '', margin + 40, yPos);
+      doc.text(`Tipo de Serviço: ${ultimoAtendimento?.tipoServico || ''}`, margin, yPos);
 
       doc.setFont(undefined, 'bold');
-      doc.text('Data do Atendimento:', margin + 110, yPos);
-      doc.setFont(undefined, 'normal');
       const dataAtend = ultimoAtendimento?.dataAtendimento ? formatarDataSegura(ultimoAtendimento.dataAtendimento) : '_____/_____/_____';
-      doc.text(dataAtend, margin + 155, yPos);
+      doc.text(`Data do Atendimento: ${dataAtend}`, margin + 110, yPos);
       yPos += 12;
 
       // Segunda linha - Valor e Status
       doc.setFont(undefined, 'bold');
-      doc.text('Valor Cobrado:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(`R$ ${parseFloat(ultimoAtendimento?.valor || "0").toFixed(2)}`, margin + 40, yPos);
+      doc.text(`Valor Cobrado: R$ ${parseFloat(ultimoAtendimento?.valor || "0").toFixed(2)}`, margin, yPos);
 
       doc.setFont(undefined, 'bold');
-      doc.text('Status de Pagamento:', margin + 110, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(ultimoAtendimento?.statusPagamento || '', margin + 155, yPos);
+      doc.text(`Status de Pagamento: ${ultimoAtendimento?.statusPagamento || ''}`, margin + 110, yPos);
       yPos += 12;
 
       // Terceira linha - Destino e Ano
       doc.setFont(undefined, 'bold');
-      doc.text('Destino:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(ultimoAtendimento?.destino || '', margin + 40, yPos);
+      doc.text(`Destino: ${ultimoAtendimento?.destino || ''}`, margin, yPos);
 
       doc.setFont(undefined, 'bold');
-      doc.text('Ano:', margin + 110, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(ultimoAtendimento?.ano || '', margin + 155, yPos);
+      doc.text(`Ano: ${ultimoAtendimento?.ano || ''}`, margin + 110, yPos);
       yPos += 18;
 
-      // Plano Contratado - Corrigido para mostrar valores
+      // Plano Contratado
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('PLANO CONTRATADO', margin, yPos);
@@ -139,18 +121,14 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
       if (hasPlanoMensal || hasSemanal) {
         // Primeira linha - Plano Selecionado e Duração Contratada
         doc.setFont(undefined, 'bold');
-        doc.text('Plano Selecionado:', margin, yPos);
-        doc.setFont(undefined, 'normal');
         const tipoPlano = hasPlanoMensal ? 'Plano Mensal' : 'Plano Semanal';
-        doc.text(tipoPlano, margin + 45, yPos);
+        doc.text(`Plano Selecionado: ${tipoPlano}`, margin, yPos);
 
         doc.setFont(undefined, 'bold');
-        doc.text('Duração Contratada:', margin + 110, yPos);
-        doc.setFont(undefined, 'normal');
         const duracao = hasPlanoMensal 
           ? `${ultimoAtendimento?.meses || 0} meses`
           : `${ultimoAtendimento?.semanas || 0} semanas`;
-        doc.text(duracao, margin + 165, yPos);
+        doc.text(`Duração Contratada: ${duracao}`, margin + 110, yPos);
         yPos += 10;
 
         // Segunda linha - Valor Total e Valor por Período
@@ -165,15 +143,11 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
         const valorTotal = valorPorPeriodo * durPeriodos;
 
         doc.setFont(undefined, 'bold');
-        doc.text('Valor Total:', margin, yPos);
-        doc.setFont(undefined, 'normal');
-        doc.text(`R$ ${valorTotal.toFixed(2)}`, margin + 45, yPos);
+        doc.text(`Valor Total: R$ ${valorTotal.toFixed(2)}`, margin, yPos);
 
         doc.setFont(undefined, 'bold');
         const labelPeriodo = hasPlanoMensal ? 'Valor por Mês:' : 'Valor por Semana:';
-        doc.text(labelPeriodo, margin + 110, yPos);
-        doc.setFont(undefined, 'normal');
-        doc.text(`R$ ${valorPorPeriodo.toFixed(2)}`, margin + 165, yPos);
+        doc.text(`${labelPeriodo} R$ ${valorPorPeriodo.toFixed(2)}`, margin + 110, yPos);
         yPos += 12;
       } else {
         doc.setFont(undefined, 'normal');

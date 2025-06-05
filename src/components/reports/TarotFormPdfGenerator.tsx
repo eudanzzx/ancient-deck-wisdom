@@ -61,30 +61,22 @@ const TarotFormPdfGenerator: React.FC<TarotFormPdfGeneratorProps> = ({ cliente, 
 
       doc.setFontSize(11);
 
-      // Nome e Data de Nascimento com espaçamento fixo
+      // Nome e Data de Nascimento
       doc.setFont(undefined, 'bold');
-      doc.text('Nome do Cliente:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(cliente.nome || '', margin + 45, yPos);
+      doc.text(`Nome do Cliente: ${cliente.nome || ''}`, margin, yPos);
 
       doc.setFont(undefined, 'bold');
-      doc.text('Data de Nascimento:', margin + 110, yPos);
-      doc.setFont(undefined, 'normal');
       const dataNasc = ultimaAnalise?.dataNascimento ? formatarDataSegura(ultimaAnalise.dataNascimento) : '_____/_____/_____';
-      doc.text(dataNasc, margin + 170, yPos);
+      doc.text(`Data de Nascimento: ${dataNasc}`, margin + 110, yPos);
       yPos += 12;
 
       // Signo e Telefone
       doc.setFont(undefined, 'bold');
-      doc.text('Signo:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(ultimaAnalise?.signo || '', margin + 45, yPos);
+      doc.text(`Signo: ${ultimaAnalise?.signo || ''}`, margin, yPos);
 
       if (ultimaAnalise?.telefone) {
         doc.setFont(undefined, 'bold');
-        doc.text('Telefone:', margin + 110, yPos);
-        doc.setFont(undefined, 'normal');
-        doc.text(ultimaAnalise.telefone, margin + 170, yPos);
+        doc.text(`Telefone: ${ultimaAnalise.telefone}`, margin + 110, yPos);
       }
       yPos += 20;
 
@@ -98,25 +90,19 @@ const TarotFormPdfGenerator: React.FC<TarotFormPdfGeneratorProps> = ({ cliente, 
 
       // Data da Análise e Valor
       doc.setFont(undefined, 'bold');
-      doc.text('Data da Análise:', margin, yPos);
-      doc.setFont(undefined, 'normal');
       const dataAnalise = ultimaAnalise?.dataInicio ? formatarDataSegura(ultimaAnalise.dataInicio) : '_____/_____/_____';
-      doc.text(dataAnalise, margin + 45, yPos);
+      doc.text(`Data da Análise: ${dataAnalise}`, margin, yPos);
 
       doc.setFont(undefined, 'bold');
-      doc.text('Valor:', margin + 110, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(`R$ ${parseFloat(ultimaAnalise?.preco || "150").toFixed(2)}`, margin + 170, yPos);
+      doc.text(`Valor: R$ ${parseFloat(ultimaAnalise?.preco || "150").toFixed(2)}`, margin + 110, yPos);
       yPos += 12;
 
       // Status
       doc.setFont(undefined, 'bold');
-      doc.text('Status:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(ultimaAnalise?.finalizado ? 'Finalizada' : 'Em andamento', margin + 45, yPos);
+      doc.text(`Status: ${ultimaAnalise?.finalizado ? 'Finalizada' : 'Em andamento'}`, margin, yPos);
       yPos += 20;
 
-      // PLANO CONTRATADO - Nova estrutura
+      // PLANO CONTRATADO
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('PLANO CONTRATADO', margin, yPos);
@@ -124,36 +110,28 @@ const TarotFormPdfGenerator: React.FC<TarotFormPdfGeneratorProps> = ({ cliente, 
 
       doc.setFontSize(11);
 
-      // Tipo de Plano - sempre PLANO SEMANAL
+      // Tipo de Plano
       doc.setFont(undefined, 'bold');
-      doc.text('Tipo de Plano:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text('PLANO SEMANAL', margin + 45, yPos);
+      doc.text('Tipo de Plano: PLANO SEMANAL', margin, yPos);
       yPos += 12;
 
       // Duração
       doc.setFont(undefined, 'bold');
-      doc.text('Duração:', margin, yPos);
-      doc.setFont(undefined, 'normal');
       const semanas = ultimaAnalise?.semanas || '4';
-      doc.text(`${semanas} semanas`, margin + 45, yPos);
+      doc.text(`Duração: ${semanas} semanas`, margin, yPos);
       yPos += 12;
 
       // Valor Total
       doc.setFont(undefined, 'bold');
-      doc.text('Valor Total:', margin, yPos);
-      doc.setFont(undefined, 'normal');
       const valorSemanal = parseFloat(ultimaAnalise?.valorSemanal || "40");
       const totalSemanas = parseInt(semanas);
       const valorTotal = valorSemanal * totalSemanas;
-      doc.text(`R$ ${valorTotal.toFixed(2)}`, margin + 45, yPos);
+      doc.text(`Valor Total: R$ ${valorTotal.toFixed(2)}`, margin, yPos);
       yPos += 12;
 
       // Valor por Semana
       doc.setFont(undefined, 'bold');
-      doc.text('Valor por Semana:', margin, yPos);
-      doc.setFont(undefined, 'normal');
-      doc.text(`R$ ${valorSemanal.toFixed(2)}`, margin + 45, yPos);
+      doc.text(`Valor por Semana: R$ ${valorSemanal.toFixed(2)}`, margin, yPos);
       yPos += 20;
 
       // ANÁLISE - ANTES
@@ -215,8 +193,7 @@ const TarotFormPdfGenerator: React.FC<TarotFormPdfGeneratorProps> = ({ cliente, 
         yPos += 15;
       }
 
-      doc.text('Avisar daqui a:', margin, yPos);
-      doc.text('[7 dias / próxima sessão / conclusão]', margin + 45, yPos);
+      doc.text('Avisar daqui a: [7 dias / próxima sessão / conclusão]', margin, yPos);
 
       // Footer
       doc.setFontSize(8);
