@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
@@ -122,13 +123,13 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
       doc.text('Ano:', margin + 110, yPos);
       doc.setFont(undefined, 'normal');
       doc.text(ultimoAtendimento?.ano || '', margin + 155, yPos);
-      yPos += 20;
+      yPos += 18;
 
-      // Plano Contratado - Nova estrutura
+      // Plano Contratado - Corrigido para mostrar valores
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('PLANO CONTRATADO', margin, yPos);
-      yPos += 15;
+      yPos += 12;
 
       doc.setFontSize(11);
 
@@ -150,7 +151,7 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
           ? `${ultimoAtendimento?.meses || 0} meses`
           : `${ultimoAtendimento?.semanas || 0} semanas`;
         doc.text(duracao, margin + 165, yPos);
-        yPos += 12;
+        yPos += 10;
 
         // Segunda linha - Valor Total e Valor por Período
         const valorPorPeriodo = hasPlanoMensal 
@@ -173,64 +174,64 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
         doc.text(labelPeriodo, margin + 110, yPos);
         doc.setFont(undefined, 'normal');
         doc.text(`R$ ${valorPorPeriodo.toFixed(2)}`, margin + 165, yPos);
-        yPos += 15;
+        yPos += 12;
       } else {
         doc.setFont(undefined, 'normal');
         doc.text('Nenhum plano contratado', margin, yPos);
-        yPos += 15;
+        yPos += 12;
       }
 
       // Detalhes da Sessão
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('DETALHES DA SESSÃO', margin, yPos);
-      yPos += 10;
+      yPos += 8;
 
       doc.setFont(undefined, 'normal');
       doc.setFontSize(11);
       doc.text('Revelações, conselhos e orientações:', margin, yPos);
-      yPos += 8;
+      yPos += 6;
 
-      // Caixa para detalhes sem bordas visíveis
-      const detalhesHeight = 25;
+      // Caixa para detalhes
+      const detalhesHeight = 18;
       if (ultimoAtendimento?.detalhes) {
         const detalhesLines = doc.splitTextToSize(ultimoAtendimento.detalhes, pageWidth - 2 * margin - 4);
-        doc.text(detalhesLines.slice(0, 3), margin + 2, yPos + 3);
+        doc.text(detalhesLines.slice(0, 2), margin + 2, yPos + 3);
       }
-      yPos += detalhesHeight + 5;
+      yPos += detalhesHeight + 3;
 
-      // Tratamento - moved up by reducing spacing
+      // Tratamento
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('TRATAMENTO', margin, yPos);
-      yPos += 10;
+      yPos += 8;
 
       doc.setFont(undefined, 'normal');
       doc.setFontSize(11);
       doc.text('Observações sobre o tratamento:', margin, yPos);
-      yPos += 8;
+      yPos += 6;
 
-      // Caixa para tratamento sem bordas visíveis
-      const tratamentoHeight = 20;
+      // Caixa para tratamento
+      const tratamentoHeight = 15;
       if (ultimoAtendimento?.tratamento) {
         const tratamentoLines = doc.splitTextToSize(ultimoAtendimento.tratamento, pageWidth - 2 * margin - 4);
         doc.text(tratamentoLines.slice(0, 2), margin + 2, yPos + 3);
       }
-      yPos += tratamentoHeight + 5;
+      yPos += tratamentoHeight + 3;
 
       // Indicação
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('INDICAÇÃO', margin, yPos);
-      yPos += 10;
+      yPos += 8;
 
       doc.setFont(undefined, 'normal');
       doc.setFontSize(11);
       doc.text('Informações adicionais e indicações:', margin, yPos);
-      yPos += 8;
+      yPos += 6;
 
-      // Caixa para indicação sem bordas visíveis
-      const indicacaoHeight = 20;
+      // Caixa para indicação
+      const indicacaoHeight = 15;
       if (ultimoAtendimento?.indicacao) {
         const indicacaoLines = doc.splitTextToSize(ultimoAtendimento.indicacao, pageWidth - 2 * margin - 4);
         doc.text(indicacaoLines.slice(0, 2), margin + 2, yPos + 3);

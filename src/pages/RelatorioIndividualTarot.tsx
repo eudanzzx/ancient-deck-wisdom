@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
+import TarotFormPdfGenerator from "@/components/reports/TarotFormPdfGenerator";
 
 const RelatorioIndividualTarot = () => {
   const { getAllTarotAnalyses } = useUserDataService();
@@ -521,6 +521,7 @@ const RelatorioIndividualTarot = () => {
                           >
                             {expandedClient === cliente.nome ? 'Ocultar' : 'Ver'} Detalhes
                           </Button>
+                          <TarotFormPdfGenerator cliente={cliente} />
                           <Button
                             variant="outline"
                             className="border-[#673193]/30 text-[#673193] hover:bg-[#673193]/10"
