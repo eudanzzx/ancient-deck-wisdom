@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,11 +76,11 @@ const RelatorioIndividual = () => {
       // Header elegante
       doc.setFontSize(22);
       doc.setTextColor(37, 99, 235);
-      doc.text('Relatório Individual', 105, 25, { align: 'center' });
+      doc.text('Relatório de Atendimentos', 105, 25, { align: 'center' });
       
       doc.setFontSize(16);
       doc.setTextColor(120, 120, 120);
-      doc.text('Atendimentos Detalhados', 105, 35, { align: 'center' });
+      doc.text('Histórico Detalhado', 105, 35, { align: 'center' });
       
       // Linha decorativa
       doc.setDrawColor(37, 99, 235);
@@ -130,12 +129,11 @@ const RelatorioIndividual = () => {
       const valorMedio = cliente.atendimentos.length > 0 ? (totalGasto / cliente.atendimentos.length).toFixed(2) : '0.00';
       doc.text(`R$ ${valorMedio}`, 165, 96, { align: 'center' });
 
-      // Histórico de atendimentos detalhado
+      // Histórico de atendimentos detalhado - removendo campos internos
       const tableData = cliente.atendimentos.slice(0, 8).map((atendimento: any) => [
         formatarDataSegura(atendimento.dataAtendimento || atendimento.data),
-        atendimento.tipoServico || 'N/A',
+        atendimento.tipoServico || 'Consulta',
         `R$ ${parseFloat(atendimento.valor || "0").toFixed(2)}`,
-        atendimento.sessao || 'N/A',
         atendimento.tratamento || 'N/A',
         atendimento.indicacao || 'N/A'
       ]);
@@ -143,7 +141,7 @@ const RelatorioIndividual = () => {
       console.log('Dados da tabela:', tableData);
 
       autoTable(doc, {
-        head: [['Data', 'Serviço', 'Valor', 'Sessão', 'Tratamento', 'Indicação']],
+        head: [['Data', 'Serviço', 'Valor', 'Tratamento', 'Indicação']],
         body: tableData,
         startY: 115,
         theme: 'grid',
@@ -163,12 +161,11 @@ const RelatorioIndividual = () => {
         },
         margin: { left: 20, right: 20 },
         columnStyles: {
-          0: { cellWidth: 25 },
-          1: { cellWidth: 35 },
-          2: { cellWidth: 25 },
-          3: { cellWidth: 25 },
-          4: { cellWidth: 35 },
-          5: { cellWidth: 35 }
+          0: { cellWidth: 30 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 45 },
+          4: { cellWidth: 45 }
         }
       });
 
