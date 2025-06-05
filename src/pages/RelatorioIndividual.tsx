@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import Logo from "@/components/Logo";
+import ClientFormPdfGenerator from "@/components/reports/ClientFormPdfGenerator";
 
 const RelatorioIndividual = () => {
   const { getAtendimentos } = useUserDataService();
@@ -351,6 +353,7 @@ const RelatorioIndividual = () => {
                           >
                             {expandedClient === cliente.nome ? 'Ocultar' : 'Ver'} Detalhes
                           </Button>
+                          <ClientFormPdfGenerator cliente={cliente} />
                           <Button
                             variant="outline"
                             className="border-[#2563EB]/30 text-[#2563EB] hover:bg-[#2563EB]/10"
@@ -366,15 +369,18 @@ const RelatorioIndividual = () => {
                         <div className="mt-4 border-t border-blue-600/20 pt-4">
                           <div className="flex justify-between items-center mb-3">
                             <h4 className="font-medium text-blue-600">Histórico de Atendimentos</h4>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="border-[#2563EB]/30 text-[#2563EB] hover:bg-[#2563EB]/10"
-                              onClick={() => gerarRelatorioIndividual(cliente)}
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Baixar PDF
-                            </Button>
+                            <div className="flex gap-2">
+                              <ClientFormPdfGenerator cliente={cliente} />
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-[#2563EB]/30 text-[#2563EB] hover:bg-[#2563EB]/10"
+                                onClick={() => gerarRelatorioIndividual(cliente)}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Baixar PDF
+                              </Button>
+                            </div>
                           </div>
                           <div className="space-y-3">
                             {cliente.atendimentos.map((atendimento: any, idx: number) => (
