@@ -7,8 +7,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, BarChart3, Home, ChevronDown, Users } from "lucide-react";
+import { Plus, BarChart3, Home, ChevronDown, Users, Bell } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import UserMenu from "@/components/UserMenu";
 import SemanalPaymentNotifications from "@/components/SemanalPaymentNotifications";
@@ -18,6 +19,38 @@ const DashboardHeader = () => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const isTarotPage = location.pathname === '/listagem-tarot' || location.pathname === '/analise-frequencial' || location.pathname === '/relatorio-frequencial' || location.pathname.includes('tarot');
+
+  const handleTestNotifications = () => {
+    console.log('Testando notificações semanais...');
+    
+    // Simular notificação de 1 dia antes (quinta-feira)
+    toast.warning(
+      `⚠️ Teste: Pagamento semanal amanhã!`,
+      {
+        description: `Cliente Teste - R$ 150,00 vence amanhã (sexta-feira)`,
+        duration: 10000,
+        action: {
+          label: "Ver detalhes",
+          onClick: () => console.log("Detalhes do pagamento teste")
+        }
+      }
+    );
+
+    // Simular notificação do dia (sexta-feira) após 2 segundos
+    setTimeout(() => {
+      toast.error(
+        `🚨 Teste: Pagamento semanal vence hoje!`,
+        {
+          description: `Cliente Teste 2 - R$ 200,00 vence hoje (sexta-feira)`,
+          duration: 15000,
+          action: {
+            label: "Ver detalhes",
+            onClick: () => console.log("Detalhes do pagamento teste 2")
+          }
+        }
+      );
+    }, 2000);
+  };
 
   return (
     <>
@@ -84,6 +117,16 @@ const DashboardHeader = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <Button 
+                variant="outline"
+                size="sm"
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200 transition-all duration-200 text-sm"
+                onClick={handleTestNotifications}
+              >
+                <Bell className="h-4 w-4 mr-1" />
+                Teste Notificações
+              </Button>
               
               <Button 
                 className={`text-white h-8 px-4 text-sm transition-all duration-200 ${
