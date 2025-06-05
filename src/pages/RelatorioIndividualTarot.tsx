@@ -208,6 +208,7 @@ const RelatorioIndividualTarot = () => {
                           >
                             {expandedClient === cliente.nome ? 'Ocultar' : 'Ver'} Detalhes
                           </Button>
+                          
                           <TarotFormPdfGenerator cliente={cliente} />
                           
                           {cliente.analises.length > 1 ? (
@@ -223,13 +224,13 @@ const RelatorioIndividualTarot = () => {
                                   <ChevronDown className="h-3 w-3 ml-1" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-64">
+                              <DropdownMenuContent align="end" className="w-64 bg-white border border-gray-200 shadow-lg">
                                 {cliente.analises.map((analise: any, idx: number) => (
                                   <IndividualTarotFormGenerator
                                     key={idx}
                                     analise={analise}
                                     clientName={cliente.nome}
-                                    className="w-full"
+                                    className="w-full justify-start px-2 py-1 hover:bg-gray-50"
                                   />
                                 ))}
                               </DropdownMenuContent>
@@ -291,7 +292,7 @@ const RelatorioIndividualTarot = () => {
                                       </div>
                                     )}
                                   </div>
-                                  <div className="ml-4">
+                                  <div className="ml-4 flex flex-col gap-2">
                                     <IndividualTarotFormGenerator
                                       analise={analise}
                                       clientName={cliente.nome}

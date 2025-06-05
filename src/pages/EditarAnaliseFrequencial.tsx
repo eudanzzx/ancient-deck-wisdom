@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Plus, Trash2, BellRing } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, BellRing, FileText } from "lucide-react";
 import { toast } from "sonner";
 import Logo from "@/components/Logo";
 import ClientBirthdayAlert from "@/components/ClientBirthdayAlert";
@@ -430,7 +430,7 @@ const EditarAnaliseFrequencial = () => {
           <div className="flex items-center gap-3">
             <Logo height={40} width={40} />
             <h1 className="text-2xl font-bold text-[#6B21A8]">
-              Tarot Frequencial
+              Editar Análise Frequencial
             </h1>
           </div>
         </div>
@@ -445,7 +445,10 @@ const EditarAnaliseFrequencial = () => {
 
         <Card className="border-[#6B21A8]/20 shadow-sm mb-6 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow duration-300">
           <CardHeader>
-            <CardTitle className="text-[#6B21A8]">Tarot Frequencial</CardTitle>
+            <CardTitle className="text-[#6B21A8] flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Dados da Análise Frequencial
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ClientForm
@@ -480,14 +483,17 @@ const EditarAnaliseFrequencial = () => {
             
             <div className="mt-8">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-[#6B21A8]">Tratamento</h3>
+                <h3 className="text-lg font-medium text-[#6B21A8] flex items-center gap-2">
+                  <BellRing className="h-5 w-5" />
+                  Tratamentos e Lembretes
+                </h3>
                 <Button 
                   variant="outline" 
                   className="border-[#6B21A8]/30 text-[#6B21A8] hover:bg-[#6B21A8]/10 hover:border-[#6B21A8] transition-colors duration-200"
                   onClick={adicionarLembrete}
                 >
                   <Plus className="h-4 w-4 mr-1" />
-                  Adicionar
+                  Adicionar Tratamento
                 </Button>
               </div>
               
@@ -503,7 +509,7 @@ const EditarAnaliseFrequencial = () => {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end gap-3">
+          <CardFooter className="flex justify-between">
             <Button 
               variant="outline" 
               onClick={handleCancel}
