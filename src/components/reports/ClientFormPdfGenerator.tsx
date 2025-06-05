@@ -48,170 +48,193 @@ const ClientFormPdfGenerator: React.FC<ClientFormPdfGeneratorProps> = ({ cliente
       doc.setFontSize(12);
       doc.setTextColor(120, 120, 120);
       doc.text('Documento confidencial - Uso exclusivo do cliente', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 20;
-
-      // Linha decorativa
-      doc.setDrawColor(37, 99, 235);
-      doc.setLineWidth(0.5);
-      doc.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 15;
+      yPos += 25;
 
       // Informações do Cliente
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
       doc.setFont(undefined, 'bold');
       doc.text('INFORMAÇÕES DO CLIENTE', margin, yPos);
-      yPos += 10;
+      yPos += 15;
 
-      doc.setFont(undefined, 'normal');
       doc.setFontSize(11);
+      const ultimoAtendimento = cliente.atendimentos[cliente.atendimentos.length - 1];
 
-      // Nome
+      // Primeira linha - Nome e Data de Nascimento
+      doc.setFont(undefined, 'bold');
       doc.text('Nome do Cliente:', margin, yPos);
-      doc.setDrawColor(150, 150, 150);
-      doc.line(margin + 35, yPos + 2, pageWidth - margin, yPos + 2);
-      doc.text(cliente.nome || '', margin + 37, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(cliente.nome || '', margin + 40, yPos);
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Data de Nascimento:', margin + 110, yPos);
+      doc.setFont(undefined, 'normal');
+      const dataNasc = ultimoAtendimento?.dataNascimento ? formatarDataSegura(ultimoAtendimento.dataNascimento) : '_____/_____/_____';
+      doc.text(dataNasc, margin + 155, yPos);
       yPos += 12;
 
-      // Data de Nascimento
-      doc.text('Data de Nascimento:', margin, yPos);
-      doc.line(margin + 45, yPos + 2, margin + 85, yPos + 2);
-      const ultimoAtendimento = cliente.atendimentos[cliente.atendimentos.length - 1];
-      doc.text(ultimoAtendimento?.dataNascimento ? formatarDataSegura(ultimoAtendimento.dataNascimento) : '_____/_____/_____', margin + 47, yPos);
-      
-      // Signo
-      doc.text('Signo:', margin + 100, yPos);
-      doc.line(margin + 115, yPos + 2, pageWidth - margin, yPos + 2);
-      doc.text(ultimoAtendimento?.signo || '', margin + 117, yPos);
+      // Segunda linha - Signo
+      doc.setFont(undefined, 'bold');
+      doc.text('Signo:', margin, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(ultimoAtendimento?.signo || '', margin + 40, yPos);
       yPos += 20;
 
       // Dados do Atendimento
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('DADOS DO ATENDIMENTO', margin, yPos);
-      yPos += 10;
+      yPos += 15;
 
-      doc.setFont(undefined, 'normal');
       doc.setFontSize(11);
 
-      // Tipo de Serviço
+      // Primeira linha - Tipo de Serviço e Data do Atendimento
+      doc.setFont(undefined, 'bold');
       doc.text('Tipo de Serviço:', margin, yPos);
-      doc.line(margin + 35, yPos + 2, margin + 100, yPos + 2);
-      doc.text(ultimoAtendimento?.tipoServico || '', margin + 37, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(ultimoAtendimento?.tipoServico || '', margin + 40, yPos);
 
-      // Data do Atendimento
+      doc.setFont(undefined, 'bold');
       doc.text('Data do Atendimento:', margin + 110, yPos);
-      doc.line(margin + 145, yPos + 2, pageWidth - margin, yPos + 2);
-      doc.text(ultimoAtendimento?.dataAtendimento ? formatarDataSegura(ultimoAtendimento.dataAtendimento) : '_____/_____/_____', margin + 147, yPos);
+      doc.setFont(undefined, 'normal');
+      const dataAtend = ultimoAtendimento?.dataAtendimento ? formatarDataSegura(ultimoAtendimento.dataAtendimento) : '_____/_____/_____';
+      doc.text(dataAtend, margin + 155, yPos);
       yPos += 12;
 
-      // Valor e Status
-      doc.text('Valor Cobrado (R$):', margin, yPos);
-      doc.line(margin + 42, yPos + 2, margin + 85, yPos + 2);
-      doc.text(`R$ ${parseFloat(ultimoAtendimento?.valor || "0").toFixed(2)}`, margin + 44, yPos);
+      // Segunda linha - Valor e Status
+      doc.setFont(undefined, 'bold');
+      doc.text('Valor Cobrado:', margin, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(`R$ ${parseFloat(ultimoAtendimento?.valor || "0").toFixed(2)}`, margin + 40, yPos);
 
-      doc.text('Status de Pagamento:', margin + 100, yPos);
-      doc.line(margin + 135, yPos + 2, pageWidth - margin, yPos + 2);
-      doc.text(ultimoAtendimento?.statusPagamento || '', margin + 137, yPos);
+      doc.setFont(undefined, 'bold');
+      doc.text('Status de Pagamento:', margin + 110, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(ultimoAtendimento?.statusPagamento || '', margin + 155, yPos);
       yPos += 12;
 
-      // Destino e Ano
+      // Terceira linha - Destino e Ano
+      doc.setFont(undefined, 'bold');
       doc.text('Destino:', margin, yPos);
-      doc.line(margin + 20, yPos + 2, margin + 85, yPos + 2);
-      doc.text(ultimoAtendimento?.destino || '', margin + 22, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(ultimoAtendimento?.destino || '', margin + 40, yPos);
 
-      doc.text('Ano:', margin + 100, yPos);
-      doc.line(margin + 115, yPos + 2, pageWidth - margin, yPos + 2);
-      doc.text(ultimoAtendimento?.ano || '', margin + 117, yPos);
-      yPos += 20;
+      doc.setFont(undefined, 'bold');
+      doc.text('Ano:', margin + 110, yPos);
+      doc.setFont(undefined, 'normal');
+      doc.text(ultimoAtendimento?.ano || '', margin + 155, yPos);
+      yPos += 25;
 
-      // Plano Contratado
+      // Plano Contratado - Nova estrutura
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('PLANO CONTRATADO', margin, yPos);
-      yPos += 10;
+      yPos += 15;
 
-      doc.setFont(undefined, 'normal');
       doc.setFontSize(11);
 
-      // Checkboxes para planos
       const hasPlanoMensal = ultimoAtendimento?.planoAtivo;
       const hasSemanal = ultimoAtendimento?.semanalAtivo;
 
-      // Plano Mensal
-      doc.rect(margin, yPos - 3, 4, 4);
-      if (hasPlanoMensal) {
-        doc.text('✓', margin + 1, yPos);
-      }
-      doc.text('PLANO MENSAL', margin + 8, yPos);
+      if (hasPlanoMensal || hasSemanal) {
+        // Primeira linha - Plano Selecionado e Duração Contratada
+        doc.setFont(undefined, 'bold');
+        doc.text('Plano Selecionado:', margin, yPos);
+        doc.setFont(undefined, 'normal');
+        const tipoPlano = hasPlanoMensal ? 'Plano Mensal' : 'Plano Semanal';
+        doc.text(tipoPlano, margin + 45, yPos);
 
-      // Plano Semanal
-      doc.rect(margin + 60, yPos - 3, 4, 4);
-      if (hasSemanal) {
-        doc.text('✓', margin + 61, yPos);
+        doc.setFont(undefined, 'bold');
+        doc.text('Duração Contratada:', margin + 110, yPos);
+        doc.setFont(undefined, 'normal');
+        const duracao = hasPlanoMensal 
+          ? `${ultimoAtendimento?.meses || 0} meses`
+          : `${ultimoAtendimento?.semanas || 0} semanas`;
+        doc.text(duracao, margin + 165, yPos);
+        yPos += 12;
+
+        // Segunda linha - Valor Total e Valor por Período
+        const valorPorPeriodo = hasPlanoMensal 
+          ? parseFloat(ultimoAtendimento?.valorMensal || "0")
+          : parseFloat(ultimoAtendimento?.valorSemanal || "0");
+        
+        const durPeriodos = hasPlanoMensal 
+          ? parseInt(ultimoAtendimento?.meses || "0")
+          : parseInt(ultimoAtendimento?.semanas || "0");
+        
+        const valorTotal = valorPorPeriodo * durPeriodos;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Valor Total:', margin, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(`R$ ${valorTotal.toFixed(2)}`, margin + 45, yPos);
+
+        doc.setFont(undefined, 'bold');
+        const labelPeriodo = hasPlanoMensal ? 'Valor por Mês:' : 'Valor por Semana:';
+        doc.text(labelPeriodo, margin + 110, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(`R$ ${valorPorPeriodo.toFixed(2)}`, margin + 165, yPos);
+        yPos += 20;
+      } else {
+        doc.setFont(undefined, 'normal');
+        doc.text('Nenhum plano contratado', margin, yPos);
+        yPos += 20;
       }
-      doc.text('PLANO SEMANAL', margin + 68, yPos);
-      yPos += 20;
 
       // Detalhes da Sessão
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('DETALHES DA SESSÃO', margin, yPos);
-      yPos += 8;
+      yPos += 10;
 
       doc.setFont(undefined, 'normal');
       doc.setFontSize(11);
       doc.text('Revelações, conselhos e orientações:', margin, yPos);
-      yPos += 6;
+      yPos += 8;
 
-      // Caixa para detalhes
-      doc.setDrawColor(150, 150, 150);
-      doc.rect(margin, yPos, pageWidth - 2 * margin, 25);
-      
-      // Texto dos detalhes se existir
+      // Caixa para detalhes sem bordas visíveis
+      const detalhesHeight = 25;
       if (ultimoAtendimento?.detalhes) {
         const detalhesLines = doc.splitTextToSize(ultimoAtendimento.detalhes, pageWidth - 2 * margin - 4);
-        doc.text(detalhesLines.slice(0, 3), margin + 2, yPos + 5);
+        doc.text(detalhesLines.slice(0, 3), margin + 2, yPos + 3);
       }
-      yPos += 30;
+      yPos += detalhesHeight + 10;
 
       // Tratamento
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('TRATAMENTO', margin, yPos);
-      yPos += 8;
+      yPos += 10;
 
       doc.setFont(undefined, 'normal');
       doc.setFontSize(11);
       doc.text('Observações sobre o tratamento:', margin, yPos);
-      yPos += 6;
+      yPos += 8;
 
-      // Caixa para tratamento
-      doc.rect(margin, yPos, pageWidth - 2 * margin, 20);
-      
+      // Caixa para tratamento sem bordas visíveis
+      const tratamentoHeight = 20;
       if (ultimoAtendimento?.tratamento) {
         const tratamentoLines = doc.splitTextToSize(ultimoAtendimento.tratamento, pageWidth - 2 * margin - 4);
-        doc.text(tratamentoLines.slice(0, 2), margin + 2, yPos + 5);
+        doc.text(tratamentoLines.slice(0, 2), margin + 2, yPos + 3);
       }
-      yPos += 25;
+      yPos += tratamentoHeight + 10;
 
       // Indicação
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('INDICAÇÃO', margin, yPos);
-      yPos += 8;
+      yPos += 10;
 
       doc.setFont(undefined, 'normal');
       doc.setFontSize(11);
       doc.text('Informações adicionais e indicações:', margin, yPos);
-      yPos += 6;
+      yPos += 8;
 
-      // Caixa para indicação
-      doc.rect(margin, yPos, pageWidth - 2 * margin, 20);
-      
+      // Caixa para indicação sem bordas visíveis
+      const indicacaoHeight = 20;
       if (ultimoAtendimento?.indicacao) {
         const indicacaoLines = doc.splitTextToSize(ultimoAtendimento.indicacao, pageWidth - 2 * margin - 4);
-        doc.text(indicacaoLines.slice(0, 2), margin + 2, yPos + 5);
+        doc.text(indicacaoLines.slice(0, 2), margin + 2, yPos + 3);
       }
 
       // Footer
